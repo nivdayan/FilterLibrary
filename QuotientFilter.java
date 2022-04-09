@@ -306,7 +306,8 @@ public class QuotientFilter {
 		}
 		boolean does_run_exist = is_occupied(index);
 		if (!does_run_exist) {
-			return insert_new_run(index, fingerprint);
+			boolean val = insert_new_run(index, fingerprint);
+			return val;
 		}
 		
 		int run_start_index = find_run_start(index);
@@ -488,10 +489,11 @@ public class QuotientFilter {
 	}
 	
 	boolean insert(int input, boolean insert_only_if_no_match) {
+
 		int large_hash = HashFunctions.normal_hash(input);
 		int slot_index = get_slot_index(large_hash);
 		BitSet fingerprint = gen_fingerprint(large_hash);
-		
+
 		/*print_int_in_binary(input, 31);
 		print_int_in_binary(large_hash, 31);
 		print_int_in_binary(slot_index_mask, 31);
@@ -680,12 +682,37 @@ public class QuotientFilter {
 			}
 		}
 		
+
+	}
+	
+	static public void experiment_false_positives() {
+		int bits_per_entry = 10;
+		int num_entries_power = 5;
+		int seed = 5; 
+		//int num_entries = (int)Math.pow(2, num_entries_power);
+		int fingerprint_size = bits_per_entry - 3;
+		QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
+		HashSet<Integer> added = new HashSet<Integer>();
+		Random rand = new Random(seed);
+		double load_factor = 0.9;
 		int num_queries = 20000;
 		int num_false_positives = 0;
+		
+		for (int i = 0; i < qf.get_physcial_num_slots() * load_factor; i++) {
+			int rand_num = rand.nextInt();
+			boolean success = qf.insert(rand_num, false);
+			if (success) {
+				added.add(rand_num);
+			}
+			else {
+				System.out.println("insertion failed");
+			}
+			
+		}
+		
 		for (int i = 0; i < num_queries; i++) {
 			int rand_num = rand.nextInt();
 			if (!added.contains(rand_num)) {
-				//System.out.println("query for non-existing key " + rand_num );
 				boolean found = qf.search(i);
 				if (found) {
 					//System.out.println("we seem to have a false positive");
@@ -694,12 +721,48 @@ public class QuotientFilter {
 			}
 		}
 		double FPR = num_false_positives / (double)num_queries;
-		System.out.println("FPR:\t" + FPR);
+		System.out.println("measured FPR:\t" + FPR);
 		double expected_FPR = Math.pow(2, - fingerprint_size);
-		System.out.println("FPR:\t" + expected_FPR);
+		System.out.println("single fingerprint model:\t" + expected_FPR);
 		double expected_FPR_bender = 1 - Math.exp(- load_factor / Math.pow(2, fingerprint_size));
-		System.out.println("bended FPR:\t" + expected_FPR_bender);
+		System.out.println("bender model:\t" + expected_FPR_bender);
 	}
+	
+	static public void experiment_insertion_speed() {
+		int bits_per_entry = 3;
+		int num_entries_power = 14;
+		int seed = 5; 
+		//int num_entries = (int)Math.pow(2, num_entries_power);
+		int fingerprint_size = bits_per_entry - 3;
+		QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
+		Random rand = new Random(seed);
+		double load_factor = 0.05;
+		int num_queries = 20000;
+		int num_false_positives = 0;
+		double num_insertions = qf.get_physcial_num_slots() * load_factor; 
+		long start = System.nanoTime();
+		long time_acc = 0;
+		for (int i = 0; i < num_insertions; i++) {
+			long start1 = System.nanoTime();
+
+			int rand_num = rand.nextInt();
+			boolean success = qf.insert(rand_num, false);
+
+			long end1 = System.nanoTime(); 
+			if (i > 5) {
+				time_acc += ( end1 - start1);
+			}
+			//System.out.println("execution time :\t" + ( end1 - start1) / (1000.0) + " mic s");
+			
+		}
+		long end = System.nanoTime(); 
+
+		System.out.println("execution time :\t" + ( end - start) / (1000.0 * 1000.0) + " ms");
+		System.out.println("execution time :\t" + ( end - start) / (num_insertions * 1000.0) + " mic sec");
+		System.out.println("time_acc :\t" + time_acc / (num_insertions * 1000.0));
+
+	}
+
 	
 	// adds two entries to the end of the filter, causing an overflow
 	// checks this can be handled
@@ -724,7 +787,6 @@ public class QuotientFilter {
 			System.out.println("Should have found the entry");
 			System.exit(1);
 		}
-		qf.pretty_print();
 	}
 	
 	static public BitSet set_slot_in_test(BitSet result, int bits_per_entry, int slot, boolean is_occupied, boolean is_continuation, boolean is_shifted, BitSet fingerprint) {
@@ -782,6 +844,9 @@ public class QuotientFilter {
 		test3(); // ensuring no false negatives
 		test4(); // overflow test
 		test5(); // deletion test 
+		
+		experiment_false_positives();
+		experiment_insertion_speed();
 	}
 
 }
