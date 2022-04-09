@@ -741,26 +741,33 @@ public class QuotientFilter {
 		int num_false_positives = 0;
 		double num_insertions = qf.get_physcial_num_slots() * load_factor; 
 		long start = System.nanoTime();
-		long time_acc = 0;
+		long time_sum = 0;
+		long time_sum_square = 0;
 		for (int i = 0; i < num_insertions; i++) {
 			long start1 = System.nanoTime();
-
 			int rand_num = rand.nextInt();
 			boolean success = qf.insert(rand_num, false);
 
 			long end1 = System.nanoTime(); 
-			if (i > 5) {
-				time_acc += ( end1 - start1);
-			}
-			//System.out.println("execution time :\t" + ( end1 - start1) / (1000.0) + " mic s");
-			
+			//if (i > 5) {
+			long time_diff = (end1 - start1);
+			time_sum += time_diff;
+			time_sum_square += time_diff * time_diff; 
+			//}
+			//System.out.println("execution time :\t" + ( end1 - start1) / (1000.0) + " mic s");	
 		}
 		long end = System.nanoTime(); 
-
 		System.out.println("execution time :\t" + ( end - start) / (1000.0 * 1000.0) + " ms");
-		System.out.println("execution time :\t" + ( end - start) / (num_insertions * 1000.0) + " mic sec");
-		System.out.println("time_acc :\t" + time_acc / (num_insertions * 1000.0));
+		System.out.println("execution time per entry :\t" + ( end - start) / (num_insertions * 1000.0) + " mic sec");
+		
+		double avg_nano = time_sum / num_insertions;
+		System.out.println("avg :\t" + (avg_nano / 1000.0));
 
+		double avg_normalized = avg_nano / 1000.0;
+		double time_sum_square_normalized = time_sum_square / 1000000.0 ;
+		double variance = (time_sum_square_normalized - avg_normalized * avg_normalized * num_insertions) / num_insertions;
+		double std = Math.sqrt(variance);
+		System.out.println("std :\t" + std);
 	}
 
 	
