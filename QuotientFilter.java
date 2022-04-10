@@ -38,21 +38,26 @@ public class QuotientFilter {
 		set_shifted(index, is_shifted);
 	}
 	
-	void set_fingerprint(int index, BitSet fingerprint) {
+	void set_fingerprint(int index, long fingerprint) {
 		for (int i = index * bitPerEntry + 3, j = 0; i < index * bitPerEntry + 3 + fingerprintLength; i++, j++) {
-			filter.set(i, fingerprint.get(j));
+			filter.set(i, get_fingerprint_bit(j, fingerprint));
 		}
 	}
 	
-	BitSet get_fingerprint(int index) {
-		BitSet fingerprint = new BitSet(fingerprintLength);
+	long get_fingerprint(int index) {
+		long fingerprint = 0;
 		for (int i = index * bitPerEntry + 3, j = 0; i < index * bitPerEntry + 3 + fingerprintLength; i++, j++) {
-			fingerprint.set(j, filter.get(i));
+			fingerprint = set_fingerprint_bit(j, fingerprint, filter.get(i));
 		}
 		return fingerprint;
 	}
 	
-
+	void print_fingerprint(BitSet fp) {
+		for (int i = 0; i < fingerprintLength; i++) {
+			System.out.print(fp.get(i) ? "1" : "0");
+		}
+		System.out.println();
+	}
 	
 	boolean compare(int index, BitSet fingerprint) {
 		for (int i = index * bitPerEntry + 3, j = 0; i < index * bitPerEntry + 3 + fingerprintLength; i++, j++) {
@@ -63,8 +68,18 @@ public class QuotientFilter {
 		return true; 
 	}
 	
+	boolean compare(int index, long fingerprint) {
+		for (int i = index * bitPerEntry + 3, j = 0; i < index * bitPerEntry + 3 + fingerprintLength; i++, j++) {
+			if (filter.get(i) != get_fingerprint_bit(j, fingerprint)) {
+				return false;
+			}
+		}
+		return true; 
+	}
+	
+	
 	void modify_slot(boolean is_occupied, boolean is_continuation, boolean is_shifted, 
-			int index, BitSet fingerprint) {
+			int index, long fingerprint) {
 		modify_slot(is_occupied, is_continuation, is_shifted, index);
 		set_fingerprint(index, fingerprint);
 	}
@@ -174,7 +189,7 @@ public class QuotientFilter {
 
 	
 	// returns the index of the entry if found, -1 otherwise
-	int find_first_matching_fingerprint_in_run(int index, BitSet fingerprint) {
+	int find_first_fingerprint_in_run(int index, long fingerprint) {
 		assert(!is_continuation(index));
 		do {
 			if (compare(index, fingerprint)) {
@@ -187,7 +202,7 @@ public class QuotientFilter {
 	}
 	
 	// returns the index of the entry if found, -1 otherwise
-	int find_last_matching_fingerprint_in_run(int index, BitSet fingerprint) {
+	int find_last_matching_fingerprint_in_run(int index, long fingerprint) {
 		assert(!is_continuation(index));
 		int matching_fingerprint_index = -1;
 		do {
@@ -208,44 +223,20 @@ public class QuotientFilter {
 		} while (is_continuation(index));
 		return index - 1; 
 	}
-	
-	/*class run_scan_result {
-		run_scan_result() {
-			matching_fingerprint_index = -1;
-			last_entry_index = -1;
-		}
-		int matching_fingerprint_index;
-		int last_entry_index;
-	}*/
-	
-	// returns the index of the entry if found, -1 otherwise
-	/*run_scan_result scan_run_fully(int index, BitSet fingerprint) {
-		assert(!is_continuation(index));
-		run_scan_result res = new run_scan_result();
-		do {
-			if (compare(index, fingerprint)) {
-				//System.out.println("found matching FP at index " + index);
-				res.matching_fingerprint_index = index;
-			}
-			index++;
-		} while (is_continuation(index));
-		res.last_entry_index = index - 1;
-		return res; 
-	}*/
-
-	
-	boolean search(BitSet fingerprint, int index) {
+		
+	boolean search(long fingerprint, int index) {
 		boolean does_run_exist = is_occupied(index);
 		if (!does_run_exist) {
 			return false;
 		}
 		int run_start_index = find_run_start(index);
-		int found_index = find_first_matching_fingerprint_in_run(run_start_index, fingerprint);
+		//long long_fp = convert(fingerprint);
+		int found_index = find_first_fingerprint_in_run(run_start_index, fingerprint);
 		return found_index > -1;
 	}
 	
-	BitSet swap_fingerprints(int index, BitSet new_fingerprint) {
-		BitSet existing = get_fingerprint(index);
+	long swap_fingerprints(int index, long new_fingerprint) {
+		long existing = get_fingerprint(index);
 		set_fingerprint(index, new_fingerprint);
 		return existing;
 	}
@@ -267,7 +258,7 @@ public class QuotientFilter {
 		return index;
 	}
 	
-	boolean insert_new_run(int index, BitSet fingerprint) {
+	boolean insert_new_run(int index, long long_fp) {
 		int first_empty_slot = find_first_empty_slot(index);
 		int run_start_index = find_run_start(index);
 		int start_of_this_new_run = find_new_run_location(run_start_index);
@@ -282,7 +273,7 @@ public class QuotientFilter {
 		}
 		set_continuation(start_of_this_new_run, false);
 		if (slot_initially_empty) {
-			set_fingerprint(start_of_this_new_run, fingerprint);
+			set_fingerprint(start_of_this_new_run, long_fp);
 			return true; 
 		}
 		
@@ -291,6 +282,8 @@ public class QuotientFilter {
 		boolean finished_first_run = false;
 		boolean temp_continuation = false;
 		
+		//long long_fp = convert(fingerprint);
+		
 		do {
 			
 			if (current_index >= get_logical_num_slots()) {
@@ -298,7 +291,8 @@ public class QuotientFilter {
 			}
 			
 			is_this_slot_empty = is_slot_empty(current_index);
-			fingerprint = swap_fingerprints(current_index, fingerprint);
+			long_fp = swap_fingerprints(current_index, long_fp);
+			//System.out.println();
 
 			if (current_index > start_of_this_new_run) {
 				set_shifted(current_index, true);
@@ -318,35 +312,38 @@ public class QuotientFilter {
 			current_index++;
 			//is_new_run = !is_continuation(current_index);
 		} while (!is_this_slot_empty);
-		//print_important_bits();
 		return true; 
 	}
 	
 	boolean insert(BitSet fingerprint, int index, boolean insert_only_if_no_match) {
+		long long_fp = convert(fingerprint);
+		return insert(long_fp, index, insert_only_if_no_match);
+	}
+
+	
+	boolean insert(long long_fp, int index, boolean insert_only_if_no_match) {
 		if (index >= get_logical_num_slots()) {
 			return false;
 		}
 		boolean does_run_exist = is_occupied(index);
 		if (!does_run_exist) {
-			boolean val = insert_new_run(index, fingerprint);
+			boolean val = insert_new_run(index, long_fp);
 			return val;
 		}
 		
 		int run_start_index = find_run_start(index);
 		if (does_run_exist && insert_only_if_no_match) {
-			int found_index = find_first_matching_fingerprint_in_run(run_start_index, fingerprint);
+			int found_index = find_first_fingerprint_in_run(run_start_index, long_fp);
 			if (found_index > -1) {
 				return false; 
 			}
 		} 
-		
-		//System.out.println("filter size: " + filter.size() + " bits");
-		
+				
 		int current_index = run_start_index;
 		boolean is_this_slot_empty;
 		boolean finished_first_run = false;
 		boolean temp_continuation = false;
-		
+				
 		do {
 			
 			if (current_index >= get_logical_num_slots()) {
@@ -354,14 +351,11 @@ public class QuotientFilter {
 			}
 			
 			is_this_slot_empty = is_slot_empty(current_index);
-			fingerprint = swap_fingerprints(current_index, fingerprint);
-			
-
+			long_fp = swap_fingerprints(current_index, long_fp);
 
 			if (current_index > run_start_index) {
 				set_shifted(current_index, true);
 			}
-			//System.out.println("filter size: " + filter.size() + " bits");
 			
 			if (current_index > run_start_index && !finished_first_run && !is_continuation(current_index)) {
 				finished_first_run = true;
@@ -374,13 +368,16 @@ public class QuotientFilter {
 			}
 
 			current_index++;
-			//is_new_run = !is_continuation(current_index);
 		} while (!is_this_slot_empty);
 		//System.out.println("filter size: " + filter.size() + " bits");
 		return true;
 	}
 	
 	boolean delete(BitSet fingerprint, int index) {
+		return delete(convert(fingerprint), index);
+	}
+	
+	boolean delete(long fingerprint, int index) {
 		if (index >= get_logical_num_slots()) {
 			return false;
 		}
@@ -400,9 +397,6 @@ public class QuotientFilter {
 			return false;
 		}
 		
-		//int j = index + 1;
-		//int num_occupied_slots_encountered = 1;
-		
 		// the run has only one entry, so we disable its is_occupied flag
 		if (run_start_index == matching_fingerprint_index) {
 			set_occupied(index, false);
@@ -421,10 +415,10 @@ public class QuotientFilter {
 		
 		// First thing to do is move everything else in the run back by one slot
 		for (int i = matching_fingerprint_index; i < last_entry_index; i++) {
-			BitSet f = get_fingerprint(index + 1);
+			long f = get_fingerprint(index + 1);
 			set_fingerprint(index, f);
 		}
-		set_fingerprint(last_entry_index, new BitSet(5)); // can be commented out later 
+		set_fingerprint(last_entry_index, 0); // can be commented out later 
 		
 		// we now need to decide about shifting the next run
 		// we assume current_index is always empty, and we consider shifting the next slot back to it
@@ -457,7 +451,7 @@ public class QuotientFilter {
 			//occupied_stack--;
 
 			for (int i = next_run_start_index; i <= last_entry_index; i++) {
-				BitSet f = get_fingerprint(i);
+				long f = get_fingerprint(i);
 				set_fingerprint(i - 1, f);
 				if (is_continuation(i)) {
 					set_continuation(i-1, true);
@@ -466,13 +460,11 @@ public class QuotientFilter {
 					occupied_stack++;
 				}
 			}
-			set_fingerprint(last_entry_index, new BitSet(5));
+			set_fingerprint(last_entry_index, 0);
 			set_shifted(last_entry_index, false);
 			set_continuation(last_entry_index, false);
 			
-		
 		} while (true);
-
 		
 	}
 	
@@ -486,10 +478,10 @@ public class QuotientFilter {
 		System.out.println(str);
 	}
 	
-	String get_fingerprint_str(BitSet fp, int length) {
+	String get_fingerprint_str(long fp, int length) {
 		String str = "";
 		for (int i = 0; i < length; i++) {
-			str += fp.get(i) ? "1" : "0";
+			str += get_fingerprint_bit(i, fp) ? "1" : "0";
 		}
 		return str;
 	}
@@ -500,26 +492,25 @@ public class QuotientFilter {
 		return slot_index;
 	}
 	
-	BitSet gen_fingerprint(int large_hash) {
+	long gen_fingerprint(int large_hash) {
 		int fingerprint_mask = (1 << fingerprintLength) - 1;
 		fingerprint_mask = fingerprint_mask << power_of_two_size;
 		int fingerprint = (large_hash & fingerprint_mask) >> power_of_two_size;
-		BitSet fingerprint_bs = new BitSet(fingerprintLength);
+		/*BitSet fingerprint_bs = new BitSet(fingerprintLength);
 		for (int i = 0; i < fingerprintLength; i++) {
 			int mask = (int)Math.pow(2, i);
 			int masked = fingerprint & mask;
 			boolean val = masked > 0;
 			fingerprint_bs.set(i, val);
 			//System.out.println(val);
-		}
-		return fingerprint_bs;
+		}*/
+		return fingerprint;
 	}
 	
 	boolean insert(int input, boolean insert_only_if_no_match) {
-
 		int large_hash = HashFunctions.normal_hash(input);
 		int slot_index = get_slot_index(large_hash);
-		BitSet fingerprint = gen_fingerprint(large_hash);
+		long fingerprint = gen_fingerprint(large_hash);
 
 		/*print_int_in_binary(input, 31);
 		print_int_in_binary(large_hash, 31);
@@ -541,11 +532,10 @@ public class QuotientFilter {
 	boolean delete(int input, boolean insert_only_if_no_match) {
 		int large_hash = HashFunctions.normal_hash(input);
 		int slot_index = get_slot_index(large_hash);
-		BitSet fingerprint = gen_fingerprint(large_hash);
-		boolean success = delete(fingerprint, slot_index);
-		//if (!success) {
+		long fp_long = gen_fingerprint(large_hash);
+		boolean success = delete(fp_long, slot_index);
 		if (!success) {
-			System.out.println(input + "\t" + slot_index + "\t" + get_fingerprint_str(fingerprint, fingerprintLength));
+			System.out.println(input + "\t" + slot_index + "\t" + get_fingerprint_str(fp_long, fingerprintLength));
 			pretty_print();
 			System.exit(1);
 		}
@@ -555,12 +545,45 @@ public class QuotientFilter {
 	boolean search(int input) {
 		int large_hash = HashFunctions.normal_hash(input);
 		int slot_index = get_slot_index(large_hash);
-		BitSet fingerprint = gen_fingerprint(large_hash);
+		long fingerprint = gen_fingerprint(large_hash);
 		return search(fingerprint, slot_index);
 	}
 	
 	public boolean get_bit_at_offset(int offset) {
 		return filter.get(offset);
+	}
+	
+	public static boolean get_fingerprint_bit(int index, long fingerprint) {
+		long mask = 1 << index;
+		long and = fingerprint & mask;
+		return and != 0;
+	}
+	
+	public static long set_fingerprint_bit(int index, long fingerprint, boolean val) {
+		if (val) {
+			fingerprint |= 1 << index;   
+		}
+		else {
+			fingerprint &= ~(1 << index);   
+		}
+		return fingerprint;
+	}
+	
+	public long convert(BitSet fp) {
+		long fp_long = 0;
+		for (int i = 0; i < fingerprintLength; i++) {
+			fp_long = set_fingerprint_bit(i, fp_long, fp.get(i));
+		}
+		return fp_long;
+	}
+	
+	public BitSet convert(long fp) {
+		BitSet bs = new BitSet(fingerprintLength);
+		for (int i = 0; i < fingerprintLength; i++) {
+			bs.set(i, get_fingerprint_bit(i, fp));
+			//fp_long = set_fingerprint_bit(i, fp_long, fp.get(i));
+		}
+		return bs;
 	}
 	
 	static public boolean check_equality(QuotientFilter qf, BitSet bs, boolean check_also_fingerprints) {
@@ -574,28 +597,7 @@ public class QuotientFilter {
 		}
 		return true;
 	}
-	
-	static public void read_test() {
-		QuotientFilter qf = new QuotientFilter(8, 8);
-		
-		BitSet f = new BitSet(5);
-		f.set(0, 5, true);
-		
-		qf.modify_slot(false, false, false, 0); 
-		qf.modify_slot(true, false, false, 1); 
-		qf.modify_slot(true, true, true, 2); 
-		qf.modify_slot(false, true, true, 3);
-		qf.modify_slot(true, false, true, 4, f); 
-		qf.modify_slot(false, false, true, 5); 
-		qf.modify_slot(false, true, true, 6, f); 
-		qf.modify_slot(true, false, false, 7); 
-		
-		
-		qf.print(); 
-		qf.print_important_bits();
-		
-		qf.search(f, 4);
-	}
+
 	
 	// This test is based on the example from https://en.wikipedia.org/wiki/Quotient_filter
 	// it performs the same insertions and query as the example and verifies that it gets the same results. 
@@ -603,35 +605,33 @@ public class QuotientFilter {
 		int bits_per_entry = 8;
 		int num_entries_power = 3;
 		int num_entries = (int)Math.pow(2, num_entries_power);
-		int fingerprint_size = bits_per_entry - 3;
 		QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
 
-		BitSet fingerprint0 = new BitSet(5);
-		fingerprint0.set(0, fingerprint_size, false);
-		
-		BitSet fingerprint1 = new BitSet(5);
-		fingerprint1.set(0, fingerprint_size, true);
+		long fingerprint0 = 0;
+		long fingerprint1 = (1 << bits_per_entry) - 1;
+		//System.out.println(fingerprint1);
 	
 		qf.insert(fingerprint0, 1, false);
 		qf.insert(fingerprint1, 4, false);
 		qf.insert(fingerprint0, 7, false);
+		//qf.pretty_print();
 		qf.insert(fingerprint0, 1, false);
 		qf.insert(fingerprint0, 2, false);
+		//qf.pretty_print();
 		qf.insert(fingerprint0, 1, false);
 		
 		// these are the expecting resulting is_occupied, is_continuation, and is_shifted bits 
 		// for all slots contigously. We do not store the fingerprints here
 		BitSet result = new BitSet(num_entries * bits_per_entry);		
-		result = set_slot_in_test(result, bits_per_entry, 0, false, false, false, new BitSet(bits_per_entry - 3));
-		result = set_slot_in_test(result, bits_per_entry, 1, true, false, false, new BitSet(bits_per_entry - 3));
-		result = set_slot_in_test(result, bits_per_entry, 2, true, true, true, new BitSet(bits_per_entry - 3));
-		result = set_slot_in_test(result, bits_per_entry, 3, false, true, true, new BitSet(bits_per_entry - 3));
-		result = set_slot_in_test(result, bits_per_entry, 4, true, false, true, new BitSet(bits_per_entry - 3));
+		result = set_slot_in_test(result, bits_per_entry, 0, false, false, false, fingerprint0);
+		result = set_slot_in_test(result, bits_per_entry, 1, true, false, false, fingerprint0);
+		result = set_slot_in_test(result, bits_per_entry, 2, true, true, true, fingerprint0);
+		result = set_slot_in_test(result, bits_per_entry, 3, false, true, true, fingerprint0);
+		result = set_slot_in_test(result, bits_per_entry, 4, true, false, true, fingerprint0);
 		result = set_slot_in_test(result, bits_per_entry, 5, false, false, true, fingerprint1);
-		result = set_slot_in_test(result, bits_per_entry, 6, false, false, false, new BitSet(bits_per_entry - 3));
-		result = set_slot_in_test(result, bits_per_entry, 7, true, false, false, new BitSet(bits_per_entry - 3));
-		
-	
+		result = set_slot_in_test(result, bits_per_entry, 6, false, false, false, fingerprint0);
+		result = set_slot_in_test(result, bits_per_entry, 7, true, false, false, fingerprint0);
+		//qf.pretty_print();
 		check_equality(qf, result, true);
 	}
 	
@@ -642,33 +642,29 @@ public class QuotientFilter {
 		int bits_per_entry = 8;
 		int num_entries_power = 4;
 		int num_entries = (int)Math.pow(2, num_entries_power);
-		int fingerprint_size = bits_per_entry - 3;
 		QuotientFilter qf = new QuotientFilter(4, 8);
-		BitSet ones = new BitSet(fingerprint_size);
-		ones.set(0, fingerprint_size, true);
-		BitSet zeros = new BitSet(fingerprint_size);
-		zeros.set(0, fingerprint_size, false);
 		
-		qf.insert(zeros, 1, false);
-		qf.insert(zeros, 1, false);
-		qf.insert(zeros, 3, false);
-		qf.insert(zeros, 3, false);
-		qf.insert(zeros, 3, false);
-		qf.insert(zeros, 4, false);
-		qf.insert(zeros, 6, false);
-		qf.insert(zeros, 6, false);
+		qf.insert(0, 1, false);
+		qf.insert(0, 1, false);
+		qf.insert(0, 3, false);
+		qf.insert(0, 3, false);
+		qf.insert(0, 3, false);
+		qf.insert(0, 4, false);
+		qf.insert(0, 6, false);
+		qf.insert(0, 6, false);
 			
 		BitSet result = new BitSet(num_entries * bits_per_entry);		
-		result = set_slot_in_test(result, bits_per_entry, 0, false, false, false, new BitSet(bits_per_entry - 3));
-		result = set_slot_in_test(result, bits_per_entry, 1, true, false, false, new BitSet(bits_per_entry - 3));
-		result = set_slot_in_test(result, bits_per_entry, 2, false, true, true, new BitSet(bits_per_entry - 3));
-		result = set_slot_in_test(result, bits_per_entry, 3, true, false, false, new BitSet(bits_per_entry - 3));
-		result = set_slot_in_test(result, bits_per_entry, 4, true, true, true, new BitSet(bits_per_entry - 3));
-		result = set_slot_in_test(result, bits_per_entry, 5, false, true, true, new BitSet(bits_per_entry - 3));
-		result = set_slot_in_test(result, bits_per_entry, 6, true, false, true, new BitSet(bits_per_entry - 3));
-		result = set_slot_in_test(result, bits_per_entry, 7, false, false, true, new BitSet(bits_per_entry - 3));
-		result = set_slot_in_test(result, bits_per_entry, 8, false, true, true, new BitSet(bits_per_entry - 3));
+		result = set_slot_in_test(result, bits_per_entry, 0, false, false, false, 0);
+		result = set_slot_in_test(result, bits_per_entry, 1, true, false, false, 0);
+		result = set_slot_in_test(result, bits_per_entry, 2, false, true, true, 0);
+		result = set_slot_in_test(result, bits_per_entry, 3, true, false, false, 0);
+		result = set_slot_in_test(result, bits_per_entry, 4, true, true, true, 0);
+		result = set_slot_in_test(result, bits_per_entry, 5, false, true, true, 0);
+		result = set_slot_in_test(result, bits_per_entry, 6, true, false, true, 0);
+		result = set_slot_in_test(result, bits_per_entry, 7, false, false, true, 0);
+		result = set_slot_in_test(result, bits_per_entry, 8, false, true, true, 0);
 		check_equality(qf, result, false);
+		
 	}
 	
 	// Here we create a large(ish) filter, insert some random entries into it, and then make sure 
@@ -680,7 +676,6 @@ public class QuotientFilter {
 		int num_entries_power = 5;
 		int seed = 5; 
 		//int num_entries = (int)Math.pow(2, num_entries_power);
-		int fingerprint_size = bits_per_entry - 3;
 		QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
 		HashSet<Integer> added = new HashSet<Integer>();
 		Random rand = new Random(seed);
@@ -757,13 +752,13 @@ public class QuotientFilter {
 	
 	static public void experiment_insertion_speed() {
 		int bits_per_entry = 3;
-		int num_entries_power = 14;
+		int num_entries_power = 12;
 		int seed = 5; 
 		//int num_entries = (int)Math.pow(2, num_entries_power);
 		int fingerprint_size = bits_per_entry - 3;
 		QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
 		Random rand = new Random(seed);
-		double load_factor = 0.05;
+		double load_factor = 0.1;
 		int num_queries = 20000;
 		int num_false_positives = 0;
 		double num_insertions = qf.get_physcial_num_slots() * load_factor; 
@@ -807,32 +802,28 @@ public class QuotientFilter {
 		int fingerprint_size = bits_per_entry - 3;
 		QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
 
-		BitSet fingerprint0 = new BitSet(5);
-		fingerprint0.set(0, fingerprint_size, false);
-		
-		BitSet fingerprint1 = new BitSet(5);
-		fingerprint1.set(0, fingerprint_size, true);
+		long fp2 = 1 << fingerprint_size - 1;
 	
-		qf.insert(fingerprint1, num_entries - 1, false);
-		qf.insert(fingerprint1, num_entries - 1, false);
+		qf.insert(fp2, num_entries - 1, false);
+		qf.insert(fp2, num_entries - 1, false);
 		
 		qf.pretty_print();
 		
-		qf.delete(fingerprint1, num_entries - 1);
-		boolean found = qf.search(fingerprint1, num_entries - 1);
+		qf.delete(fp2, num_entries - 1);
+		boolean found = qf.search(fp2, num_entries - 1);
 		if (!found) {
 			System.out.println("Should have found the entry");
 			System.exit(1);
 		}
 	}
 	
-	static public BitSet set_slot_in_test(BitSet result, int bits_per_entry, int slot, boolean is_occupied, boolean is_continuation, boolean is_shifted, BitSet fingerprint) {
+	static public BitSet set_slot_in_test(BitSet result, int bits_per_entry, int slot, boolean is_occupied, boolean is_continuation, boolean is_shifted, long fingerprint) {
 		int index = bits_per_entry * slot;
 		result.set(index++, is_occupied); 
 		result.set(index++, is_continuation); 
 		result.set(index++, is_shifted); 
 		for (int i = 0; i < bits_per_entry - 3; i++) {
-			result.set(index++, fingerprint.get(i));
+			result.set(index++, get_fingerprint_bit(i, fingerprint) );
 		}
 		return result;
 	}
@@ -846,33 +837,30 @@ public class QuotientFilter {
 		int fingerprint_size = bits_per_entry - 3;
 		QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
 
-		BitSet one = new BitSet(fingerprint_size);
-		one.set(4, true);
-		
-		BitSet two = new BitSet(fingerprint_size);
-		two.set(3, true);
-		
-		BitSet four = new BitSet(fingerprint_size);
-		four.set(2, true);
+		long fp1 = 1 << 4;
+		long fp2 = 1 << 3;
+		long fp3 = 1 << 2;
 	
-		qf.insert(one, 1, false);
-		qf.insert(one, 1, false);
-		qf.insert(one, 1, false);
-		qf.insert(one, 1, false);
-		qf.insert(one, 1, false);
-		qf.insert(two, 2, false);
-		qf.insert(four, 4, false);
-			
-		qf.delete(one, 1);
-		qf.delete(one, 1);
-		qf.delete(one, 1);
-		qf.delete(one, 1);
-		qf.delete(one, 1);
+		qf.insert(fp1, 1, false);
+		qf.insert(fp1, 1, false);
+		qf.insert(fp1, 1, false);
+		qf.insert(fp1, 1, false);
+		qf.insert(fp1, 1, false);
+		qf.insert(fp2, 2, false);
+		qf.insert(fp3, 4, false);
+		
+		qf.pretty_print();
+		qf.delete(fp1, 1);
+		qf.delete(fp1, 1);
+		qf.delete(fp1, 1);
+		qf.delete(fp1, 1);
+		qf.delete(fp1, 1);
 
 		BitSet result = new BitSet(num_entries * bits_per_entry);	
-		result = set_slot_in_test(result, bits_per_entry, 2, true, false, false, two);
-		result = set_slot_in_test(result, bits_per_entry, 4, true, false, false, four);
+		result = set_slot_in_test(result, bits_per_entry, 2, true, false, false, fp2);
+		result = set_slot_in_test(result, bits_per_entry, 4, true, false, false, fp3);
 		check_equality(qf, result, true);
+		qf.pretty_print();
 	}
 	
 	static public  void main(String[] args) {
