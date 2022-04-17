@@ -2,6 +2,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
 public class QuotientFilter {
 
@@ -28,7 +29,7 @@ public class QuotientFilter {
 	}
 	
 	public int get_logical_num_slots() {
-		return filter.size() / bitPerEntry + num_extension_slots;
+		return filter.size() / (bitPerEntry ) + num_extension_slots;
 	}
 	
 	void modify_slot(boolean is_occupied, boolean is_continuation, boolean is_shifted, 
@@ -233,6 +234,21 @@ public class QuotientFilter {
 		//long long_fp = convert(fingerprint);
 		int found_index = find_first_fingerprint_in_run(run_start_index, fingerprint);
 		return found_index > -1;
+	}
+	
+	// Used for testing
+	Set<Long> get_all_fingerprints(int bucket_index) {
+		boolean does_run_exist = is_occupied(bucket_index);
+		HashSet<Long> set = new HashSet<Long>();
+		if (!does_run_exist) {
+			return set;
+		}
+		int run_index = find_run_start(bucket_index);
+		do {
+			set.add(get_fingerprint(run_index));
+			run_index++;
+		} while (is_continuation(run_index));		
+		return set;
 	}
 	
 	long swap_fingerprints(int index, long new_fingerprint) {
@@ -507,18 +523,29 @@ public class QuotientFilter {
 		return fingerprint;
 	}
 	
+	void print_key(int input) {
+		int large_hash = HashFunctions.normal_hash(input);
+		int slot_index = get_slot_index(large_hash);
+		long fingerprint = gen_fingerprint(large_hash);
+		
+		System.out.println("num   :  " + input);
+		System.out.print("hash  :  ");
+		print_int_in_binary(large_hash, fingerprintLength + power_of_two_size);
+		//print_int_in_binary(slot_index_mask, 31);
+		System.out.print("bucket:  ");
+		print_int_in_binary(slot_index, power_of_two_size);
+		System.out.print("FP    :  ");
+		//print_int_in_binary(fingerprint_mask, 31);
+		print_int_in_binary((int)fingerprint, fingerprintLength);
+		System.out.println();
+
+	}
+	
 	boolean insert(int input, boolean insert_only_if_no_match) {
 		int large_hash = HashFunctions.normal_hash(input);
 		int slot_index = get_slot_index(large_hash);
 		long fingerprint = gen_fingerprint(large_hash);
-
-		/*print_int_in_binary(input, 31);
-		print_int_in_binary(large_hash, 31);
-		print_int_in_binary(slot_index_mask, 31);
-		print_int_in_binary(slot_index, 31);
-		print_int_in_binary(fingerprint_mask, 31);
-		print_int_in_binary(fingerprint, 31);
-		System.out.println(slot_index);*/
+		
 		boolean success = insert(fingerprint, slot_index, false);
 		//if (!success) {
 		if (!success) {
@@ -863,15 +890,122 @@ public class QuotientFilter {
 		qf.pretty_print();
 	}
 	
+	static public void test6() {
+		
+		int bits_per_entry = 8;
+		int num_entries_power = 4;
+		int num_entries = (int)Math.pow(2, num_entries_power);
+		int fingerprint_size = bits_per_entry - 3;
+		QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
+		
+		qf.insert(0, 2, false);
+		qf.insert(0, 3, false);
+		qf.insert(0, 3, false);
+		//qf.pretty_print();
+		qf.insert(0, 4, false);
+		//qf.insert(0, 2, false);
+		qf.pretty_print();
+		//qf.insert(0, 1, false);
+		
+		Iterator it = new Iterator(qf);
+		int[] arr = new int[] {2, 3, 3, 4};
+        int arr_index = 0;
+		
+		while (it.next()) {
+			//System.out.println(it.bucket_index);
+			if (arr[arr_index++] != it.bucket_index) {
+				System.out.print("error in iteration");
+				System.exit(1);
+			}
+		}
+	}
+	
+	static public void test7() {
+		
+		int bits_per_entry = 8;
+		int num_entries_power = 4;
+		int num_entries = (int)Math.pow(2, num_entries_power);
+		int fingerprint_size = bits_per_entry - 3;
+		QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
+		
+		qf.insert(0, 1, false);
+		qf.insert(0, 4, false);
+		qf.insert(0, 7, false);
+		//qf.pretty_print();
+		qf.insert(0, 1, false);
+		qf.insert(0, 2, false);
+		//qf.pretty_print();
+		qf.insert(0, 1, false);
+		
+		Iterator it = new Iterator(qf);
+		int[] arr = new int[] {1, 1, 1, 2, 4, 7};
+        int arr_index = 0;
+        qf.pretty_print();
+		
+		while (it.next()) {
+			//System.out.println(it.bucket_index);
+			if (arr[arr_index++] != it.bucket_index) {
+				System.out.print("error in iteration");
+				System.exit(1);
+			}
+		}
+	}
+	
+	// In this test, we create one FingerprintShrinkingQF and expand it once.
+	// We also create an expanded Quotient Filter with the same data from the onset and make sure they are logically equivalent. 
+	static public void test8() {
+		
+		int bits_per_entry = 10;
+		int num_entries_power = 4;
+		FingerprintShrinkingQF qf = new FingerprintShrinkingQF(num_entries_power, bits_per_entry);
+		
+		//qf.print_key(1);
+		
+		for (int i = 0; i < 12; i++) {
+			qf.insert(i, false);
+		}
+		
+		qf.pretty_print();
+		qf.expand();
+		qf.pretty_print();
+		
+		QuotientFilter qf2 = new QuotientFilter(num_entries_power + 1, bits_per_entry - 1);
+		
+		for (int i = 0; i < 12; i++) {
+			qf2.insert(i, false);
+		}
+		
+		qf2.pretty_print();
+		
+		if (qf.filter.size() != qf2.filter.size()) {
+			System.out.print("filters have different sizes");
+			System.exit(1);
+		}
+		
+		for (int i = 0; i < qf.get_logical_num_slots(); i++) {
+			Set<Long> set1 = qf.get_all_fingerprints(i);
+			Set<Long> set2 = qf2.get_all_fingerprints(i);
+			
+			if (!set1.equals(set2)) {
+				System.out.print("fingerprints for bucket " + i + " not identical");
+				System.exit(1);
+			}
+		}
+	}
+
+	
 	static public  void main(String[] args) {
 		test1(); // example from wikipedia
 		test2(); // example from quotient filter paper
 		test3(); // ensuring no false negatives
 		test4(); // overflow test
 		test5(); // deletion test 
+		test6(); // iteration test 1
+		test7(); // iteration test 2
+		//test8(); // expansion test
 		
-		experiment_false_positives();
-		experiment_insertion_speed();
+		//experiment_false_positives();
+		//experiment_insertion_speed();
 	}
 
 }
