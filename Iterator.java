@@ -66,7 +66,6 @@ public class Iterator  {
 			// do nothing
 		}
 		else if (occupied && !continuation && shifted) {
-			// do nothing
 			s.add(index);
 			s.remove();
 			bucket_index = s.peek();
@@ -81,7 +80,7 @@ public class Iterator  {
 		System.out.println("original slot: " + index + "  " + bucket_index);
 	}
 
-	void scan() {
+	/*void scan() {
 		Queue<Integer> s = new LinkedList<Integer>();
 		int current_index = 0;
 
@@ -112,11 +111,7 @@ public class Iterator  {
 
 			System.out.println("original slot: " + i + "  " + current_index);
 		}
+	}*/
 
-	}
-
-	void expand() {
-
-	}
 
 }

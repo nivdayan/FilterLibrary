@@ -5,6 +5,7 @@ public class FingerprintShrinkingQF extends QuotientFilter {
 	FingerprintShrinkingQF(int power_of_two, int bits_per_entry) {
 		super(power_of_two, bits_per_entry);
 		// TODO Auto-generated constructor stub
+		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);
 	}
 	
 	void expand() {
@@ -14,15 +15,13 @@ public class FingerprintShrinkingQF extends QuotientFilter {
 		
 		while (it.next()) {
 			int bucket = it.bucket_index;
-			//
 			long fingerprint = it.fingerprint;
 			long pivot_bit = (1 & fingerprint);
 			long bucket_mask = pivot_bit << power_of_two_size;
 			long updated_bucket = bucket | bucket_mask;
 			long updated_fingerprint = fingerprint >> 1;
 			
-			/*
-			System.out.println(bucket); 
+			/*System.out.println(bucket); 
 			System.out.print("bucket1      : ");
 			print_int_in_binary( bucket, power_of_two_size);
 			System.out.print("fingerprint1 : ");
@@ -44,6 +43,8 @@ public class FingerprintShrinkingQF extends QuotientFilter {
 		num_extension_slots += 2;
 		bitPerEntry--;
 		fingerprintLength--;
+		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);
+
 	}
 	
 }
