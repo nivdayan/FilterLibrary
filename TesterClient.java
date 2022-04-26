@@ -314,6 +314,7 @@ public class TesterClient {
 				System.exit(1);
 			}
 		}
+		
 	}
 	
 	static public void test7() {
@@ -417,6 +418,36 @@ public class TesterClient {
 		
 	}
 	
+	static public void test10() {
+		int bits_per_entry = 10;
+		int num_entries_power = 4;
+		ExpandableQF qf = new ExpandableQF(num_entries_power, bits_per_entry);
+		
+		// test we can parse all the different unary codes up to 
+		for (int i = 0; i < 63; i++) {
+			long num = i;
+			long unary = (long)Math.pow(2, num) - 1;
+			long num_verified = qf.parse_unary(unary);
+			//System.out.println(num + "  " + unary + "  " + num_verified);
+			if (num != num_verified) {
+				System.exit(1);
+			}
+		}	
+		
+		int i = 1;
+		//while (i < Math.pow(2, num_entries_power) - 1) {
+		while (i < 2) {
+			qf.insert(i, false);
+			i++;
+		}
+		
+		qf.expand();
+		
+		System.out.println();
+		
+		qf.expand();
+	}
+	
 	static public  void main(String[] args) {
 		test1(); // example from wikipedia
 		test2(); // example from quotient filter paper
@@ -427,6 +458,7 @@ public class TesterClient {
 		test7(); // iteration test 2
 		test8(); // expansion test for FingerprintShrinkingQF
 		test9(); // expansion test for MultiplyingQF
+		test10(); // expansion test for MultiplyingQF
 		
 		//experiment_false_positives();
 		//experiment_insertion_speed();
