@@ -250,6 +250,18 @@ public class TesterClient {
 		}
 		return result;
 	}
+	
+	static public BitSet set_slot_in_test(BitSet result, int bits_per_entry, int slot, boolean is_occupied, boolean is_continuation, boolean is_shifted, String fingerprint) {
+		long l_fingerprint = 0;
+		for (int i = 0; i < fingerprint.length(); i++) {
+			char c = fingerprint.charAt(i);
+			if (c == '1') {
+				l_fingerprint |= (1 << i);
+			}
+		}
+		
+		return set_slot_in_test(result, bits_per_entry, slot, is_occupied, is_continuation, is_shifted, l_fingerprint);
+	}
 
 	// This is a test for deleting items. We insert many keys into one slot to create an overflow. 
 	// we then remove them and check that the other keys are back to their canonical slots. 
@@ -420,32 +432,49 @@ public class TesterClient {
 	
 	static public void test10() {
 		int bits_per_entry = 10;
-		int num_entries_power = 4;
+		int num_entries_power = 3;
+		
+		int fingerprint_size = bits_per_entry - 3;  
 		ExpandableQF qf = new ExpandableQF(num_entries_power, bits_per_entry);
 		
 		// test we can parse all the different unary codes up to 
-		for (int i = 0; i < 63; i++) {
+		long fingerprint_i = fingerprint_size;
+		long reversed_unary = 0;
+		for (int i = 0; i < fingerprint_size; i++) {
 			long num = i;
-			long unary = (long)Math.pow(2, num) - 1;
-			long num_verified = qf.parse_unary(unary);
-			//System.out.println(num + "  " + unary + "  " + num_verified);
+			reversed_unary |= (long) Math.pow(2, fingerprint_i--);
+			long num_verified = qf.parse_unary(reversed_unary);
+			//System.out.println(num + " " + reversed_unary +  "  " + num_verified);
 			if (num != num_verified) {
+				System.out.println("unary matching not working");
 				System.exit(1);
 			}
 		}	
-		
+
 		int i = 1;
-		//while (i < Math.pow(2, num_entries_power) - 1) {
-		while (i < 2) {
+		while (i < Math.pow(2, num_entries_power) - 1) {
 			qf.insert(i, false);
 			i++;
 		}
 		
+		qf.pretty_print();
 		qf.expand();
+		qf.pretty_print();
+
 		
-		System.out.println();
-		
-		qf.expand();
+		int num_entries = 1 << ++num_entries_power;
+		BitSet result = new BitSet(num_entries * bits_per_entry);		
+		result = set_slot_in_test(result, bits_per_entry, 0, false, false, false, "0000000");
+		result = set_slot_in_test(result, bits_per_entry, 1, true, false, false, "1100101");
+		result = set_slot_in_test(result, bits_per_entry, 2, true, false, false, "1010101");
+		result = set_slot_in_test(result, bits_per_entry, 3, false, false, false, "0000000");
+		result = set_slot_in_test(result, bits_per_entry, 4, false, false, false, "0000000");
+		result = set_slot_in_test(result, bits_per_entry, 5, true, false, false, "0010001");
+		result = set_slot_in_test(result, bits_per_entry, 6, false, false, false, "0000000");
+		result = set_slot_in_test(result, bits_per_entry, 7, true, false, false, "0101101");
+		result = set_slot_in_test(result, bits_per_entry, 8, true, false, false, "1001001");
+		result = set_slot_in_test(result, bits_per_entry, 9, false, true, true, "0111001");
+		check_equality(qf, result, true);
 	}
 	
 	static public  void main(String[] args) {
