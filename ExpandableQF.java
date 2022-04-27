@@ -3,22 +3,35 @@ public class ExpandableQF extends QuotientFilter {
 
 	ExpandableQF(int power_of_two, int bits_per_entry) {
 		super(power_of_two, bits_per_entry);
-
+		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);
+	}
+	
+	protected boolean compare(int index, long fingerprint) {
+		int generation = parse_unary(index);
+		int first_fp_bit = index * bitPerEntry + 3;
+		int last_fp_bit = index * bitPerEntry + 3 + fingerprintLength - (generation + 1);
+		for (int i = first_fp_bit, j = 0; i < last_fp_bit; i++, j++) {
+			if (filter.get(i) != get_fingerprint_bit(j, fingerprint)) {
+				return false;
+			}
+		}
+		return true; 
 	}
 	
 	// There is probably a more efficient implementation of this using rank&select
 	// however, most fingerprints will have short unary codes 
 	// the expected parsing time is therefore constant amortized time. 
-	int parse_unary(long fingerprint) {
-		long mask = 1 << fingerprintLength;
-		for (int i = 0; i <= fingerprintLength; i++) {
-			boolean one = (fingerprint & mask) > 0;
-			if (!one) {
-				return i - 1;
+	int parse_unary(int slot_index) {
+		int starting_bit = bitPerEntry * (slot_index + 1) - 1;
+		int ending_bit = bitPerEntry * slot_index;
+		int counter = 0;
+		for (int i = starting_bit; i >= ending_bit; i--) {
+			if (!filter.get(i)) {
+				break;
 			}
-			mask = mask >> 1;
+			counter++;
 		}
-		return -1;
+		return counter;
 	}
 	
 	long gen_fingerprint(int large_hash) {

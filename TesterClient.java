@@ -432,31 +432,15 @@ public class TesterClient {
 	
 	static public void test10() {
 		int bits_per_entry = 10;
-		int num_entries_power = 3;
-		
-		int fingerprint_size = bits_per_entry - 3;  
+		int num_entries_power = 3;		
 		ExpandableQF qf = new ExpandableQF(num_entries_power, bits_per_entry);
-		
-		// test we can parse all the different unary codes up to 
-		long fingerprint_i = fingerprint_size;
-		long reversed_unary = 0;
-		for (int i = 0; i < fingerprint_size; i++) {
-			long num = i;
-			reversed_unary |= (long) Math.pow(2, fingerprint_i--);
-			long num_verified = qf.parse_unary(reversed_unary);
-			//System.out.println(num + " " + reversed_unary +  "  " + num_verified);
-			if (num != num_verified) {
-				System.out.println("unary matching not working");
-				System.exit(1);
-			}
-		}	
 
 		int i = 1;
 		while (i < Math.pow(2, num_entries_power) - 1) {
 			qf.insert(i, false);
 			i++;
 		}
-		
+	
 		qf.pretty_print();
 		qf.expand();
 		qf.pretty_print();
@@ -475,7 +459,50 @@ public class TesterClient {
 		result = set_slot_in_test(result, bits_per_entry, 8, true, false, false, "1001001");
 		result = set_slot_in_test(result, bits_per_entry, 9, false, true, true, "0111001");
 		check_equality(qf, result, true);
+		
+		i = 1;
+		while (i < Math.pow(2, num_entries_power - 1) - 1) {
+			boolean found = qf.search(i);
+			//qf.compare(0, 0);
+			if (!found) {
+				System.out.println("not found entry " + i);
+				System.exit(1);
+			}
+			i++;
+		}
 	}
+	
+	static public void test11() {
+		int bits_per_entry = 10;
+		int num_entries_power = 3;		
+		ExpandableQF qf = new ExpandableQF(num_entries_power, bits_per_entry);
+		
+		for (int i = 0; i < 100; i++) {
+			qf.insert(i, false);
+		}
+		
+		for (int i = 0; i < 100; i++) {
+			boolean found = qf.search(i);
+			if (!found) {
+				System.out.println("not found entry " + i);
+				System.exit(1);
+			}
+		}
+		
+		int false_positives = 0;
+		for (int i = 101; i < 10000; i++) {
+			boolean found = qf.search(i);
+			if (found) {
+				false_positives++;
+			}
+		}
+		if (false_positives == 0) {
+			System.out.println("should have had a few false positives");
+			System.exit(1);
+		}
+		
+	}
+
 	
 	static public  void main(String[] args) {
 		test1(); // example from wikipedia
@@ -487,7 +514,8 @@ public class TesterClient {
 		test7(); // iteration test 2
 		test8(); // expansion test for FingerprintShrinkingQF
 		test9(); // expansion test for MultiplyingQF
-		test10(); // expansion test for MultiplyingQF
+		//test10(); // expansion test for MultiplyingQF
+		test11();
 		
 		//experiment_false_positives();
 		//experiment_insertion_speed();

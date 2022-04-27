@@ -77,16 +77,7 @@ public class QuotientFilter {
 		System.out.println();
 	}
 	
-	boolean compare(int index, BitSet fingerprint) {
-		for (int i = index * bitPerEntry + 3, j = 0; i < index * bitPerEntry + 3 + fingerprintLength; i++, j++) {
-			if (filter.get(i) != fingerprint.get(j)) {
-				return false;
-			}
-		}
-		return true; 
-	}
-	
-	boolean compare(int index, long fingerprint) {
+	protected boolean compare(int index, long fingerprint) {
 		for (int i = index * bitPerEntry + 3, j = 0; i < index * bitPerEntry + 3 + fingerprintLength; i++, j++) {
 			if (filter.get(i) != get_fingerprint_bit(j, fingerprint)) {
 				return false;
