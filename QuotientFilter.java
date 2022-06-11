@@ -1,3 +1,5 @@
+package testing_project;
+
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashSet;
@@ -14,6 +16,8 @@ public class QuotientFilter {
 	BitSet filter;
 	double expansion_threshold;
 	int max_entries_before_expansion;
+	boolean expand_autonomously;
+	boolean is_full;
 	
 	QuotientFilter(int power_of_two, int bits_per_entry) {
 		// we actually allocate a quotient filter twice as needed for now to easily absorb overflows
@@ -25,8 +29,11 @@ public class QuotientFilter {
 		int init_size = 1 << (power_of_two + 1);
 		filter = new BitSet(bits_per_entry * init_size);
 		num_extension_slots = power_of_two * 2;
-		max_entries_before_expansion = init_size * 2;
+		
 		expansion_threshold = 0.8;
+		max_entries_before_expansion = (int) ((init_size / 2.0) * expansion_threshold);
+		expand_autonomously = false;
+		is_full = false;
 	}
 	
 	QuotientFilter(int power_of_two, int bits_per_entry, BitSet bitmap) {
@@ -38,7 +45,25 @@ public class QuotientFilter {
 	}
 	
 	void expand() {
-		
+		is_full = true;
+	}
+	
+	int get_num_entries() {
+		int slots = get_physcial_num_slots();
+		int num_entries = 0;
+		for (int i = 0; i < slots; i++) {
+			if (is_occupied(i) || is_continuation(i) || is_shifted(i)) {
+				num_entries++;
+			}
+		}
+		return num_entries;
+	}
+	
+	double get_utilization() {
+		int num_logical_slots = 1 << power_of_two_size;
+		int num_entries = get_num_entries();
+		double util = num_entries / (double) num_logical_slots;
+		return util;
 	}
 	
 	public int get_physcial_num_slots() {
@@ -557,6 +582,9 @@ public class QuotientFilter {
 	}
 	
 	boolean insert(int input, boolean insert_only_if_no_match) {
+		if (is_full) {
+			return false;
+		}
 		int large_hash = HashFunctions.normal_hash(input);
 		int slot_index = get_slot_index(large_hash);
 		long fingerprint = gen_fingerprint(large_hash);
@@ -569,7 +597,7 @@ public class QuotientFilter {
 			System.exit(1);
 		}
 		
-		if (num_existing_entries >= max_entries_before_expansion) {
+		if (expand_autonomously && num_existing_entries >= max_entries_before_expansion) {
 			expand();
 		}
 		

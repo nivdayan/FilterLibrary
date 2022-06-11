@@ -1,3 +1,5 @@
+package testing_project;
+
 import java.util.BitSet;
 
 public class FingerprintShrinkingQF extends QuotientFilter {
@@ -9,6 +11,12 @@ public class FingerprintShrinkingQF extends QuotientFilter {
 	}
 	
 	void expand() {
+		
+		if (fingerprintLength == 0) {
+			is_full = true;
+			return;
+		}
+		
 		QuotientFilter new_qf = new QuotientFilter(power_of_two_size + 1, bitPerEntry - 1);
 		num_extension_slots = (power_of_two_size + 1) * 2;
 		Iterator it = new Iterator(this);

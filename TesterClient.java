@@ -1,7 +1,35 @@
+package testing_project;
+
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeMap;
+
+class baseline {
+	Map<String, ArrayList<Double>> metrics;
+	baseline() {
+		metrics = new TreeMap<String, ArrayList<Double>>();
+		metrics.put("num_entries", new ArrayList<Double>());
+		metrics.put("insertion_time", new ArrayList<Double>());
+		metrics.put("query_time", new ArrayList<Double>());
+		metrics.put("FPR", new ArrayList<Double>());
+	}
+	
+	void print(String x_axis_name, String y_axis_name, int commas) {
+		ArrayList<Double> x_axis = metrics.get(x_axis_name);
+		ArrayList<Double> y_axis = metrics.get(y_axis_name);
+		for (int i = 0; i < x_axis.size(); i++) {
+			System.out.print(x_axis.get(i));	
+			for (int c = 0; c < commas; c++) {
+				System.out.print(",");
+			}
+			System.out.println(y_axis.get(i));	
+		}
+	}
+}
 
 public class TesterClient {
 
@@ -24,7 +52,7 @@ public class TesterClient {
 		int num_entries_power = 3;
 		int num_entries = (int)Math.pow(2, num_entries_power);
 		QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
-
+		
 		long fingerprint0 = 0;
 		long fingerprint1 = (1 << bits_per_entry) - 1;
 		//System.out.println(fingerprint1);
@@ -441,9 +469,9 @@ public class TesterClient {
 			i++;
 		}
 	
-		qf.pretty_print();
+		//qf.pretty_print();
 		qf.expand();
-		qf.pretty_print();
+		//qf.pretty_print();
 
 		
 		int num_entries = 1 << ++num_entries_power;
@@ -502,10 +530,129 @@ public class TesterClient {
 		}
 		
 	}
+	
+	
+	
+	
+	static public void scalability_experiment(QuotientFilter qf, int power, baseline results) {
+		
+		int num_qeuries = 5000;
+		int query_index = Integer.MAX_VALUE;
+		int num_false_positives = 0;
+		
+		//int num_entries_to_insert = (int) (Math.pow(2, power) * (qf.expansion_threshold )) - qf.num_existing_entries;
+		final int initial_num_entries = qf.get_num_entries();
+		int insertion_index = initial_num_entries;
+		long start_insertions = System.nanoTime();
+		
+		//System.out.println("inserting: " + num_entries_to_insert + " to capacity " + Math.pow(2, qf.power_of_two_size));
+
+		
+		do {
+			qf.insert(insertion_index++, false);
+		} while (qf.num_existing_entries < qf.max_entries_before_expansion - 1);
+		
+		long end_insertions = System.nanoTime();
+		long start_queries = System.nanoTime();
+		
+		for (int i = 0; i < num_qeuries; i++) {
+			boolean found = qf.search(query_index--);
+			if (found) {
+				num_false_positives++;
+			}
+		}
+		
+		long end_queries = System.nanoTime();
+		double avg_insertions = (end_insertions - start_insertions) / (double)(insertion_index - initial_num_entries);
+		double avg_queries = (end_queries - start_queries) / (double)num_qeuries;
+		double FPR = num_false_positives / (double)num_qeuries;
+		//int num_slots = (1 << qf.power_of_two_size) - 1;
+		double utilization = qf.get_utilization();
+		
+		double num_entries = qf.get_num_entries();
+		double avg_insertion_time = qf.get_num_entries();
+		double avg_query_time = qf.get_num_entries();
+		
+		results.metrics.get("num_entries").add(num_entries);
+		results.metrics.get("insertion_time").add(avg_insertions);
+		results.metrics.get("query_time").add(avg_queries);
+		results.metrics.get("FPR").add(FPR);
+		
+	}
+	
+
+		
+	static public void scalability_experiment() {
+		
+		int num_cycles = 18;
+		int bits_per_entry = 10;
+		int num_entries_power = 6;		
+		
+		baseline orig_res = new baseline();
+		for (int i = num_entries_power; i < num_cycles; i++ ) {
+			QuotientFilter orig = new QuotientFilter(i, bits_per_entry);
+			orig.expand_autonomously = true; 
+			scalability_experiment(orig, i, orig_res);
+			//orig.expand();
+			//System.out.println("# entries: " + qf.num_existing_entries + " new capacity: " + Math.pow(2, qf.power_of_two_size));
+		}
+		System.out.println();
+		
+		ExpandableQF qf = new ExpandableQF(num_entries_power, bits_per_entry);
+		qf.expand_autonomously = true; 
+		baseline qf_res = new baseline();
+		for (int i = num_entries_power; i < num_cycles; i++ ) {
+			scalability_experiment(qf, i, qf_res);
+			//qf.expand();
+			//System.out.println("# entries: " + qf.num_existing_entries + " new capacity: " + Math.pow(2, qf.power_of_two_size));
+		}
+		System.out.println();
+		
+		num_entries_power = 6;
+		FingerprintShrinkingQF qf2 = new FingerprintShrinkingQF(num_entries_power, bits_per_entry);
+		qf2.expand_autonomously = true;
+		baseline qf2_res = new baseline();
+		for (int i = num_entries_power; i < num_cycles && qf2.fingerprintLength > 0; i++ ) {
+			scalability_experiment(qf2, i, qf2_res);
+			//qf2.expand();
+		}
+		System.out.println();
+		
+		num_entries_power = 6;
+		MultiplyingQF qf3 = new MultiplyingQF(num_entries_power, bits_per_entry);
+		qf3.expand_autonomously = true;
+		baseline qf3_res = new baseline();
+		for (int i = num_entries_power; i < num_cycles; i++ ) {
+			scalability_experiment(qf3, i, qf3_res);
+			//System.out.println("# entries: " + qf3.num_existing_entries + " new capacity: " + Math.pow(2, qf3.power_of_two_size + 1));
+			//qf3.expand();
+		}
+		//scalability_experiment(qf3);
+		
+		orig_res.print("num_entries", "insertion_time", 1);
+		qf_res.print("num_entries", "insertion_time", 2);
+		qf2_res.print("num_entries", "insertion_time", 3);
+		qf3_res.print("num_entries", "insertion_time", 4);
+		
+		System.out.println();
+		
+		orig_res.print("num_entries", "query_time", 1);
+		qf_res.print("num_entries", "query_time", 2);
+		qf2_res.print("num_entries", "query_time", 3);
+		qf3_res.print("num_entries", "query_time", 4);
+		
+		System.out.println();
+		
+		orig_res.print("num_entries", "FPR", 1);
+		qf_res.print("num_entries", "FPR", 2);
+		qf2_res.print("num_entries", "FPR", 3);
+		qf3_res.print("num_entries", "FPR", 4);
+		
+	}
 
 	
 	static public  void main(String[] args) {
-		test1(); // example from wikipedia
+		/*test1(); // example from wikipedia
 		test2(); // example from quotient filter paper
 		test3(); // ensuring no false negatives
 		test4(); // overflow test
@@ -514,8 +661,10 @@ public class TesterClient {
 		test7(); // iteration test 2
 		test8(); // expansion test for FingerprintShrinkingQF
 		test9(); // expansion test for MultiplyingQF
-		//test10(); // expansion test for MultiplyingQF
-		test11();
+		test10(); // testing ExpandableFilter
+		test11(); // testing ExpandableFilter
+		*/
+		scalability_experiment();
 		
 		//experiment_false_positives();
 		//experiment_insertion_speed();

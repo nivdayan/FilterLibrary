@@ -1,4 +1,6 @@
 
+package testing_project;
+
 public class ExpandableQF extends QuotientFilter {
 
 	ExpandableQF(int power_of_two, int bits_per_entry) {
@@ -67,22 +69,10 @@ public class ExpandableQF extends QuotientFilter {
 			//print_int_in_binary( (int)chopped_fingerprint, fingerprintLength);
 			//print_int_in_binary( (int)updated_fingerprint, fingerprintLength);
 
-			/*System.out.println(bucket); 
-			System.out.print("bucket1      : ");
-			print_int_in_binary( bucket, power_of_two_size);
-			System.out.print("fingerprint1 : ");
-			print_int_in_binary((int) fingerprint, fingerprintLength);
-			System.out.print("pivot        : ");
-			print_int_in_binary((int) pivot_bit, 1);
-			System.out.print("bucket2      : ");
-			print_int_in_binary((int) updated_bucket, power_of_two_size + 1);
-			System.out.print("fingerprint2 : ");
-			print_int_in_binary((int) updated_fingerprint, fingerprintLength - 1);
-			System.out.println();
-			System.out.println();*/
-			
 			new_qf.insert(updated_fingerprint, (int)updated_bucket, false);
 		}
+		
+		
 		
 		filter = new_qf.filter;
 		power_of_two_size++;
