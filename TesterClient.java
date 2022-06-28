@@ -500,12 +500,15 @@ public class TesterClient {
 		}
 	}
 	
+	// this test ensures we issue enough insertions until the fingerprints of at least some of the first entries inserted 
+	// run out. This means that for these entries, we are going to try the double insertion technique to avoid false negatives. 
 	static public void test11() {
-		int bits_per_entry = 10;
+		int bits_per_entry = 7;
 		int num_entries_power = 3;		
 		ExpandableQF qf = new ExpandableQF(num_entries_power, bits_per_entry);
-		
-		for (int i = 0; i < 100; i++) {
+		qf.expand_autonomously = true;
+		int max_key = (int)Math.pow(2, num_entries_power + qf.fingerprintLength + 1);
+		for (int i = 0; i < max_key; i++) {
 			qf.insert(i, false);
 		}
 		
@@ -518,7 +521,7 @@ public class TesterClient {
 		}
 		
 		int false_positives = 0;
-		for (int i = 101; i < 10000; i++) {
+		for (int i = max_key; i < max_key + 10000; i++) {
 			boolean found = qf.search(i);
 			if (found) {
 				false_positives++;
@@ -528,10 +531,8 @@ public class TesterClient {
 			System.out.println("should have had a few false positives");
 			System.exit(1);
 		}
-		
+		//qf.pretty_print();
 	}
-	
-	
 	
 	
 	static public void scalability_experiment(QuotientFilter qf, int power, baseline results) {
@@ -664,6 +665,9 @@ public class TesterClient {
 		test10(); // testing ExpandableFilter
 		test11(); // testing ExpandableFilter
 		*/
+		
+		//test11();
+		
 		scalability_experiment();
 		
 		//experiment_false_positives();

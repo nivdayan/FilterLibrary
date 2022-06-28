@@ -3,9 +3,12 @@ package testing_project;
 
 public class ExpandableQF extends QuotientFilter {
 
+	final long empty_fingerprint;
+	
 	ExpandableQF(int power_of_two, int bits_per_entry) {
 		super(power_of_two, bits_per_entry);
 		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);
+		empty_fingerprint = (1 << bits_per_entry - 3) - 2 ;
 	}
 	
 	protected boolean compare(int index, long fingerprint) {
@@ -53,26 +56,38 @@ public class ExpandableQF extends QuotientFilter {
 		QuotientFilter new_qf = new QuotientFilter(power_of_two_size + 1, bitPerEntry);
 		num_extension_slots = (power_of_two_size + 1) * 2;
 		Iterator it = new Iterator(this);
-		
+		//this.pretty_print();
 		while (it.next()) {
 			int bucket = it.bucket_index;
 			long fingerprint = it.fingerprint;
-			long pivot_bit = (1 & fingerprint);
-			long bucket_mask = pivot_bit << power_of_two_size;
-			long updated_bucket = bucket | bucket_mask;
-			long chopped_fingerprint = fingerprint >> 1;
-			
-			int unary_mask = (1 << (fingerprintLength - 1));
-			long updated_fingerprint = chopped_fingerprint | unary_mask;
-			//System.out.println(); 
-			//print_int_in_binary( (int)fingerprint, fingerprintLength);
-			//print_int_in_binary( (int)chopped_fingerprint, fingerprintLength);
-			//print_int_in_binary( (int)updated_fingerprint, fingerprintLength);
 
-			new_qf.insert(updated_fingerprint, (int)updated_bucket, false);
+			if (it.fingerprint != empty_fingerprint) {
+				long pivot_bit = (1 & fingerprint);	// getting the bit of the fingerprint we'll be sacrificing 
+				long bucket_mask = pivot_bit << power_of_two_size; // setting this bit to the proper offset of the slot address field
+				long updated_bucket = bucket | bucket_mask;	// addding the pivot bit to the slot address field
+				long chopped_fingerprint = fingerprint >> 1; // getting rid of this pivot bit from the fingerprint 
+				
+				int unary_mask = (1 << (fingerprintLength - 1));
+				long updated_fingerprint = chopped_fingerprint | unary_mask;
+				//System.out.println(); 
+				//print_int_in_binary( (int)fingerprint, fingerprintLength);
+				//print_int_in_binary( (int)updated_fingerprint, fingerprintLength);
+
+				new_qf.insert(updated_fingerprint, (int)updated_bucket, false);
+			}
+			else {
+				//System.out.println(); 
+				//print_int_in_binary( (int)fingerprint, fingerprintLength);
+				int bucket1 = it.bucket_index;
+				long bucket_mask = 1 << power_of_two_size; 		// setting this bit to the proper offset of the slot address field
+				long bucket2 = bucket1 | bucket_mask;	// adding the pivot bit to the slot address field
+				new_qf.insert(empty_fingerprint, (int)bucket1, false);
+				new_qf.insert(empty_fingerprint, (int)bucket2, false);
+			}
+			
+
+
 		}
-		
-		
 		
 		filter = new_qf.filter;
 		power_of_two_size++;
