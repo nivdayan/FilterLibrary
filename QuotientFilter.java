@@ -48,6 +48,14 @@ public class QuotientFilter {
 		is_full = true;
 	}
 	
+	double measure_num_bits_per_entry() {
+		int num_entries = get_num_entries();
+		int init_size = 1 << (power_of_two_size + 1);
+		int num_bits = bitPerEntry * init_size + num_extension_slots * bitPerEntry;
+		double bits_per_entry = num_bits / num_entries;
+		return bits_per_entry;
+	}
+	
 	int get_num_entries() {
 		int slots = get_physcial_num_slots();
 		int num_entries = 0;

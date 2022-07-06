@@ -1,11 +1,11 @@
 
 package testing_project;
 
-public class ExpandableQF extends QuotientFilter {
+public class InfiniFilter extends QuotientFilter {
 
 	final long empty_fingerprint;
 	
-	ExpandableQF(int power_of_two, int bits_per_entry) {
+	InfiniFilter(int power_of_two, int bits_per_entry) {
 		super(power_of_two, bits_per_entry);
 		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);
 		empty_fingerprint = (1 << bits_per_entry - 3) - 2 ;

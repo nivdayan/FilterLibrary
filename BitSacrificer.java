@@ -2,9 +2,9 @@ package testing_project;
 
 import java.util.BitSet;
 
-public class FingerprintShrinkingQF extends QuotientFilter {
+public class BitSacrificer extends QuotientFilter {
 
-	FingerprintShrinkingQF(int power_of_two, int bits_per_entry) {
+	BitSacrificer(int power_of_two, int bits_per_entry) {
 		super(power_of_two, bits_per_entry);
 		// TODO Auto-generated constructor stub
 		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);
