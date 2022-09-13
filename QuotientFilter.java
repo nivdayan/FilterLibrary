@@ -34,6 +34,8 @@ public class QuotientFilter {
 		max_entries_before_expansion = (int) ((init_size / 2.0) * expansion_threshold);
 		expand_autonomously = false;
 		is_full = false;
+		
+		//measure_num_bits_per_entry();
 	}
 	
 	QuotientFilter(int power_of_two, int bits_per_entry, BitSet bitmap) {
@@ -49,14 +51,42 @@ public class QuotientFilter {
 	}
 	
 	double measure_num_bits_per_entry() {
-		int num_entries = get_num_entries();
-		int init_size = 1 << (power_of_two_size + 1);
+		/*double num_entries = get_num_entries();
+		int init_size = 1 << power_of_two_size ;
 		int num_bits = bitPerEntry * init_size + num_extension_slots * bitPerEntry;
-		double bits_per_entry = num_bits / num_entries;
-		return bits_per_entry;
+		double bits_per_entry = num_bits / num_entries ;*/
+		return measure_num_bits_per_entry(this, new ArrayList<QuotientFilter>());
 	}
 	
-	int get_num_entries() {
+	protected static double measure_num_bits_per_entry(QuotientFilter current, ArrayList<QuotientFilter> other_filters) {
+		System.out.println("--------------------------");
+		current.print_filter_summary();
+		System.out.println();
+		double num_entries = current.get_num_entries(false);
+		for (QuotientFilter q : other_filters) {
+			q.print_filter_summary();
+			System.out.println();
+			int q_num_entries = q.get_num_entries(false);
+			num_entries += q_num_entries;
+		}
+		int init_size = 1 << current.power_of_two_size;
+		int num_bits = current.bitPerEntry * init_size + current.num_extension_slots * current.bitPerEntry;
+		for (QuotientFilter q : other_filters) {
+			init_size = 1 << q.power_of_two_size;
+			num_bits += q.bitPerEntry * init_size + q.num_extension_slots * q.bitPerEntry;
+		}
+		
+		System.out.println("total entries: \t\t" + num_entries);
+		System.out.println("total bits: \t\t" + num_bits);
+		double bits_per_entry = num_bits / num_entries;
+
+		System.out.println("total bits/entry: \t" + bits_per_entry);
+		System.out.println();
+
+ 		return bits_per_entry;
+	}
+	
+	int get_num_entries(boolean include_all_internal_filters) {
 		int slots = get_physcial_num_slots();
 		int num_entries = 0;
 		for (int i = 0; i < slots; i++) {
@@ -69,7 +99,7 @@ public class QuotientFilter {
 	
 	double get_utilization() {
 		int num_logical_slots = 1 << power_of_two_size;
-		int num_entries = get_num_entries();
+		int num_entries = get_num_entries(false);
 		double util = num_entries / (double) num_logical_slots;
 		return util;
 	}
@@ -147,13 +177,16 @@ public class QuotientFilter {
 		System.out.println();
 	}
 	
-	public String get_pretty_str() {
+	public String get_pretty_str(boolean vertical) {
 		StringBuffer sbr = new StringBuffer();
 		
 		for (int i = 0; i < filter.size(); i++) {
 			int remainder = i % bitPerEntry;
 			if (remainder == 0) {
 				sbr.append(" ");
+				if (vertical) {
+					sbr.append("\n" + (i/bitPerEntry) + " ");
+				}
 			}
 			if (remainder == 3) {
 				sbr.append(" ");
@@ -165,7 +198,19 @@ public class QuotientFilter {
 	}
 	
 	public void pretty_print() {	
-		System.out.print(get_pretty_str());
+		System.out.print(get_pretty_str(true));
+	}
+	
+	public void print_filter_summary() {	
+		int num_entries = get_num_entries(false);
+		
+		int slots = (1 << power_of_two_size) + num_extension_slots;
+		int num_bits = slots * bitPerEntry;
+		
+		System.out.println("slots:\t" + slots);
+		System.out.println("entries:\t" + num_entries);
+		System.out.println("bits\t:" + num_bits);
+		System.out.println("bits/entry\t:" + num_bits / (double)num_entries);
 	}
 	
 	boolean is_occupied(int index) {
@@ -597,6 +642,12 @@ public class QuotientFilter {
 		int slot_index = get_slot_index(large_hash);
 		long fingerprint = gen_fingerprint(large_hash);
 		
+		/*if (input == 1) {
+			print_int_in_binary( large_hash, power_of_two_size + fingerprintLength);
+			print_int_in_binary( slot_index, power_of_two_size);
+			print_int_in_binary( (int)fingerprint, fingerprintLength);
+		}*/
+		
 		boolean success = insert(fingerprint, slot_index, false);
 		//if (!success) {
 		if (!success) {
@@ -634,6 +685,7 @@ public class QuotientFilter {
 		int large_hash = HashFunctions.normal_hash(input);
 		int slot_index = get_slot_index(large_hash);
 		long fingerprint = gen_fingerprint(large_hash);
+		
 		return search(fingerprint, slot_index);
 	}
 	

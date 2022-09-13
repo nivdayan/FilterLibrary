@@ -29,10 +29,13 @@ public class MultiplyingQF extends QuotientFilter {
 	
 	ArrayList<QuotientFilter> older_filters;
 
-	int get_num_entries() {
-		int num_entries = super.get_num_entries();
+	int get_num_entries(boolean include_all_internal_filters) {
+		int num_entries = super.get_num_entries(false);
+		if (!include_all_internal_filters) {
+			return num_entries;
+		}
 		for (QuotientFilter q : older_filters) {
-			num_entries += q.get_num_entries();
+			num_entries += q.get_num_entries(false);
 		}
 		return num_entries; 
 	}
@@ -42,7 +45,7 @@ public class MultiplyingQF extends QuotientFilter {
 		for (QuotientFilter q : older_filters) {
 			num_slots += 1 << q.power_of_two_size;
 		}
-		int num_entries = get_num_entries();
+		int num_entries = get_num_entries(true);
 		double utilization = num_entries / (double) num_slots;
 		return utilization;
 	}
@@ -69,20 +72,7 @@ public class MultiplyingQF extends QuotientFilter {
 	}
 	
 	double measure_num_bits_per_entry() {
-		int num_entries = get_num_entries();
-		for (QuotientFilter q : older_filters) {
-			int q_num_entries = q.get_num_entries();
-			num_entries += q_num_entries;
-		}
-		int init_size = 1 << power_of_two_size;
-		int num_bits = bitPerEntry * init_size + num_extension_slots * bitPerEntry;
-		for (QuotientFilter q : older_filters) {
-			init_size += 1 << (q.power_of_two_size + 1);
-			num_bits += q.bitPerEntry * init_size + q.num_extension_slots * q.bitPerEntry;
-		}
-		
-		double bits_per_entry = num_bits / num_entries;
-		return bits_per_entry;
+		return measure_num_bits_per_entry(this, older_filters);
 	}
 	
 	void expand() {

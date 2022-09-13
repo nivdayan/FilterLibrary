@@ -10,32 +10,32 @@ import java.util.TreeMap;
 
 import testing_project.MultiplyingQF.FalsePositiveRateExpansion;
 
-class baseline {
-	Map<String, ArrayList<Double>> metrics;
-	baseline() {
-		metrics = new TreeMap<String, ArrayList<Double>>();
-		metrics.put("num_entries", new ArrayList<Double>());
-		metrics.put("insertion_time", new ArrayList<Double>());
-		metrics.put("query_time", new ArrayList<Double>());
-		metrics.put("FPR", new ArrayList<Double>());
-		metrics.put("memory", new ArrayList<Double>());
-	}
-	
-	void print(String x_axis_name, String y_axis_name, int commas) {
-		ArrayList<Double> x_axis = metrics.get(x_axis_name);
-		ArrayList<Double> y_axis = metrics.get(y_axis_name);
-		for (int i = 0; i < x_axis.size(); i++) {
-			System.out.print(x_axis.get(i));	
-			for (int c = 0; c < commas; c++) {
-				System.out.print(",");
-			}
-			System.out.println(y_axis.get(i));	
-		}
-	}
-}
-
 public class TesterClient {
 
+	private static class baseline {
+		Map<String, ArrayList<Double>> metrics;
+		public baseline() {
+			metrics = new TreeMap<String, ArrayList<Double>>();
+			metrics.put("num_entries", new ArrayList<Double>());
+			metrics.put("insertion_time", new ArrayList<Double>());
+			metrics.put("query_time", new ArrayList<Double>());
+			metrics.put("FPR", new ArrayList<Double>());
+			metrics.put("memory", new ArrayList<Double>());
+		}
+		
+		void print(String x_axis_name, String y_axis_name, int commas) {
+			ArrayList<Double> x_axis = metrics.get(x_axis_name);
+			ArrayList<Double> y_axis = metrics.get(y_axis_name);
+			for (int i = 0; i < x_axis.size(); i++) {
+				System.out.print(x_axis.get(i));	
+				for (int c = 0; c < commas; c++) {
+					System.out.print(",");
+				}
+				System.out.println(y_axis.get(i));	
+			}
+		}
+	}
+	
 	static public boolean check_equality(QuotientFilter qf, BitSet bs, boolean check_also_fingerprints) {
 		for (int i = 0; i < bs.size(); i++) {
 			if (check_also_fingerprints || (i % qf.bitPerEntry == 0 || i % qf.bitPerEntry == 1 || i % qf.bitPerEntry == 2)) {
@@ -537,6 +537,40 @@ public class TesterClient {
 		//qf.pretty_print();
 	}
 	
+	// this test ensures we issue enough insertions until the fingerprints of at least some of the first entries inserted 
+	// run out. This means that for these entries, we are going to try the double insertion technique to avoid false negatives. 
+	static public void test12() {
+		int bits_per_entry = 7;
+		int num_entries_power = 3;		
+		ChainedInfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
+		qf.expand_autonomously = true;
+		int max_key = (int)Math.pow(2, num_entries_power + qf.fingerprintLength * 2 + 1 );
+		for (int i = 0; i < max_key; i++) {
+			qf.insert(i, false);
+		}
+		
+		for (int i = 0; i < max_key; i++) {
+			boolean found = qf.search(i);
+			if (!found) {
+				System.out.println("not found entry " + i);
+				System.exit(1);
+			}
+		}
+		
+		int false_positives = 0;
+		for (int i = max_key; i < max_key + 10000; i++) {
+			boolean found = qf.search(i);
+			if (found) {
+				false_positives++;
+			}
+		}
+		if (false_positives == 0) {
+			System.out.println("should have had a few false positives");
+			System.exit(1);
+		}
+		//qf.pretty_print();
+	}
+	
 	
 	static public void scalability_experiment(QuotientFilter qf, int power, baseline results) {
 		
@@ -545,7 +579,7 @@ public class TesterClient {
 		int num_false_positives = 0;
 		
 		//int num_entries_to_insert = (int) (Math.pow(2, power) * (qf.expansion_threshold )) - qf.num_existing_entries;
-		final int initial_num_entries = qf.get_num_entries();
+		final int initial_num_entries = qf.get_num_entries(true);
 		int insertion_index = initial_num_entries;
 		long start_insertions = System.nanoTime();
 		
@@ -575,15 +609,14 @@ public class TesterClient {
 		//int num_slots = (1 << qf.power_of_two_size) - 1;
 		double utilization = qf.get_utilization();
 		
-		double num_entries = qf.get_num_entries();
-		double avg_insertion_time = qf.get_num_entries();
-		double avg_query_time = qf.get_num_entries();
+		double num_entries = qf.get_num_entries(true);
 		
 		results.metrics.get("num_entries").add(num_entries);
 		results.metrics.get("insertion_time").add(avg_insertions);
 		results.metrics.get("query_time").add(avg_queries);
 		results.metrics.get("FPR").add(FPR);
-		double avg = qf.measure_num_bits_per_entry();
+		//double avg = qf.measure_num_bits_per_entry();
+		//qf.pretty_print();
 		results.metrics.get("memory").add(qf.measure_num_bits_per_entry());
 	}
 	
@@ -595,21 +628,21 @@ public class TesterClient {
 		int bits_per_entry = 10;
 		int num_entries_power = 6;		
 		
-		baseline orig_res = new baseline();
+		baseline original_qf_res = new baseline();
 		for (int i = num_entries_power; i < num_cycles; i++ ) {
 			QuotientFilter orig = new QuotientFilter(i, bits_per_entry);
 			orig.expand_autonomously = true; 
-			scalability_experiment(orig, i, orig_res);
+			scalability_experiment(orig, i, original_qf_res);
 			//orig.expand();
 			//System.out.println("# entries: " + qf.num_existing_entries + " new capacity: " + Math.pow(2, qf.power_of_two_size));
 		}
 		System.out.println();
 		
-		InfiniFilter qf = new InfiniFilter(num_entries_power, bits_per_entry);
+		InfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
 		qf.expand_autonomously = true; 
-		baseline qf_res = new baseline();
+		baseline chained_IF_res = new baseline();
 		for (int i = num_entries_power; i < num_cycles; i++ ) {
-			scalability_experiment(qf, i, qf_res);
+			scalability_experiment(qf, i, chained_IF_res);
 			//qf.expand();
 			//System.out.println("# entries: " + qf.num_existing_entries + " new capacity: " + Math.pow(2, qf.power_of_two_size));
 		}
@@ -618,9 +651,9 @@ public class TesterClient {
 		num_entries_power = 6;
 		BitSacrificer qf2 = new BitSacrificer(num_entries_power, bits_per_entry);
 		qf2.expand_autonomously = true;
-		baseline qf2_res = new baseline();
+		baseline bit_sacrifice_res = new baseline();
 		for (int i = num_entries_power; i < num_cycles && qf2.fingerprintLength > 0; i++ ) {
-			scalability_experiment(qf2, i, qf2_res);
+			scalability_experiment(qf2, i, bit_sacrifice_res);
 			//qf2.expand();
 		}
 		System.out.println();
@@ -628,32 +661,39 @@ public class TesterClient {
 		num_entries_power = 6;
 		MultiplyingQF qf3 = new MultiplyingQF(num_entries_power, bits_per_entry);
 		qf3.expand_autonomously = true;
-		baseline qf3_res = new baseline();
+		baseline geometric_expansion_res = new baseline();
 		for (int i = num_entries_power; i < num_cycles; i++ ) {
-			scalability_experiment(qf3, i, qf3_res);
+			scalability_experiment(qf3, i, geometric_expansion_res);
 			//System.out.println("# entries: " + qf3.num_existing_entries + " new capacity: " + Math.pow(2, qf3.power_of_two_size + 1));
 			//qf3.expand();
 		}
 		//scalability_experiment(qf3);
 		
-		orig_res.print("num_entries", "insertion_time", 1);
-		qf_res.print("num_entries", "insertion_time", 2);
-		qf2_res.print("num_entries", "insertion_time", 3);
-		qf3_res.print("num_entries", "insertion_time", 4);
+		original_qf_res.print("num_entries", "insertion_time", 1);
+		chained_IF_res.print("num_entries", "insertion_time", 2);
+		bit_sacrifice_res.print("num_entries", "insertion_time", 3);
+		geometric_expansion_res.print("num_entries", "insertion_time", 4);
 		
 		System.out.println();
 		
-		orig_res.print("num_entries", "query_time", 1);
-		qf_res.print("num_entries", "query_time", 2);
-		qf2_res.print("num_entries", "query_time", 3);
-		qf3_res.print("num_entries", "query_time", 4);
+		original_qf_res.print("num_entries", "query_time", 1);
+		chained_IF_res.print("num_entries", "query_time", 2);
+		bit_sacrifice_res.print("num_entries", "query_time", 3);
+		geometric_expansion_res.print("num_entries", "query_time", 4);
 		
 		System.out.println();
 		
-		orig_res.print("num_entries", "FPR", 1);
-		qf_res.print("num_entries", "FPR", 2);
-		qf2_res.print("num_entries", "FPR", 3);
-		qf3_res.print("num_entries", "FPR", 4);
+		original_qf_res.print("num_entries", "FPR", 1);
+		chained_IF_res.print("num_entries", "FPR", 2);
+		bit_sacrifice_res.print("num_entries", "FPR", 3);
+		geometric_expansion_res.print("num_entries", "FPR", 4);
+		
+		System.out.println();
+		
+		original_qf_res.print("num_entries", "memory", 1);
+		chained_IF_res.print("num_entries", "memory", 2);
+		bit_sacrifice_res.print("num_entries", "memory", 3);
+		geometric_expansion_res.print("num_entries", "memory", 4);
 		
 	}
 
@@ -762,13 +802,12 @@ public class TesterClient {
 		test9(); // expansion test for MultiplyingQF
 		test10(); // testing ExpandableFilter
 		test11(); // testing ExpandableFilter
+		test12(); // testing ExpandableFilter
 		*/
 		
-		//test11();
+		//geometric_expansion_experiment();
 		
-		geometric_expansion_experiment();
-		
-		//scalability_experiment();
+		scalability_experiment();
 		
 		//experiment_false_positives();
 		//experiment_insertion_speed();
