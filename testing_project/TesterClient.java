@@ -574,7 +574,7 @@ public class TesterClient {
 	
 	static public void scalability_experiment(QuotientFilter qf, int power, baseline results) {
 		
-		int num_qeuries = 100000;
+		int num_qeuries = 1000000;
 		int query_index = Integer.MAX_VALUE;
 		int num_false_positives = 0;
 		
@@ -585,7 +585,6 @@ public class TesterClient {
 		
 		//System.out.println("inserting: " + num_entries_to_insert + " to capacity " + Math.pow(2, qf.power_of_two_size));
 
-		
 		do {
 			qf.insert(insertion_index++, false);
 		} while (qf.num_existing_entries < qf.max_entries_before_expansion - 1);
@@ -624,9 +623,17 @@ public class TesterClient {
 		
 	static public void scalability_experiment() {
 		
-		int num_cycles = 18;
-		int bits_per_entry = 10;
-		int num_entries_power = 6;		
+		int num_cycles = 20;
+		int bits_per_entry = 12;
+		int num_entries_power = 10;		
+		
+		System.gc();
+
+		scalability_experiment(new QuotientFilter(num_entries_power, bits_per_entry), num_entries_power, new baseline());
+		scalability_experiment(new QuotientFilter(num_entries_power, bits_per_entry), num_entries_power, new baseline());
+
+		//orig.expand();
+		//System.out.println("# entries: " + qf.num_existing_entries + " new capacity: " + Math.pow(2, qf.power_of_two_size));
 		
 		baseline original_qf_res = new baseline();
 		for (int i = num_entries_power; i < num_cycles; i++ ) {
@@ -636,36 +643,47 @@ public class TesterClient {
 			//orig.expand();
 			//System.out.println("# entries: " + qf.num_existing_entries + " new capacity: " + Math.pow(2, qf.power_of_two_size));
 		}
-		System.out.println();
 		
-		InfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
-		qf.expand_autonomously = true; 
-		baseline chained_IF_res = new baseline();
-		for (int i = num_entries_power; i < num_cycles; i++ ) {
-			scalability_experiment(qf, i, chained_IF_res);
-			//qf.expand();
-			//System.out.println("# entries: " + qf.num_existing_entries + " new capacity: " + Math.pow(2, qf.power_of_two_size));
-		}
-		System.out.println();
 		
-		num_entries_power = 6;
-		BitSacrificer qf2 = new BitSacrificer(num_entries_power, bits_per_entry);
-		qf2.expand_autonomously = true;
+		System.gc();
+		
 		baseline bit_sacrifice_res = new baseline();
-		for (int i = num_entries_power; i < num_cycles && qf2.fingerprintLength > 0; i++ ) {
-			scalability_experiment(qf2, i, bit_sacrifice_res);
-			//qf2.expand();
+		{
+			BitSacrificer qf2 = new BitSacrificer(num_entries_power, bits_per_entry);
+			qf2.expand_autonomously = true;
+			for (int i = num_entries_power; i < num_cycles && qf2.fingerprintLength > 0; i++ ) {
+				scalability_experiment(qf2, i, bit_sacrifice_res);
+				//qf2.expand();
+			}
 		}
-		System.out.println();
 		
-		num_entries_power = 6;
-		MultiplyingQF qf3 = new MultiplyingQF(num_entries_power, bits_per_entry);
-		qf3.expand_autonomously = true;
+		
+		System.gc();
+		baseline chained_IF_res = new baseline();
+		{
+			InfiniFilter qf = new InfiniFilter(num_entries_power, bits_per_entry);
+			qf.expand_autonomously = true; 
+			for (int i = num_entries_power; i < num_cycles; i++ ) {
+				scalability_experiment(qf, i, chained_IF_res);
+				//qf.expand();
+				//System.out.println("# entries: " + qf.num_existing_entries + " new capacity: " + Math.pow(2, qf.power_of_two_size));
+			}
+			//qf.print_filter_summary();
+			//System.out.println("Niv: " + qf.older_filters.size());
+		}
+		
+
+		System.gc();
+		
 		baseline geometric_expansion_res = new baseline();
-		for (int i = num_entries_power; i < num_cycles; i++ ) {
-			scalability_experiment(qf3, i, geometric_expansion_res);
-			//System.out.println("# entries: " + qf3.num_existing_entries + " new capacity: " + Math.pow(2, qf3.power_of_two_size + 1));
-			//qf3.expand();
+		{
+			MultiplyingQF qf3 = new MultiplyingQF(num_entries_power, bits_per_entry);
+			qf3.expand_autonomously = true;
+			for (int i = num_entries_power; i < num_cycles; i++ ) {
+				scalability_experiment(qf3, i, geometric_expansion_res);
+				//System.out.println("# entries: " + qf3.num_existing_entries + " new capacity: " + Math.pow(2, qf3.power_of_two_size + 1));
+				//qf3.expand();
+			}
 		}
 		//scalability_experiment(qf3);
 		
@@ -806,8 +824,24 @@ public class TesterClient {
 		*/
 		
 		//geometric_expansion_experiment();
+		//scalability_experiment();
 		
-		scalability_experiment();
+		QuickBitVector f = new QuickBitVector();
+		long[] bits = QuickBitVector.makeBitVector(20, 1);
+		QuickBitVector.set(bits, 3);
+		for (int i = 0; i < bits.length * Long.BYTES * 8; i++) {
+			boolean bit = QuickBitVector.get(bits, i);
+			String s = bit ? "1" : "0";
+			System.out.print(s);
+		}
+		System.out.println();
+		
+		long num = QuickBitVector.getLongFromTo(bits, 1, 8);
+		
+		System.out.println(Long.toBinaryString(num));
+
+		
+	
 		
 		//experiment_false_positives();
 		//experiment_insertion_speed();

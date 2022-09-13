@@ -69,9 +69,10 @@ public class InfiniFilter extends QuotientFilter {
 	
 	void expand() {
 		QuotientFilter new_qf = new QuotientFilter(power_of_two_size + 1, bitPerEntry);
-		num_extension_slots = (power_of_two_size + 1) * 2;
 		Iterator it = new Iterator(this);
 		//this.pretty_print();
+		long start = System.nanoTime();
+
 		while (it.next()) {
 			int bucket = it.bucket_index;
 			long fingerprint = it.fingerprint;
@@ -97,11 +98,13 @@ public class InfiniFilter extends QuotientFilter {
 			}
 		}
 		
+		long end = System.nanoTime();
+		double time = (end - start) / 1000;
+		//System.out.println("time IF  " + time + "   " + new_qf.get_num_entries(false));
+		
 		filter = new_qf.filter;
 		power_of_two_size++;
 		num_extension_slots += 2;
-		//bitPerEntry--;
-		//fingerprintLength--;
 		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);
 
 	}

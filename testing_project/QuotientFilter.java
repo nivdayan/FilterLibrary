@@ -59,13 +59,13 @@ public class QuotientFilter {
 	}
 	
 	protected static double measure_num_bits_per_entry(QuotientFilter current, ArrayList<QuotientFilter> other_filters) {
-		System.out.println("--------------------------");
-		current.print_filter_summary();
-		System.out.println();
+		//System.out.println("--------------------------");
+		//current.print_filter_summary();
+		//System.out.println();
 		double num_entries = current.get_num_entries(false);
 		for (QuotientFilter q : other_filters) {
-			q.print_filter_summary();
-			System.out.println();
+			//q.print_filter_summary();
+			//System.out.println();
 			int q_num_entries = q.get_num_entries(false);
 			num_entries += q_num_entries;
 		}
@@ -76,12 +76,12 @@ public class QuotientFilter {
 			num_bits += q.bitPerEntry * init_size + q.num_extension_slots * q.bitPerEntry;
 		}
 		
-		System.out.println("total entries: \t\t" + num_entries);
-		System.out.println("total bits: \t\t" + num_bits);
+		//System.out.println("total entries: \t\t" + num_entries);
+		//System.out.println("total bits: \t\t" + num_bits);
 		double bits_per_entry = num_bits / num_entries;
 
-		System.out.println("total bits/entry: \t" + bits_per_entry);
-		System.out.println();
+		//System.out.println("total bits/entry: \t" + bits_per_entry);
+		//System.out.println();
 
  		return bits_per_entry;
 	}
@@ -272,8 +272,6 @@ public class QuotientFilter {
 		}
 		//System.out.println("current_index  " + current_index);
 	}
-	
-
 	
 	// returns the index of the entry if found, -1 otherwise
 	int find_first_fingerprint_in_run(int index, long fingerprint) {

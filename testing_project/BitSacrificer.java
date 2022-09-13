@@ -21,6 +21,9 @@ public class BitSacrificer extends QuotientFilter {
 		num_extension_slots = (power_of_two_size + 1) * 2;
 		Iterator it = new Iterator(this);
 		
+		long start = System.nanoTime();
+
+		
 		while (it.next()) {
 			int bucket = it.bucket_index;
 			long fingerprint = it.fingerprint;
@@ -45,6 +48,10 @@ public class BitSacrificer extends QuotientFilter {
 			
 			new_qf.insert(updated_fingerprint, (int)updated_bucket, false);
 		}
+		
+		long end = System.nanoTime();
+		double time = (end - start) / 1000;
+		//System.out.println("time BS  " + time + "   " + new_qf.get_num_entries(false));
 		
 		filter = new_qf.filter;
 		power_of_two_size++;
