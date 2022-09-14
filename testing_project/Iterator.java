@@ -1,5 +1,6 @@
 package testing_project;
 
+import java.util.ArrayDeque;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Stack;
@@ -15,14 +16,10 @@ public class Iterator  {
 	Iterator(QuotientFilter new_qf) {
 		qf = new_qf;
 		s = new LinkedList<Integer>();
+		//s = new ArrayDeque<Integer>();
 		index = 0;
 		bucket_index = -1;
 		fingerprint = -1;
-	}
-	
-	boolean finished() {
-		int num_slots = qf.get_logical_num_slots();
-		return index >= num_slots;
 	}
 	
 	void clear() {
@@ -33,24 +30,24 @@ public class Iterator  {
 	}
 
 	boolean next() {
+		
+		if (index == qf.get_logical_num_slots_plus_extensions()) {
+			return false;
+		}	
+		
 		boolean occupied = qf.is_occupied(index);
 		boolean shifted = qf.is_shifted(index);
 		boolean continuation = qf.is_continuation(index);
-		boolean finished = false;
 		
-		while (!occupied && !continuation && !shifted && !finished) {
+		while (!occupied && !continuation && !shifted && index < qf.get_logical_num_slots_plus_extensions()) {
 			index++;
+			if (index == qf.get_logical_num_slots_plus_extensions()) {
+				return false;
+			}	
 			occupied = qf.is_occupied(index);
 			shifted = qf.is_shifted(index);
 			continuation = qf.is_continuation(index); 
-			finished = finished();
 		} 
-		
-		if (finished) {
-			bucket_index = -1;
-			fingerprint = -1;
-			return false;
-		}
 
 		if (occupied && !continuation && !shifted) {
 			s.clear();
@@ -69,7 +66,7 @@ public class Iterator  {
 		}
 		else if (occupied && !continuation && shifted) {
 			s.add(index);
-			s.remove();
+			s.remove(); 
 			bucket_index = s.peek();
 		}
 
@@ -81,39 +78,6 @@ public class Iterator  {
 	void print() {
 		System.out.println("original slot: " + index + "  " + bucket_index);
 	}
-
-	/*void scan() {
-		Queue<Integer> s = new LinkedList<Integer>();
-		int current_index = 0;
-
-		for (int i = 0; i < qf.filter.size(); i++) {
-			boolean occupied = qf.is_occupied(i);
-			boolean shifted = qf.is_shifted(i);
-			boolean continuation = qf.is_continuation(i); 
-
-			if (!occupied && !continuation && !shifted) {
-				current_index = -1;
-				continue;
-			}
-
-			if (occupied) {
-				s.add(i);
-			}
-
-
-			if (!continuation && !shifted) {
-				current_index = i;
-			}
-			else if (!continuation && shifted) {
-				s.remove();
-				current_index = s.peek();
-			}
-
-			long fingerprint = qf.get_fingerprint(i);
-
-			System.out.println("original slot: " + i + "  " + current_index);
-		}
-	}*/
 
 
 }

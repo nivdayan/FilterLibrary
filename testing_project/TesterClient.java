@@ -8,6 +8,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 
+import bitmap_implementations.Bitmap;
+import bitmap_implementations.QuickBitVector;
 import testing_project.MultiplyingQF.FalsePositiveRateExpansion;
 
 public class TesterClient {
@@ -63,10 +65,8 @@ public class TesterClient {
 		qf.insert(fingerprint0, 1, false);
 		qf.insert(fingerprint1, 4, false);
 		qf.insert(fingerprint0, 7, false);
-		//qf.pretty_print();
 		qf.insert(fingerprint0, 1, false);
 		qf.insert(fingerprint0, 2, false);
-		//qf.pretty_print();
 		qf.insert(fingerprint0, 1, false);
 		
 		// these are the expecting resulting is_occupied, is_continuation, and is_shifted bits 
@@ -80,7 +80,7 @@ public class TesterClient {
 		result = set_slot_in_test(result, bits_per_entry, 5, false, false, true, fingerprint1);
 		result = set_slot_in_test(result, bits_per_entry, 6, false, false, false, fingerprint0);
 		result = set_slot_in_test(result, bits_per_entry, 7, true, false, false, fingerprint0);
-		//qf.pretty_print();
+		//qf.filter.pretty_print();
 		
 		check_equality(qf, result, true);
 		
@@ -135,7 +135,7 @@ public class TesterClient {
 		HashSet<Integer> added = new HashSet<Integer>();
 		Random rand = new Random(seed);
 		double load_factor = 1.00;
-		for (int i = 0; i < qf.get_physcial_num_slots() * load_factor; i++) {
+		for (int i = 0; i < qf.get_logical_num_slots() * load_factor; i++) {
 			int rand_num = rand.nextInt();
 			boolean success = qf.insert(rand_num, false);
 			if (success) {
@@ -277,7 +277,7 @@ public class TesterClient {
 		result.set(index++, is_continuation); 
 		result.set(index++, is_shifted); 
 		for (int i = 0; i < bits_per_entry - 3; i++) {
-			result.set(index++, QuotientFilter.get_fingerprint_bit(i, fingerprint) );
+			result.set(index++, Bitmap.get_fingerprint_bit(i, fingerprint) );
 		}
 		return result;
 	}
@@ -333,24 +333,23 @@ public class TesterClient {
 		
 		int bits_per_entry = 8;
 		int num_entries_power = 4;
-		int num_entries = (int)Math.pow(2, num_entries_power);
-		int fingerprint_size = bits_per_entry - 3;
+		//int num_entries = (int)Math.pow(2, num_entries_power);
+		//int fingerprint_size = bits_per_entry - 3;
 		QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
 		
 		qf.insert(0, 2, false);
 		qf.insert(0, 3, false);
 		qf.insert(0, 3, false);
-		//qf.pretty_print();
 		qf.insert(0, 4, false);
-		//qf.insert(0, 2, false);
-		//qf.pretty_print();
-		//qf.insert(0, 1, false);
+		qf.insert(0, 23, false); // last key in the filter
+		qf.insert(0, 24, false); // outside the bounds, logical slot 14 does not exist logically, even if it might exist physically 
 		
 		Iterator it = new Iterator(qf);
-		int[] arr = new int[] {2, 3, 3, 4};
+		int[] arr = new int[] {2, 3, 3, 4, 23};
         int arr_index = 0;
+        
 		
-		while (it.next()) {
+ 		while (it.next()) {
 			//System.out.println(it.bucket_index);
 			if (arr[arr_index++] != it.bucket_index) {
 				System.out.print("error in iteration");
@@ -376,11 +375,11 @@ public class TesterClient {
 		qf.insert(0, 2, false);
 		//qf.pretty_print();
 		qf.insert(0, 1, false);
+		qf.insert(0, 15, false);
 		
 		Iterator it = new Iterator(qf);
-		int[] arr = new int[] {1, 1, 1, 2, 4, 7};
+		int[] arr = new int[] {1, 1, 1, 2, 4, 7, 15};
         int arr_index = 0;
-        //qf.pretty_print();
 		
 		while (it.next()) {
 			//System.out.println(it.bucket_index);
@@ -625,7 +624,7 @@ public class TesterClient {
 		
 		int num_cycles = 20;
 		int bits_per_entry = 12;
-		int num_entries_power = 10;		
+		int num_entries_power = 4;		
 		
 		System.gc();
 
@@ -809,7 +808,7 @@ public class TesterClient {
 	}
 	
 	static public  void main(String[] args) {
-		/*test1(); // example from wikipedia
+		test1(); // example from wikipedia
 		test2(); // example from quotient filter paper
 		test3(); // ensuring no false negatives
 		test4(); // overflow test
@@ -817,32 +816,16 @@ public class TesterClient {
 		test6(); // iteration test 1
 		test7(); // iteration test 2
 		test8(); // expansion test for FingerprintShrinkingQF
-		test9(); // expansion test for MultiplyingQF
+		test9(); // expansion test for MultiplyingQF*/
 		test10(); // testing ExpandableFilter
 		test11(); // testing ExpandableFilter
 		test12(); // testing ExpandableFilter
-		*/
 		
+		//System.out.println("all tests passed");
 		//geometric_expansion_experiment();
-		//scalability_experiment();
+		scalability_experiment();
 		
-		QuickBitVector f = new QuickBitVector();
-		long[] bits = QuickBitVector.makeBitVector(20, 1);
-		QuickBitVector.set(bits, 3);
-		for (int i = 0; i < bits.length * Long.BYTES * 8; i++) {
-			boolean bit = QuickBitVector.get(bits, i);
-			String s = bit ? "1" : "0";
-			System.out.print(s);
-		}
-		System.out.println();
-		
-		long num = QuickBitVector.getLongFromTo(bits, 1, 8);
-		
-		System.out.println(Long.toBinaryString(num));
 
-		
-	
-		
 		//experiment_false_positives();
 		//experiment_insertion_speed();
 	}

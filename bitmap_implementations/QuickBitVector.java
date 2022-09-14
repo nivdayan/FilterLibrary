@@ -27,7 +27,7 @@ It is provided "as is" without expressed or implied warranty.
  * @see     BitMatrix
  * @see     java.util.BitSet
  */
-package testing_project;
+package bitmap_implementations;
 
 public class QuickBitVector extends Object {
 	protected final static int ADDRESS_BITS_PER_UNIT = 6; // 64=2^6

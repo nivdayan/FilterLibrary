@@ -3,6 +3,8 @@ package testing_project;
 
 import java.util.ArrayList;
 
+import bitmap_implementations.Bitmap;
+
 public class InfiniFilter extends QuotientFilter {
 
 	final long empty_fingerprint;
@@ -19,31 +21,76 @@ public class InfiniFilter extends QuotientFilter {
 	}
 	
 	protected boolean compare(int index, long fingerprint) {
-		int generation = parse_unary(index);
+		int generation = parse_unary_old(index);
 		int first_fp_bit = index * bitPerEntry + 3;
 		int last_fp_bit = index * bitPerEntry + 3 + fingerprintLength - (generation + 1);
-		for (int i = first_fp_bit, j = 0; i < last_fp_bit; i++, j++) {
-			if (filter.get(i) != get_fingerprint_bit(j, fingerprint)) {
-				return false;
-			}
-		}
-		return true; 
+		int actual_fp_length = last_fp_bit - first_fp_bit;
+		long existing_fingerprint = filter.getFromTo(first_fp_bit, last_fp_bit);
+		long mask = (1 << actual_fp_length) - 1;
+		long adjusted_saught_fp = fingerprint & mask;
+		return existing_fingerprint == adjusted_saught_fp;
 	}
 	
-	// There is probably a more efficient implementation of this using rank&select
-	// however, most fingerprints will have short unary codes 
-	// the expected parsing time is therefore constant amortized time. 
-	int parse_unary(int slot_index) {
+	/*public String get_pretty_str(int index) {
+		StringBuffer sbr = new StringBuffer();
+		
+		int age = parse_unary_old(index);
+		
+		for (int i = index * bitPerEntry; i < (index + 1) * bitPerEntry; i++) {
+			int remainder = i % bitPerEntry;
+
+			if (remainder == 3) {
+				sbr.append(" ");
+			}
+			sbr.append(filter.get(i) ? "1" : "0");
+			int n = bitPerEntry - i + index * bitPerEntry - 2;
+			if (n == age) {
+				sbr.append(" ");
+			}
+		}
+		sbr.append("\n");
+		return sbr.toString();
+	}*/
+	
+	
+	// this is the older emthod for parsing the unary code using a loop
+	int parse_unary_old(int slot_index) {
 		int starting_bit = bitPerEntry * (slot_index + 1) - 1;
-		int ending_bit = bitPerEntry * slot_index;
+		int ending_bit = bitPerEntry * slot_index;		
 		int counter = 0;
 		for (int i = starting_bit; i >= ending_bit; i--) {
 			if (!filter.get(i)) {
 				break;
 			}
 			counter++;
+			
 		}
 		return counter;
+	}
+
+	
+	// this is the newer version of parsing the unary encoding. 
+	// it is done using just binary operations and no loop. 
+	// however, this optimization didn't yield much performance benefit 
+	int parse_unary(int slot_index) {
+		int f = (int)get_fingerprint(slot_index);
+		//.out.println();
+		//System.out.println(get_pretty_str(slot_index));
+		//print_int_in_binary(f, 32);
+		int inverted_fp = ~f;
+		//print_int_in_binary(inverted_fp, 32);
+		int mask = (1 << fingerprintLength) - 1;
+		//print_int_in_binary(mask, 32);
+		int masked = mask & inverted_fp;
+		//print_int_in_binary(masked, 32);
+		int highest = Integer.highestOneBit(masked);
+		//print_int_in_binary(highest, 32);
+		int leading_zeros = Integer.numberOfTrailingZeros(highest);
+		//System.out.println( leading_zeros );
+		int age = fingerprintLength - leading_zeros - 1;
+		//System.out.println( age );
+		
+		return age;
 	}
 	
 	long gen_fingerprint(int large_hash) {

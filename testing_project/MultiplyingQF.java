@@ -3,6 +3,9 @@ package testing_project;
 import java.util.ArrayList;
 import java.util.BitSet;
 
+import bitmap_implementations.BitSetWrapper;
+import bitmap_implementations.Bitmap;
+
 public class MultiplyingQF extends QuotientFilter {
 
 	enum SizeExpansion {
@@ -83,9 +86,10 @@ public class MultiplyingQF extends QuotientFilter {
 		power_of_two_size += sizeStyle == SizeExpansion.GEOMETRIC ? 1 : 0;
 		fingerprintLength = get_new_fingerprint_size();
 		bitPerEntry = fingerprintLength + 3;
-		int init_size = 1 << (power_of_two_size + 1);
-		filter = new BitSet(bitPerEntry * init_size);
+		int init_size = 1 << power_of_two_size;
 		num_extension_slots += 2;		
+		filter = make_filter(init_size, bitPerEntry);
+		
 		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);
 		//System.out.println("expanding");
 	}

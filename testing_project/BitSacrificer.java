@@ -18,11 +18,8 @@ public class BitSacrificer extends QuotientFilter {
 		}
 		
 		QuotientFilter new_qf = new QuotientFilter(power_of_two_size + 1, bitPerEntry - 1);
-		num_extension_slots = (power_of_two_size + 1) * 2;
 		Iterator it = new Iterator(this);
-		
 		long start = System.nanoTime();
-
 		
 		while (it.next()) {
 			int bucket = it.bucket_index;

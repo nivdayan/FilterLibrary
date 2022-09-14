@@ -3,8 +3,11 @@ package testing_project;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashSet;
-import java.util.Random;
 import java.util.Set;
+
+import bitmap_implementations.BitSetWrapper;
+import bitmap_implementations.Bitmap;
+import bitmap_implementations.QuickBitVectorWrapper;
 
 public class QuotientFilter {
 
@@ -13,11 +16,13 @@ public class QuotientFilter {
 	int power_of_two_size; 
 	int num_extension_slots;
 	int num_existing_entries;
-	BitSet filter;
+	Bitmap filter;
+	
 	double expansion_threshold;
 	int max_entries_before_expansion;
 	boolean expand_autonomously;
 	boolean is_full;
+	
 	
 	QuotientFilter(int power_of_two, int bits_per_entry) {
 		// we actually allocate a quotient filter twice as needed for now to easily absorb overflows
@@ -26,19 +31,28 @@ public class QuotientFilter {
 		power_of_two_size = power_of_two;
 		bitPerEntry = bits_per_entry; 
 		fingerprintLength = bits_per_entry - 3;
-		int init_size = 1 << (power_of_two + 1);
-		filter = new BitSet(bits_per_entry * init_size);
+		int init_size = 1 << power_of_two;
+		
 		num_extension_slots = power_of_two * 2;
 		
+		filter = make_filter(init_size, bits_per_entry);
+		
 		expansion_threshold = 0.8;
-		max_entries_before_expansion = (int) ((init_size / 2.0) * expansion_threshold);
+		max_entries_before_expansion = (int) (init_size * expansion_threshold);
 		expand_autonomously = false;
 		is_full = false;
-		
 		//measure_num_bits_per_entry();
 	}
 	
-	QuotientFilter(int power_of_two, int bits_per_entry, BitSet bitmap) {
+	Bitmap make_filter(int init_size, int bits_per_entry) {
+		boolean use_new_imp = true;
+		if (use_new_imp) {
+			return new QuickBitVectorWrapper(bits_per_entry,  init_size + num_extension_slots);
+		}
+		return new BitSetWrapper(bits_per_entry,  init_size * 2);
+	}
+	
+	QuotientFilter(int power_of_two, int bits_per_entry, Bitmap bitmap) {
 		power_of_two_size = power_of_two;
 		bitPerEntry = bits_per_entry; 
 		fingerprintLength = bits_per_entry - 3;
@@ -108,8 +122,12 @@ public class QuotientFilter {
 		return filter.size() / bitPerEntry;
 	}
 	
+	public int get_logical_num_slots_plus_extensions() {
+		return (1 << power_of_two_size) + num_extension_slots;
+	}
+	
 	public int get_logical_num_slots() {
-		return filter.size() / (bitPerEntry ) + num_extension_slots;
+		return 1 << power_of_two_size;
 	}
 	
 	void modify_slot(boolean is_occupied, boolean is_continuation, boolean is_shifted, 
@@ -120,72 +138,28 @@ public class QuotientFilter {
 	}
 	
 	void set_fingerprint(int index, long fingerprint) {
-		for (int i = index * bitPerEntry + 3, j = 0; i < index * bitPerEntry + 3 + fingerprintLength; i++, j++) {
+		filter.setFromTo(index * bitPerEntry + 3, index * bitPerEntry + 3 + fingerprintLength, fingerprint);
+		/*for (int i = index * bitPerEntry + 3, j = 0; i < index * bitPerEntry + 3 + fingerprintLength; i++, j++) {
 			filter.set(i, get_fingerprint_bit(j, fingerprint));
-		}
-	}
-	
-	long get_fingerprint(int index) {
-		long fingerprint = 0;
-		for (int i = index * bitPerEntry + 3, j = 0; i < index * bitPerEntry + 3 + fingerprintLength; i++, j++) {
-			fingerprint = set_fingerprint_bit(j, fingerprint, filter.get(i));
-		}
-		return fingerprint;
-	}
-	
-	void print_fingerprint(BitSet fp) {
-		for (int i = 0; i < fingerprintLength; i++) {
-			System.out.print(fp.get(i) ? "1" : "0");
-		}
-		System.out.println();
-	}
-	
-	protected boolean compare(int index, long fingerprint) {
-		for (int i = index * bitPerEntry + 3, j = 0; i < index * bitPerEntry + 3 + fingerprintLength; i++, j++) {
-			if (filter.get(i) != get_fingerprint_bit(j, fingerprint)) {
-				return false;
-			}
-		}
-		return true; 
-	}
-	
-	
-	void modify_slot(boolean is_occupied, boolean is_continuation, boolean is_shifted, 
-			int index, long fingerprint) {
-		modify_slot(is_occupied, is_continuation, is_shifted, index);
-		set_fingerprint(index, fingerprint);
-	}
-	
-	
-	public void print() {	
-		for (int i = 0; i < filter.size(); i++) {
-			System.out.print(filter.get(i) ? "1" : "0");
-		}
-		System.out.println();
-	}
-	
-	public void print_important_bits() {	
-		for (int i = 0; i < filter.size(); i++) {
-			int remainder = i % bitPerEntry;
-			if (remainder == 0) {
-				System.out.print(" ");
-			}
-			if (remainder == 0 || remainder == 1 || remainder == 2) {
-				System.out.print(filter.get(i) ? "1" : "0");
-			}
-		}
-		System.out.println();
+		}*/
 	}
 	
 	public String get_pretty_str(boolean vertical) {
 		StringBuffer sbr = new StringBuffer();
 		
+		int logic_slots = get_logical_num_slots();
+		int all_slots = get_logical_num_slots_plus_extensions();
+		
 		for (int i = 0; i < filter.size(); i++) {
 			int remainder = i % bitPerEntry;
 			if (remainder == 0) {
+				int slot_num = i/bitPerEntry;
 				sbr.append(" ");
 				if (vertical) {
-					sbr.append("\n" + (i/bitPerEntry) + " ");
+					if (slot_num == logic_slots || slot_num == all_slots) {
+						sbr.append("\n ---------");
+					}
+					sbr.append("\n" + slot_num + " ");
 				}
 			}
 			if (remainder == 3) {
@@ -200,6 +174,37 @@ public class QuotientFilter {
 	public void pretty_print() {	
 		System.out.print(get_pretty_str(true));
 	}
+
+	
+	long get_fingerprint(int index) {
+		return filter.getFromTo(index * bitPerEntry + 3, index * bitPerEntry + 3 + fingerprintLength);
+	}
+	
+	void print_fingerprint(BitSet fp) {
+		for (int i = 0; i < fingerprintLength; i++) {
+			System.out.print(fp.get(i) ? "1" : "0");
+		}
+		System.out.println();
+	}
+	
+	protected boolean compare(int index, long fingerprint) {
+		return get_fingerprint(index) == fingerprint;
+		/*for (int i = index * bitPerEntry + 3, j = 0; i < index * bitPerEntry + 3 + fingerprintLength; i++, j++) {
+			if (filter.get(i) != get_fingerprint_bit(j, fingerprint)) {
+				return false;
+			}
+		}
+		return true; */
+	}
+	
+	
+	void modify_slot(boolean is_occupied, boolean is_continuation, boolean is_shifted, 
+			int index, long fingerprint) {
+		modify_slot(is_occupied, is_continuation, is_shifted, index);
+		set_fingerprint(index, fingerprint);
+	}
+	
+
 	
 	public void print_filter_summary() {	
 		int num_entries = get_num_entries(false);
@@ -387,7 +392,7 @@ public class QuotientFilter {
 		
 		do {
 			
-			if (current_index >= get_logical_num_slots()) {
+			if (current_index >= get_logical_num_slots_plus_extensions()) {
 				return false;
 			}
 			
@@ -424,7 +429,7 @@ public class QuotientFilter {
 
 	
 	boolean insert(long long_fp, int index, boolean insert_only_if_no_match) {
-		if (index >= get_logical_num_slots()) {
+		if (index >= get_logical_num_slots_plus_extensions()) {
 			return false;
 		}
 		boolean does_run_exist = is_occupied(index);
@@ -448,22 +453,20 @@ public class QuotientFilter {
 				
 		do {
 			
-			if (current_index >= get_logical_num_slots()) {
+			if (current_index >= get_logical_num_slots_plus_extensions()) {	 
 				return false;
 			}
-			
 			is_this_slot_empty = is_slot_empty(current_index);
 			long_fp = swap_fingerprints(current_index, long_fp);
-
-			if (current_index > run_start_index) {
+			if (current_index > run_start_index) {			
 				set_shifted(current_index, true);
 			}
 			
-			if (current_index > run_start_index && !finished_first_run && !is_continuation(current_index)) {
+			if (current_index > run_start_index && !finished_first_run && !is_continuation(current_index)) {	
 				finished_first_run = true;
 				set_continuation(current_index, true);
 			}
-			else if (finished_first_run) {
+			else if (finished_first_run) {			
 				boolean current_continuation = is_continuation(current_index);
 				set_continuation(current_index, temp_continuation);
 				temp_continuation = current_continuation;
@@ -588,7 +591,7 @@ public class QuotientFilter {
 	String get_fingerprint_str(long fp, int length) {
 		String str = "";
 		for (int i = 0; i < length; i++) {
-			str += get_fingerprint_bit(i, fp) ? "1" : "0";
+			str += Bitmap.get_fingerprint_bit(i, fp) ? "1" : "0";
 		}
 		return str;
 	}
@@ -649,6 +652,7 @@ public class QuotientFilter {
 		boolean success = insert(fingerprint, slot_index, false);
 		//if (!success) {
 		if (!success) {
+			System.out.println("insertion failure");
 			System.out.println(input + "\t" + slot_index + "\t" + get_fingerprint_str(fingerprint, fingerprintLength));
 			pretty_print();
 			System.exit(1);
@@ -690,27 +694,11 @@ public class QuotientFilter {
 	public boolean get_bit_at_offset(int offset) {
 		return filter.get(offset);
 	}
-	
-	public static boolean get_fingerprint_bit(int index, long fingerprint) {
-		long mask = 1 << index;
-		long and = fingerprint & mask;
-		return and != 0;
-	}
-	
-	public static long set_fingerprint_bit(int index, long fingerprint, boolean val) {
-		if (val) {
-			fingerprint |= 1 << index;   
-		}
-		else {
-			fingerprint &= ~(1 << index);   
-		}
-		return fingerprint;
-	}
-	
+
 	public long convert(BitSet fp) {
 		long fp_long = 0;
 		for (int i = 0; i < fingerprintLength; i++) {
-			fp_long = set_fingerprint_bit(i, fp_long, fp.get(i));
+			fp_long = Bitmap.set_fingerprint_bit(i, fp_long, fp.get(i));
 		}
 		return fp_long;
 	}
@@ -718,25 +706,11 @@ public class QuotientFilter {
 	public BitSet convert(long fp) {
 		BitSet bs = new BitSet(fingerprintLength);
 		for (int i = 0; i < fingerprintLength; i++) {
-			bs.set(i, get_fingerprint_bit(i, fp));
+			bs.set(i, Bitmap.get_fingerprint_bit(i, fp));
 			//fp_long = set_fingerprint_bit(i, fp_long, fp.get(i));
 		}
 		return bs;
 	}
-	
-
-
-
-
-	
-
-	
-
-
-
 
 }
-
-
-
 
