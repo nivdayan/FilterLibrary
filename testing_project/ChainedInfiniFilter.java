@@ -66,6 +66,17 @@ public class ChainedInfiniFilter extends InfiniFilter {
 		num_expansions++;	
 	}
 	
+	boolean rejuvenate(int key) {
+		
+		super.rejuvenate(key);
+		
+		if (older_filters.isEmpty()) {
+			return super.rejuvenate(key);
+		}
+		System.out.println("we do not currently support rejuvenation operations on a chained infinifilter");
+		return false;
+	}
+	
 	double measure_num_bits_per_entry() {
 		return measure_num_bits_per_entry(this, new ArrayList<QuotientFilter>(older_filters));
 	}

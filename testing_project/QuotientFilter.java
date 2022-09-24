@@ -23,6 +23,12 @@ public class QuotientFilter {
 	boolean expand_autonomously;
 	boolean is_full;
 	
+	// statistics, computed in the compute_statistics method. method should be called before these are used
+	int num_runs; 
+	int num_clusters;
+	double avg_run_length;
+	double avg_cluster_length;
+	
 	
 	QuotientFilter(int power_of_two, int bits_per_entry) {
 		// we actually allocate a quotient filter twice as needed for now to easily absorb overflows
@@ -180,6 +186,10 @@ public class QuotientFilter {
 		return filter.getFromTo(index * bitPerEntry + 3, index * bitPerEntry + 3 + fingerprintLength);
 	}
 	
+	long get_slot(int index) {
+		return filter.getFromTo(index * bitPerEntry, (index + 1) * bitPerEntry);
+	}
+	
 	void print_fingerprint(BitSet fp) {
 		for (int i = 0; i < fingerprintLength; i++) {
 			System.out.print(fp.get(i) ? "1" : "0");
@@ -216,6 +226,13 @@ public class QuotientFilter {
 		System.out.println("entries:\t" + num_entries);
 		System.out.println("bits\t:" + num_bits);
 		System.out.println("bits/entry\t:" + num_bits / (double)num_entries);
+		
+		compute_statistics();
+		
+		System.out.println("num runs: \t\t" + num_runs);
+		System.out.println("avg run length: \t" + avg_run_length);
+		System.out.println("num clusters: \t\t" + num_clusters);
+		System.out.println("avg cluster length: \t" + avg_cluster_length);
 	}
 	
 	boolean is_occupied(int index) {
@@ -253,6 +270,7 @@ public class QuotientFilter {
 		}
 		return current_index;
 	}
+
 	
 	int find_run_start(int index) {
 		int current_index = index;
@@ -291,8 +309,8 @@ public class QuotientFilter {
 		return -1; 
 	}
 	
-	// returns the index of the entry if found, -1 otherwise
-	int find_last_matching_fingerprint_in_run(int index, long fingerprint) {
+	// delete the last matching fingerprint in the run
+	int decide_which_fingerprint_to_delete(int index, long fingerprint) {
 		assert(!is_continuation(index));
 		int matching_fingerprint_index = -1;
 		do {
@@ -446,6 +464,12 @@ public class QuotientFilter {
 			}
 		} 
 				
+		return insert_fingerprint_and_push_all_else(long_fp, run_start_index);
+		//System.out.println("filter size: " + filter.size() + " bits");
+	}
+	
+	boolean insert_fingerprint_and_push_all_else(long long_fp, int run_start_index) {
+		
 		int current_index = run_start_index;
 		boolean is_this_slot_empty;
 		boolean finished_first_run = false;
@@ -457,7 +481,8 @@ public class QuotientFilter {
 				return false;
 			}
 			is_this_slot_empty = is_slot_empty(current_index);
-			long_fp = swap_fingerprints(current_index, long_fp);
+			//long_fp = swap_fingerprints(current_index, long_fp);  before we swapped here. but we changed it to keep older entries appearing first in the run. This allows queries to match more quickly on average.
+
 			if (current_index > run_start_index) {			
 				set_shifted(current_index, true);
 			}
@@ -465,18 +490,19 @@ public class QuotientFilter {
 			if (current_index > run_start_index && !finished_first_run && !is_continuation(current_index)) {	
 				finished_first_run = true;
 				set_continuation(current_index, true);
+				long_fp = swap_fingerprints(current_index, long_fp);
 			}
 			else if (finished_first_run) {			
 				boolean current_continuation = is_continuation(current_index);
 				set_continuation(current_index, temp_continuation);
 				temp_continuation = current_continuation;
+				long_fp = swap_fingerprints(current_index, long_fp);
 			}
 
 			current_index++;
 		} while (!is_this_slot_empty);
-		//System.out.println("filter size: " + filter.size() + " bits");
 		num_existing_entries++;
-		return true;
+		return true; 
 	}
 	
 	boolean delete(BitSet fingerprint, int index) {
@@ -498,85 +524,94 @@ public class QuotientFilter {
 		}
 		int run_start_index = find_run_start(index);
 		
-		int matching_fingerprint_index = find_last_matching_fingerprint_in_run(run_start_index, fingerprint);
-		int last_entry_index = find_run_end(matching_fingerprint_index);
-		//run_scan_result res = scan_run_fully(run_start_index, fingerprint);
-		
+		int matching_fingerprint_index = decide_which_fingerprint_to_delete(run_start_index, fingerprint);
+		if (matching_fingerprint_index == -1) {
+			// we didn't find a matching fingerprint
+			return false;
+		}
+
+		int run_end = find_run_end(matching_fingerprint_index);
 		
 		if (matching_fingerprint_index == -1) {
 			return false;
 		}
 		
-		// the run has only one entry, so we disable its is_occupied flag
-		if (run_start_index == matching_fingerprint_index) {
-			set_occupied(index, false);
-		}
-		else {
-			set_shifted(last_entry_index, false);
-			set_continuation(last_entry_index, false);
-		}
-		
-		int occupied_stack = 0;
-		for (int i = find_cluster_start(index); i <= last_entry_index; i++) {
-			if (is_occupied(i)) {
-				occupied_stack++;
-			}
-		}
+		// the run has only one entry, we need to disable its is_occupied flag
+		// we just remember we need to do this here, and we do it later to not interfere with counts
+		boolean turn_off_occupied = run_start_index == run_end;
 		
 		// First thing to do is move everything else in the run back by one slot
-		for (int i = matching_fingerprint_index; i < last_entry_index; i++) {
-			long f = get_fingerprint(index + 1);
-			set_fingerprint(index, f);
+		for (int i = matching_fingerprint_index; i < run_end; i++) {
+			long f = get_fingerprint(i + 1);
+			set_fingerprint(i, f);
 		}
-		set_fingerprint(last_entry_index, 0); // can be commented out later 
+
+		// for each slot, we want to know by how much the entry there is shifted
+		// we can do this by counting the number of continuation flags set to true 
+		// and the number of occupied flags set to false from the start of the cluster to the given cell
+		// and then subtracting: num_shifted_count - num_non_occupied = number of slots by which an entry is shifted 
+		int cluster_start = find_cluster_start(index);
+		int num_shifted_count = 0;
+		int num_non_occupied = 0;
+		for (int i = cluster_start; i <= run_end; i++) {
+			if (is_continuation(i)) {
+				num_shifted_count++;
+			}
+			if (!is_occupied(i)) {
+				num_non_occupied++;
+			}
+		}
 		
-		// we now need to decide about shifting the next run
-		// we assume current_index is always empty, and we consider shifting the next slot back to it
-		//int num_runs = 0;
-		int num_runs_seen = 1;
+		set_fingerprint(run_end, 0); 
+		set_shifted(run_end, false);
+		set_continuation(run_end, false);
+		
+		// we now have a nested loop. The outer do-while iterates over the remaining runs in the cluster. 
+		// the inner for loop iterates over cells of particular runs, pushing entries one slot back. 
 		do {
-			num_runs_seen++;
-			boolean does_next_run_exist = !is_slot_empty(last_entry_index + 1);
-			boolean is_next_run_shifted = is_shifted(last_entry_index + 1);
+			// we first check if the next run actually exists and if it is shifted.
+			// only if both conditions hold, we need to shift it back one slot.
+			boolean does_next_run_exist = !is_slot_empty(run_end + 1);
+			boolean is_next_run_shifted = is_shifted(run_end + 1);
 			if (!does_next_run_exist || !is_next_run_shifted) {
+				if (turn_off_occupied) {
+					// if we eliminated a run and now need to turn the is_occupied flag off, we do it at the end to not interfere in our counts 
+					set_occupied(index, false);
+				}
 				return true;
 			}
-			int next_run_start_index = last_entry_index + 1;
-			matching_fingerprint_index = find_last_matching_fingerprint_in_run(next_run_start_index, fingerprint);
-			last_entry_index = find_run_end(next_run_start_index);
 			
-			//boolean is_blank_slot_occupied = is_occupied(next_run_start_index - 1);
-			//num_occupied_slots_encountered += is_blank_slot_occupied ? 1 : 0;
+			// we now find the start and end of the next run
+			int next_run_start = run_end + 1;
+			run_end = find_run_end(next_run_start);
 			
-			//if (occupied_stack > 1) {
-			if ( is_occupied(next_run_start_index - 1) && occupied_stack == num_runs_seen ) {
-				set_shifted(next_run_start_index - 1, false);
+			// before we start processing the next run, we check whether the previous run we shifted is now back to its canonical slot
+			// The condition num_shifted_count - num_non_occupied == 1 ensures that the run was shifted by only 1 slot, meaning it is now back in its proper place
+			if ( is_occupied(next_run_start - 1) && num_shifted_count - num_non_occupied == 1 ) {
+				set_shifted(next_run_start - 1, false); 
 			}
-			else {
-				set_shifted(next_run_start_index - 1, true);
+			else  {
+				set_shifted(next_run_start - 1, true);
 			}
-			
-			//set_shifted(next_run_start_index - 1, occupied_stack > 1);
-			//}
-			//occupied_stack--;
 
-			for (int i = next_run_start_index; i <= last_entry_index; i++) {
+			for (int i = next_run_start; i <= run_end; i++) {
 				long f = get_fingerprint(i);
 				set_fingerprint(i - 1, f);
 				if (is_continuation(i)) {
 					set_continuation(i-1, true);
 				}
-				if (is_occupied(i)) {
-					occupied_stack++;
+				if (!is_occupied(i)) {
+					num_non_occupied++;
 				}
 			}
-			set_fingerprint(last_entry_index, 0);
-			set_shifted(last_entry_index, false);
-			set_continuation(last_entry_index, false);
-			
+			num_shifted_count += run_end - next_run_start;
+			set_fingerprint(run_end, 0);
+			set_shifted(run_end, false);
+			set_continuation(run_end, false);
 		} while (true);
 		
 	}
+
 	
 	void print_int_in_binary(int num, int length) {
 		String str = "";
@@ -648,7 +683,8 @@ public class QuotientFilter {
 			print_int_in_binary( slot_index, power_of_two_size);
 			print_int_in_binary( (int)fingerprint, fingerprintLength);
 		}*/
-		
+		//System.out.println("inserting " + input + "\t" + slot_index + "\t" + get_fingerprint_str(fingerprint, fingerprintLength));
+
 		boolean success = insert(fingerprint, slot_index, false);
 		//if (!success) {
 		if (!success) {
@@ -670,15 +706,20 @@ public class QuotientFilter {
 		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);
 	}
 	
-	boolean delete(int input, boolean insert_only_if_no_match) {
+	boolean delete(int input) {
 		int large_hash = HashFunctions.normal_hash(input);
 		int slot_index = get_slot_index(large_hash);
 		long fp_long = gen_fingerprint(large_hash);
+		//System.out.println("deleting  " + input + "\t" + slot_index + "\t" + get_fingerprint_str(fp_long, fingerprintLength));
+
 		boolean success = delete(fp_long, slot_index);
 		if (!success) {
 			System.out.println(input + "\t" + slot_index + "\t" + get_fingerprint_str(fp_long, fingerprintLength));
 			pretty_print();
 			System.exit(1);
+		}
+		if (success) {
+			num_existing_entries--;
 		}
 		return success; 
 	}
@@ -712,5 +753,68 @@ public class QuotientFilter {
 		return bs;
 	}
 
+	public void compute_statistics() {
+		 num_runs = 0;
+		 num_clusters = 0; 
+		double sum_run_lengths = 0;
+		double sum_cluster_lengths = 0; 
+		
+		int current_run_length = 0;
+		int current_cluster_length = 0;
+		
+		for (int i = 0; i < get_logical_num_slots_plus_extensions(); i++) {
+			
+			boolean occupied = is_occupied(i);
+			boolean continuation = is_continuation(i); 
+			boolean shifted = is_shifted(i);
+			
+			if 	( !occupied && !continuation && !shifted ) { // empty slot
+				sum_cluster_lengths += current_cluster_length;
+				current_cluster_length = 0; 
+				sum_run_lengths += current_run_length;
+				current_run_length = 0;
+			}
+			else if ( !occupied && !continuation && shifted ) { // start of new run
+				num_runs++;
+				sum_run_lengths += current_run_length;
+				current_run_length = 1;
+				current_cluster_length++;
+			}
+			else if ( !occupied && continuation && !shifted ) {
+				// not used
+			}
+			else if ( !occupied && continuation && shifted ) { // continuation of run
+				current_cluster_length++;
+				current_run_length++;
+			}
+			else if ( occupied && !continuation && !shifted ) { // start of new cluster & run
+				num_runs++;
+				num_clusters++;
+				sum_cluster_lengths += current_cluster_length;
+				sum_run_lengths += current_run_length;
+				current_cluster_length = 1; 
+				current_run_length = 1;
+			}
+			else if (occupied && !continuation && shifted ) { // start of new run
+				num_runs++;
+				sum_run_lengths += current_run_length;
+				current_run_length = 1; 
+				current_cluster_length++;
+			}
+			else if (occupied && continuation && !shifted ) {
+				// not used
+			}
+			else if (occupied && continuation && shifted ) { // continuation of run
+				current_cluster_length++;
+				current_run_length++;
+			}
+		}
+		
+		 avg_run_length = sum_run_lengths / num_runs;
+		 avg_cluster_length = sum_cluster_lengths / num_clusters;
+
+
+	}
+	
 }
 

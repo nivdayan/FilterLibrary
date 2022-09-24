@@ -21,7 +21,7 @@ public class InfiniFilter extends QuotientFilter {
 	}
 	
 	protected boolean compare(int index, long fingerprint) {
-		int generation = parse_unary_old(index);
+		int generation = parse_unary(index);
 		int first_fp_bit = index * bitPerEntry + 3;
 		int last_fp_bit = index * bitPerEntry + 3 + fingerprintLength - (generation + 1);
 		int actual_fp_length = last_fp_bit - first_fp_bit;
@@ -54,7 +54,7 @@ public class InfiniFilter extends QuotientFilter {
 	
 	
 	// this is the older emthod for parsing the unary code using a loop
-	int parse_unary_old(int slot_index) {
+	/*int parse_unary_old(int slot_index) {
 		int starting_bit = bitPerEntry * (slot_index + 1) - 1;
 		int ending_bit = bitPerEntry * slot_index;		
 		int counter = 0;
@@ -66,7 +66,7 @@ public class InfiniFilter extends QuotientFilter {
 			
 		}
 		return counter;
-	}
+	}*/
 
 	
 	// this is the newer version of parsing the unary encoding. 
@@ -89,8 +89,45 @@ public class InfiniFilter extends QuotientFilter {
 		//System.out.println( leading_zeros );
 		int age = fingerprintLength - leading_zeros - 1;
 		//System.out.println( age );
-		
 		return age;
+	}
+	
+	boolean rejuvenate(int key) {
+		int large_hash = HashFunctions.normal_hash(key);
+		long fingerprint = gen_fingerprint(large_hash);
+		int ideal_index = get_slot_index(large_hash);
+		
+		int run_start_index = find_run_start(ideal_index);
+		int smallest_index = find_largest_matching_fingerprint_in_run(run_start_index, fingerprint);
+		if (smallest_index == -1) {
+			return false;
+		}
+		swap_fingerprints(smallest_index, fingerprint);
+		return true; 
+	}
+
+	
+	int decide_which_fingerprint_to_delete(int index, long fingerprint) {
+		return find_largest_matching_fingerprint_in_run(index, fingerprint);
+	}
+	
+	// returns the index of the entry if found, -1 otherwise
+	int find_largest_matching_fingerprint_in_run(int index, long fingerprint) {
+		assert(!is_continuation(index));
+		int matching_fingerprint_index = -1;
+		int lowest_age = Integer.MAX_VALUE;
+		do {
+			if (compare(index, fingerprint)) {
+				//System.out.println("found matching FP at index " + index);
+				int age = parse_unary(index);
+				if (age < lowest_age) {
+					lowest_age = age;
+					matching_fingerprint_index = index;
+				}
+			}
+			index++;
+		} while (is_continuation(index));
+		return matching_fingerprint_index; 
 	}
 	
 	long gen_fingerprint(int large_hash) {
@@ -118,7 +155,7 @@ public class InfiniFilter extends QuotientFilter {
 		QuotientFilter new_qf = new QuotientFilter(power_of_two_size + 1, bitPerEntry);
 		Iterator it = new Iterator(this);
 		//this.pretty_print();
-		long start = System.nanoTime();
+		//long start = System.nanoTime();
 
 		while (it.next()) {
 			int bucket = it.bucket_index;
@@ -145,8 +182,8 @@ public class InfiniFilter extends QuotientFilter {
 			}
 		}
 		
-		long end = System.nanoTime();
-		double time = (end - start) / 1000;
+		//long end = System.nanoTime();
+		//double time = (end - start) / 1000;
 		//System.out.println("time IF  " + time + "   " + new_qf.get_num_entries(false));
 		
 		filter = new_qf.filter;

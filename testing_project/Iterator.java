@@ -35,18 +35,21 @@ public class Iterator  {
 			return false;
 		}	
 		
-		boolean occupied = qf.is_occupied(index);
-		boolean shifted = qf.is_shifted(index);
-		boolean continuation = qf.is_continuation(index);
+		long slot = qf.get_slot(index);
+		boolean occupied = (slot & 1) != 0;
+		boolean continuation = (slot & 2) != 0;
+		boolean shifted = (slot & 4) != 0;
+		
 		
 		while (!occupied && !continuation && !shifted && index < qf.get_logical_num_slots_plus_extensions()) {
 			index++;
 			if (index == qf.get_logical_num_slots_plus_extensions()) {
 				return false;
 			}	
-			occupied = qf.is_occupied(index);
-			shifted = qf.is_shifted(index);
-			continuation = qf.is_continuation(index); 
+			slot = qf.get_slot(index);
+			occupied = (slot & 1) != 0;
+			continuation = (slot & 2) != 0;
+			shifted = (slot & 4) != 0;
 		} 
 
 		if (occupied && !continuation && !shifted) {
@@ -69,8 +72,7 @@ public class Iterator  {
 			s.remove(); 
 			bucket_index = s.peek();
 		}
-
-		fingerprint = qf.get_fingerprint(index);
+		fingerprint = slot >> 3;
 		index++;
 		return true;
 	}
