@@ -129,6 +129,7 @@ public class ChainedInfiniFilter extends InfiniFilter {
 		}
 		
 		return success; 
+
 	}
 	
 	double measure_num_bits_per_entry() {

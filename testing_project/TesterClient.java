@@ -749,7 +749,7 @@ public class TesterClient {
 		Tests.test16(); // testing deletes
 		Tests.test17(); // testing deletes
 		Tests.test18(); // testing deletes & rejuv operations
-		
+	
 		//Tests.test15(); // testing many deletes
 		//Tests.test16();
 		

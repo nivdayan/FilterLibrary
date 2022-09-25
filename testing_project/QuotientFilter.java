@@ -677,13 +677,6 @@ public class QuotientFilter {
 		int large_hash = HashFunctions.normal_hash(input);
 		int slot_index = get_slot_index(large_hash);
 		long fingerprint = gen_fingerprint(large_hash);
-		
-		/*if (input == 1) {
-			print_int_in_binary( large_hash, power_of_two_size + fingerprintLength);
-			print_int_in_binary( slot_index, power_of_two_size);
-			print_int_in_binary( (int)fingerprint, fingerprintLength);
-		}*/
-		//System.out.println("inserting " + input + "\t b " + slot_index + " \t" + get_fingerprint_str(fingerprint, fingerprintLength));
 
 		boolean success = insert(fingerprint, slot_index, false);
 		//if (!success) {
