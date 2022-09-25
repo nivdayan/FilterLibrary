@@ -25,9 +25,14 @@ public class ChainedInfiniFilter extends InfiniFilter {
 		print_int_in_binary( fingerprint, former.fingerprintLength);
 		System.out.println();*/
 		
+		//System.out.println("moving void entry from bucket " + bucket_index + " to bucket " + slot + " with fingerprint " + fingerprint + " in secondary IF");
+		//print_int_in_binary( fingerprint, former.fingerprintLength);
+		
+		
 		num_existing_entries--;
 		former.num_existing_entries++;
 		former.insert(fingerprint, slot, false);
+		
 	}
 	
 	// The hash function is being computed here for each filter 
@@ -64,6 +69,66 @@ public class ChainedInfiniFilter extends InfiniFilter {
 		super.expand();
 		//System.out.println("finished expanding ------------");
 		num_expansions++;	
+	}
+	
+	boolean rejuvenate(int key) {
+		boolean success = super.rejuvenate(key);
+		if (success) {
+			return true;
+		}
+		success = former.delete(key);
+		if (success) {
+			success = insert(key, false);
+			if (!success) {
+				System.out.println("failed at rejuvenation");
+				System.exit(1);
+			}
+			return true;
+		}
+		for (int i = older_filters.size() - 1; i >= 0; i--) {						
+			success = older_filters.get(i).delete(key);
+			if (success) {
+				success = insert(key, false);
+				if (!success) {
+					System.out.println("failed at rejuvenation");
+					System.exit(1);
+				}
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	
+	boolean delete(int input) {
+		int large_hash = HashFunctions.normal_hash(input);
+		int slot_index = get_slot_index(large_hash);
+		long fp_long = gen_fingerprint(large_hash);
+		//System.out.println("deleting  " + input + "\t b " + slot_index + " \t" + get_fingerprint_str(fp_long, fingerprintLength));
+		boolean success = delete(fp_long, slot_index);
+		if (success) {
+			num_existing_entries--;
+			return true;
+		}
+		
+		slot_index = former.get_slot_index(large_hash);
+		fp_long = former.gen_fingerprint(large_hash);
+		success = former.delete(fp_long, slot_index);
+		if (success) {
+			num_existing_entries--;
+			return true;
+		}
+		
+		for (int i = older_filters.size() - 1; i >= 0; i--) {			
+			slot_index = older_filters.get(i).get_slot_index(large_hash);
+			fp_long = older_filters.get(i).gen_fingerprint(large_hash);
+			success = older_filters.get(i).delete(fp_long, slot_index);
+			if (success) {
+				return true;
+			}
+		}
+		
+		return success; 
 	}
 	
 	double measure_num_bits_per_entry() {
