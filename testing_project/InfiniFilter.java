@@ -1,18 +1,9 @@
 
 package testing_project;
 
-import java.util.ArrayList;
-
-import bitmap_implementations.Bitmap;
-
 public class InfiniFilter extends QuotientFilter {
 
 	final long empty_fingerprint;
-
-	/*enum EmptyFingerprintResolutionStyle {
-		CHAINING,
-		DUPLICATION,
-	}*/	
 
 	InfiniFilter(int power_of_two, int bits_per_entry) {
 		super(power_of_two, bits_per_entry);
@@ -97,6 +88,11 @@ public class InfiniFilter extends QuotientFilter {
 		long fingerprint = gen_fingerprint(large_hash);
 		int ideal_index = get_slot_index(large_hash);
 		
+		boolean does_run_exist = is_occupied(ideal_index);
+		if (!does_run_exist) {
+			return false;
+		}
+		
 		int run_start_index = find_run_start(ideal_index);
 		int smallest_index = find_largest_matching_fingerprint_in_run(run_start_index, fingerprint);
 		if (smallest_index == -1) {
@@ -154,27 +150,17 @@ public class InfiniFilter extends QuotientFilter {
 	void expand() {
 		QuotientFilter new_qf = new QuotientFilter(power_of_two_size + 1, bitPerEntry);
 		Iterator it = new Iterator(this);
-		//this.pretty_print();
-		//long start = System.nanoTime();
 
 		while (it.next()) {
 			int bucket = it.bucket_index;
 			long fingerprint = it.fingerprint;
-
 			if (it.fingerprint != empty_fingerprint) {
 				long pivot_bit = (1 & fingerprint);	// getting the bit of the fingerprint we'll be sacrificing 
 				long bucket_mask = pivot_bit << power_of_two_size; // setting this bit to the proper offset of the slot address field
 				long updated_bucket = bucket | bucket_mask;	// addding the pivot bit to the slot address field
 				long chopped_fingerprint = fingerprint >> 1; // getting rid of this pivot bit from the fingerprint 
-				
 				int unary_mask = (1 << (fingerprintLength - 1));
-				long updated_fingerprint = chopped_fingerprint | unary_mask;
-				
-				/*print_int_in_binary( (int)updated_bucket, power_of_two_size + 1);
-				print_int_in_binary( (int)fingerprint, fingerprintLength);
-				print_int_in_binary( (int)updated_fingerprint, fingerprintLength);
-				System.out.println(); */
-				
+				long updated_fingerprint = chopped_fingerprint | unary_mask;				
 				new_qf.insert(updated_fingerprint, (int)updated_bucket, false);
 			}
 			else {
@@ -182,15 +168,12 @@ public class InfiniFilter extends QuotientFilter {
 			}
 		}
 		
-		//long end = System.nanoTime();
-		//double time = (end - start) / 1000;
-		//System.out.println("time IF  " + time + "   " + new_qf.get_num_entries(false));
-		
 		filter = new_qf.filter;
 		power_of_two_size++;
 		num_extension_slots += 2;
 		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);
 
+		
 	}
 
 }

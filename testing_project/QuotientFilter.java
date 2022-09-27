@@ -703,14 +703,7 @@ public class QuotientFilter {
 		int large_hash = HashFunctions.normal_hash(input);
 		int slot_index = get_slot_index(large_hash);
 		long fp_long = gen_fingerprint(large_hash);
-		//System.out.println("deleting  " + input + "\t b " + slot_index + " \t" + get_fingerprint_str(fp_long, fingerprintLength));
-
 		boolean success = delete(fp_long, slot_index);
-		if (!success) {
-			System.out.println(input + "\t" + slot_index + "\t" + get_fingerprint_str(fp_long, fingerprintLength));
-			pretty_print();
-			System.exit(1);
-		}
 		if (success) {
 			num_existing_entries--;
 		}

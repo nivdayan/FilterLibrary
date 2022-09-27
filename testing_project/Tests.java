@@ -760,7 +760,7 @@ public class Tests {
 	// Here we're going to create a largish filter, and then perform insertions and rejuvenation operations
 	// we'll test correctness by ensuring all keys we have inserted indeed still give positives
 	static public void test18() {
-		int bits_per_entry = 10;
+ 		int bits_per_entry = 16;
 		int num_entries_power = 3;
 		int seed = 5;  // 10
 		//int num_entries = (int)Math.pow(2, num_entries_power);
@@ -768,7 +768,7 @@ public class Tests {
 		qf.expand_autonomously = true;
 		TreeSet<Integer> added = new TreeSet<Integer>();
 		Random rand = new Random(seed);
-		double num_entries_to_insert = Math.pow(2, num_entries_power + 10); // we'll expand 3-4 times
+		double num_entries_to_insert = Math.pow(2, num_entries_power + 15); // we'll expand 3-4 times
 
 		for (int i = 0; i < num_entries_to_insert; i++) {
 			int rand_num = rand.nextInt();
@@ -789,9 +789,10 @@ public class Tests {
 			if (i % 4 == 0 && i > Math.pow(2, num_entries_power)) {
 				int to_del = rand.nextInt();
 				if (to_del > added.first()) {
+					
 					int r = added.floor(to_del);
 					added.remove(r);
-
+					
 					boolean deleted =  qf.delete(r);
 					if (!deleted) {
 						System.out.println("not deleted");
@@ -807,7 +808,16 @@ public class Tests {
 
 					boolean rejuved = qf.rejuvenate(key);
 					if (!rejuved) {
-						System.out.println("not rejuvenated");
+						System.out.println("not rejuvenated " + key);
+						qf.pretty_print();
+						qf.rejuvenate(key);
+						
+						System.exit(1);
+					}
+					boolean found = qf.search(key);
+					if (!found) {
+						System.out.println("failed to find key after rejuvenation  " + key);
+						qf.pretty_print();
 						System.exit(1);
 					}
 				}

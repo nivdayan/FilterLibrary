@@ -381,7 +381,7 @@ public class TesterClient {
 	static public void rejuvenation_experiment() {
 
 		int num_cycles = 19;
-		int bits_per_entry = 16;
+		int bits_per_entry = 8;
 		int num_entries_power = 6;		
 
 		System.gc();
@@ -744,23 +744,19 @@ public class TesterClient {
 		Tests.test11(); // testing InfiniFilter 
 		Tests.test12(); // testing InfiniFilter - chained
 		Tests.test13(); // testing InfiniFilter - rejuvenation 
-		Tests.test14(); // InfiniFilter deleting largest matching fingerprint */
+		Tests.test14(); // InfiniFilter deleting largest matching fingerprint 
 		Tests.test15(); // testing deletes
 		Tests.test16(); // testing deletes
-		Tests.test17(); // testing deletes
+		Tests.test17(); // testing deletes*/
 		Tests.test18(); // testing deletes & rejuv operations
 	
 		//Tests.test15(); // testing many deletes
 		//Tests.test16();
 		
-		
-		
 		System.out.println("all tests passed");
 		//scalability_experiment();
 		//rejuvenation_experiment();
-
 		//memory_experiment();
-
 		//experiment_false_positives();
 		//experiment_insertion_speed();
 	}
