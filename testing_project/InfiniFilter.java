@@ -1,14 +1,18 @@
 
 package testing_project;
 
+import java.util.Map.Entry;
+import java.util.TreeMap;
+
 public class InfiniFilter extends QuotientFilter {
 
-	final long empty_fingerprint;
+	long empty_fingerprint;
+	FingerprintGrowthStrategy.FalsePositiveRateExpansion fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.UNIFORM;
 
 	InfiniFilter(int power_of_two, int bits_per_entry) {
 		super(power_of_two, bits_per_entry);
 		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);
-		empty_fingerprint = (1 << bits_per_entry - 3) - 2 ;
+		empty_fingerprint = (1 << fingerprintLength) - 2 ;
 	}
 	
 	protected boolean compare(int index, long fingerprint) {
@@ -21,45 +25,7 @@ public class InfiniFilter extends QuotientFilter {
 		long adjusted_saught_fp = fingerprint & mask;
 		return existing_fingerprint == adjusted_saught_fp;
 	}
-	
-	/*public String get_pretty_str(int index) {
-		StringBuffer sbr = new StringBuffer();
 		
-		int age = parse_unary_old(index);
-		
-		for (int i = index * bitPerEntry; i < (index + 1) * bitPerEntry; i++) {
-			int remainder = i % bitPerEntry;
-
-			if (remainder == 3) {
-				sbr.append(" ");
-			}
-			sbr.append(filter.get(i) ? "1" : "0");
-			int n = bitPerEntry - i + index * bitPerEntry - 2;
-			if (n == age) {
-				sbr.append(" ");
-			}
-		}
-		sbr.append("\n");
-		return sbr.toString();
-	}*/
-	
-	
-	// this is the older emthod for parsing the unary code using a loop
-	/*int parse_unary_old(int slot_index) {
-		int starting_bit = bitPerEntry * (slot_index + 1) - 1;
-		int ending_bit = bitPerEntry * slot_index;		
-		int counter = 0;
-		for (int i = starting_bit; i >= ending_bit; i--) {
-			if (!filter.get(i)) {
-				break;
-			}
-			counter++;
-			
-		}
-		return counter;
-	}*/
-
-	
 	// this is the newer version of parsing the unary encoding. 
 	// it is done using just binary operations and no loop. 
 	// however, this optimization didn't yield much performance benefit 
@@ -147,32 +113,92 @@ public class InfiniFilter extends QuotientFilter {
 		insertee.insert(empty_fingerprint, (int)bucket2, false);
 	}
 	
+	private static int prep_unary_mask(int prev_FP_size, int new_FP_size) {
+		int fingerprint_diff = new_FP_size - prev_FP_size;
+		
+		int unary_mask = 0;
+		for (int i = 0; i < fingerprint_diff + 1; i++) {
+			unary_mask <<= 1;
+			unary_mask |= 1;
+		}
+		unary_mask <<= new_FP_size - 1 - fingerprint_diff;
+		return unary_mask;
+	}
+	
 	void expand() {
-		QuotientFilter new_qf = new QuotientFilter(power_of_two_size + 1, bitPerEntry);
-		Iterator it = new Iterator(this);
-
+		int new_fingerprint_size = FingerprintGrowthStrategy.get_new_fingerprint_size(original_fingerprint_size, num_expansions, fprStyle);
+		//System.out.println("FP size: " + new_fingerprint_size);
+		QuotientFilter new_qf = new QuotientFilter(power_of_two_size + 1, new_fingerprint_size + 3);
+		Iterator it = new Iterator(this);		
+		int unary_mask = prep_unary_mask(fingerprintLength, new_fingerprint_size);
+		
+		long current_empty_fingerprint = empty_fingerprint;
+		empty_fingerprint = (1 << new_fingerprint_size) - 2; // One 
+				
 		while (it.next()) {
 			int bucket = it.bucket_index;
 			long fingerprint = it.fingerprint;
-			if (it.fingerprint != empty_fingerprint) {
+			if (it.fingerprint != current_empty_fingerprint) {
 				long pivot_bit = (1 & fingerprint);	// getting the bit of the fingerprint we'll be sacrificing 
 				long bucket_mask = pivot_bit << power_of_two_size; // setting this bit to the proper offset of the slot address field
-				long updated_bucket = bucket | bucket_mask;	// addding the pivot bit to the slot address field
+				long updated_bucket = bucket | bucket_mask;	 // adding the pivot bit to the slot address field
 				long chopped_fingerprint = fingerprint >> 1; // getting rid of this pivot bit from the fingerprint 
-				int unary_mask = (1 << (fingerprintLength - 1));
 				long updated_fingerprint = chopped_fingerprint | unary_mask;				
 				new_qf.insert(updated_fingerprint, (int)updated_bucket, false);
+				
+				/*System.out.println(bucket); 
+				System.out.print("bucket1      : ");
+				print_int_in_binary( bucket, power_of_two_size);
+				System.out.print("fingerprint1 : ");
+				print_int_in_binary((int) fingerprint, fingerprintLength);
+				System.out.print("pivot        : ");
+				print_int_in_binary((int) pivot_bit, 1);
+				System.out.print("mask        : ");
+				print_int_in_binary((int) unary_mask, new_fingerprint_size);
+				System.out.print("bucket2      : ");
+				print_int_in_binary((int) updated_bucket, power_of_two_size + 1);
+				System.out.print("fingerprint2 : ");
+				print_int_in_binary((int) updated_fingerprint, new_fingerprint_size);
+				System.out.println();
+				System.out.println();*/
 			}
 			else {
 				handle_empty_fingerprint(it.bucket_index, new_qf);
 			}
 		}
 		
+		empty_fingerprint = (1 << new_fingerprint_size) - 2 ;
+		fingerprintLength = new_fingerprint_size;
+		bitPerEntry = new_fingerprint_size + 3;
 		filter = new_qf.filter;
 		power_of_two_size++;
 		num_extension_slots += 2;
 		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);
-
+	}
+	
+	public void print_filter_summary() {	
+		super.print_filter_summary();
+		
+		TreeMap<Integer, Integer> histogram = new TreeMap<Integer, Integer>();
+		
+		for (int i = 0; i <= fingerprintLength; i++) {
+			histogram.put(i, 0);
+		}
+		
+		for (int i = 0; i < get_logical_num_slots_plus_extensions(); i++) {
+			int age = parse_unary(i); 
+			int count = histogram.get(age);
+			histogram.put(age, count + 1);
+		}
+		
+		System.out.println("fingerprint sizes histogram");
+		System.out.println("\tFP size" + "\t" + "count");
+		for ( Entry<Integer, Integer> e : histogram.entrySet()) {
+			int fingerprint_size = fingerprintLength - e.getKey() - 1;
+			if (fingerprint_size >= 0) {
+				System.out.println("\t" + fingerprint_size + "\t" + e.getValue());
+			}
+		}
 		
 	}
 

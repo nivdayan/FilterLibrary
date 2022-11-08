@@ -29,6 +29,9 @@ public class QuotientFilter {
 	double avg_run_length;
 	double avg_cluster_length;
 	
+	int original_fingerprint_size; 
+	int num_expansions;
+	
 	
 	QuotientFilter(int power_of_two, int bits_per_entry) {
 		// we actually allocate a quotient filter twice as needed for now to easily absorb overflows
@@ -47,7 +50,14 @@ public class QuotientFilter {
 		max_entries_before_expansion = (int) (init_size * expansion_threshold);
 		expand_autonomously = false;
 		is_full = false;
+		
+		original_fingerprint_size = fingerprintLength;
+		num_expansions = 0;
 		//measure_num_bits_per_entry();
+	}
+	
+	boolean rejuvenate(int key) {
+		return false;
 	}
 	
 	Bitmap make_filter(int init_size, int bits_per_entry) {
@@ -222,10 +232,12 @@ public class QuotientFilter {
 		int slots = (1 << power_of_two_size) + num_extension_slots;
 		int num_bits = slots * bitPerEntry;
 		
+		
 		System.out.println("slots:\t" + slots);
 		System.out.println("entries:\t" + num_entries);
 		System.out.println("bits\t:" + num_bits);
 		System.out.println("bits/entry\t:" + num_bits / (double)num_entries);
+		System.out.println("FP length:\t" + fingerprintLength);
 		
 		compute_statistics();
 		
@@ -403,7 +415,7 @@ public class QuotientFilter {
 		
 		int current_index = start_of_this_new_run;
 		boolean is_this_slot_empty;
-		boolean finished_first_run = false;
+		//boolean finished_first_run = false;
 		boolean temp_continuation = false;
 		
 		//long long_fp = convert(fingerprint);
@@ -688,6 +700,7 @@ public class QuotientFilter {
 		}
 		
 		if (expand_autonomously && num_existing_entries >= max_entries_before_expansion) {
+			num_expansions++;
 			expand();
 		}
 		

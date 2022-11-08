@@ -1,6 +1,5 @@
 package testing_project;
 
-import java.util.BitSet;
 
 public class BitSacrificer extends QuotientFilter {
 
@@ -19,7 +18,7 @@ public class BitSacrificer extends QuotientFilter {
 		
 		QuotientFilter new_qf = new QuotientFilter(power_of_two_size + 1, bitPerEntry - 1);
 		Iterator it = new Iterator(this);
-		long start = System.nanoTime();
+		//long start = System.nanoTime();
 		
 		while (it.next()) {
 			int bucket = it.bucket_index;
@@ -46,8 +45,8 @@ public class BitSacrificer extends QuotientFilter {
 			new_qf.insert(updated_fingerprint, (int)updated_bucket, false);
 		}
 		
-		long end = System.nanoTime();
-		double time = (end - start) / 1000;
+		//long end = System.nanoTime();
+		//double time = (end - start) / 1000;
 		//System.out.println("time BS  " + time + "   " + new_qf.get_num_entries(false));
 		
 		filter = new_qf.filter;

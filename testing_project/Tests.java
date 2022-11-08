@@ -573,11 +573,12 @@ public class Tests {
 		InfiniFilter qf = new InfiniFilter(num_entries_power, bits_per_entry);
 		qf.expand_autonomously = true;
 		int max_key = (int)Math.pow(2, num_entries_power + qf.fingerprintLength + 1);
+		//int max_key = (int)Math.pow(2, num_entries_power + 4 );
 		for (int i = 0; i < max_key; i++) {
 			qf.insert(i, false);
 		}
 
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < max_key; i++) {
 			boolean found = qf.search(i);
 			if (!found) {
 				System.out.println("not found entry " + i);
@@ -604,9 +605,10 @@ public class Tests {
 	static public void test12() {
 		int bits_per_entry = 7;
 		int num_entries_power = 3;		
-		ChainedInfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
+		InfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
 		qf.expand_autonomously = true;
-		int max_key = (int)Math.pow(2, num_entries_power + qf.fingerprintLength * 2 + 1 );
+		qf.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.UNIFORM;
+		int max_key = (int)Math.pow(2, num_entries_power + qf.fingerprintLength * 4 + 1 );
 		for (int i = 0; i < max_key; i++) {
 			qf.insert(i, false);
 		}
@@ -631,6 +633,7 @@ public class Tests {
 			System.exit(1);
 		}
 		//qf.pretty_print();
+		//qf.print_filter_summary();
 	}
 
 	// here we test the rejuvenation operation of InfiniFilter
