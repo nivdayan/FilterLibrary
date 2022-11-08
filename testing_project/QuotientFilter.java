@@ -34,9 +34,6 @@ public class QuotientFilter {
 	
 	
 	QuotientFilter(int power_of_two, int bits_per_entry) {
-		// we actually allocate a quotient filter twice as needed for now to easily absorb overflows
-		// this comes from the constraint that in java, BitSet is always a power of 2 bits
-		// in a future C++ implementation, we would just have approx 2*log(N) extra slots
 		power_of_two_size = power_of_two;
 		bitPerEntry = bits_per_entry; 
 		fingerprintLength = bits_per_entry - 3;
@@ -80,14 +77,13 @@ public class QuotientFilter {
 		is_full = true;
 	}
 	
+	// measures the number of bits per entry for the filter 
 	double measure_num_bits_per_entry() {
-		/*double num_entries = get_num_entries();
-		int init_size = 1 << power_of_two_size ;
-		int num_bits = bitPerEntry * init_size + num_extension_slots * bitPerEntry;
-		double bits_per_entry = num_bits / num_entries ;*/
 		return measure_num_bits_per_entry(this, new ArrayList<QuotientFilter>());
 	}
 	
+	// measures the number of bits per entry for the filter 
+	// it takes an array of filters as a parameter since some filter implementations here consist of multiple filter objects
 	protected static double measure_num_bits_per_entry(QuotientFilter current, ArrayList<QuotientFilter> other_filters) {
 		//System.out.println("--------------------------");
 		//current.print_filter_summary();
@@ -105,17 +101,15 @@ public class QuotientFilter {
 			init_size = 1 << q.power_of_two_size;
 			num_bits += q.bitPerEntry * init_size + q.num_extension_slots * q.bitPerEntry;
 		}
-		
 		//System.out.println("total entries: \t\t" + num_entries);
 		//System.out.println("total bits: \t\t" + num_bits);
 		double bits_per_entry = num_bits / num_entries;
-
 		//System.out.println("total bits/entry: \t" + bits_per_entry);
 		//System.out.println();
-
  		return bits_per_entry;
 	}
 	
+	// scans the quotient filter and returns the number of non-empty slots
 	int get_num_entries(boolean include_all_internal_filters) {
 		int slots = get_physcial_num_slots();
 		int num_entries = 0;
@@ -127,6 +121,7 @@ public class QuotientFilter {
 		return num_entries;
 	}
 	
+	// returns the fraction of occupied slots in the filter
 	double get_utilization() {
 		int num_logical_slots = 1 << power_of_two_size;
 		int num_entries = get_num_entries(false);
@@ -138,14 +133,17 @@ public class QuotientFilter {
 		return filter.size() / bitPerEntry;
 	}
 	
+	// returns the number of physical slots in the filter (including the extention/buffer slots at the end)
 	public int get_logical_num_slots_plus_extensions() {
 		return (1 << power_of_two_size) + num_extension_slots;
 	}
 	
+	// returns the number of slots in the filter without the extension/buffer slots
 	public int get_logical_num_slots() {
 		return 1 << power_of_two_size;
 	}
 	
+	// sets the metadata flag bits for a given slot index
 	void modify_slot(boolean is_occupied, boolean is_continuation, boolean is_shifted, 
 			int index) {
 		set_occupied(index, is_occupied);
@@ -153,13 +151,13 @@ public class QuotientFilter {
 		set_shifted(index, is_shifted);
 	}
 	
+	// sets the fingerprint for a given slot index
 	void set_fingerprint(int index, long fingerprint) {
 		filter.setFromTo(index * bitPerEntry + 3, index * bitPerEntry + 3 + fingerprintLength, fingerprint);
-		/*for (int i = index * bitPerEntry + 3, j = 0; i < index * bitPerEntry + 3 + fingerprintLength; i++, j++) {
-			filter.set(i, get_fingerprint_bit(j, fingerprint));
-		}*/
 	}
 	
+	// print a nice representation of the filter that can be understood. 
+	// if vertical is on, each line will represent a slot
 	public String get_pretty_str(boolean vertical) {
 		StringBuffer sbr = new StringBuffer();
 		
@@ -187,60 +185,44 @@ public class QuotientFilter {
 		return sbr.toString();
 	}
 	
+	// print a nice representation of the filter that can be humanly read. 
 	public void pretty_print() {	
 		System.out.print(get_pretty_str(true));
 	}
 
-	
+	// return a fingerprint in a given slot index
 	long get_fingerprint(int index) {
 		return filter.getFromTo(index * bitPerEntry + 3, index * bitPerEntry + 3 + fingerprintLength);
 	}
 	
+	// return an entire slot representation, including metadata flags and fingerprint
 	long get_slot(int index) {
 		return filter.getFromTo(index * bitPerEntry, (index + 1) * bitPerEntry);
 	}
 	
-	void print_fingerprint(BitSet fp) {
-		for (int i = 0; i < fingerprintLength; i++) {
-			System.out.print(fp.get(i) ? "1" : "0");
-		}
-		System.out.println();
-	}
-	
+	// compare a fingerprint input to the fingerprint in some slot index
 	protected boolean compare(int index, long fingerprint) {
 		return get_fingerprint(index) == fingerprint;
-		/*for (int i = index * bitPerEntry + 3, j = 0; i < index * bitPerEntry + 3 + fingerprintLength; i++, j++) {
-			if (filter.get(i) != get_fingerprint_bit(j, fingerprint)) {
-				return false;
-			}
-		}
-		return true; */
 	}
 	
-	
+	// modify the flags and fingerprint of a given slot
 	void modify_slot(boolean is_occupied, boolean is_continuation, boolean is_shifted, 
 			int index, long fingerprint) {
 		modify_slot(is_occupied, is_continuation, is_shifted, index);
 		set_fingerprint(index, fingerprint);
 	}
 	
-
-	
+	// summarize some statistical measures about the filter
 	public void print_filter_summary() {	
 		int num_entries = get_num_entries(false);
-		
 		int slots = (1 << power_of_two_size) + num_extension_slots;
 		int num_bits = slots * bitPerEntry;
-		
-		
 		System.out.println("slots:\t" + slots);
 		System.out.println("entries:\t" + num_entries);
 		System.out.println("bits\t:" + num_bits);
 		System.out.println("bits/entry\t:" + num_bits / (double)num_entries);
 		System.out.println("FP length:\t" + fingerprintLength);
-		
-		compute_statistics();
-		
+		compute_statistics();	
 		System.out.println("num runs: \t\t" + num_runs);
 		System.out.println("avg run length: \t" + avg_run_length);
 		System.out.println("num clusters: \t\t" + num_clusters);
@@ -275,6 +257,8 @@ public class QuotientFilter {
 		return !is_occupied(index) && !is_continuation(index) && !is_shifted(index);
 	}
 	
+	// scan the cluster leftwards until finding the start of the cluster and returning its slot index
+	// used by deletes
 	int find_cluster_start(int index) {
 		int current_index = index;
 		while (is_shifted(current_index)) {
@@ -283,32 +267,30 @@ public class QuotientFilter {
 		return current_index;
 	}
 
-	
+	// given a canonical slot A, finds the actual index B of where the run belonging to slot A now resides
+	// since the run might have been shifted to the right due to collisions
 	int find_run_start(int index) {
 		int current_index = index;
-		int num_runs = 1;
+		int runs_to_skip_counter = 1;
 		while (is_shifted(current_index)) {
 			if (is_occupied(current_index)) {
-				num_runs++;
+				runs_to_skip_counter++;
 			}
 			current_index--;
-			//System.out.println("current_index  " + current_index);
 		}
 		
 		while (true) {
 			if (!is_continuation(current_index)) {
-				num_runs--;
-				if (num_runs == 0) {
+				runs_to_skip_counter--;
+				if (runs_to_skip_counter == 0) {
 					return current_index;
 				}
 			}
 			current_index++;
-			//System.out.println("current_index  " + current_index);
 		}
-		//System.out.println("current_index  " + current_index);
 	}
 	
-	// returns the index of the entry if found, -1 otherwise
+	// given the start of a run, scan the run and return the index of the first matching fingerprint
 	int find_first_fingerprint_in_run(int index, long fingerprint) {
 		assert(!is_continuation(index));
 		do {
@@ -335,27 +317,27 @@ public class QuotientFilter {
 		return matching_fingerprint_index; 
 	}
 	
-	// find end of run index
+	// given the start of a run, find the last slot index that still belongs to this run
 	int find_run_end(int index) {
-		//assert(!is_continuation(index));
 		do {
 			index++;
 		} while (is_continuation(index));
 		return index - 1; 
 	}
-		
+	
+	// given a canonical index slot and a fingerprint, find the relevant run and check if there is a matching fingerprint within it
 	boolean search(long fingerprint, int index) {
 		boolean does_run_exist = is_occupied(index);
 		if (!does_run_exist) {
 			return false;
 		}
 		int run_start_index = find_run_start(index);
-		//long long_fp = convert(fingerprint);
 		int found_index = find_first_fingerprint_in_run(run_start_index, fingerprint);
 		return found_index > -1;
 	}
 	
-	// Used for testing
+	// Given a canonical slot index, find the corresponding run and return all fingerprints in the run.
+	// This method is only used for testing purposes.
 	Set<Long> get_all_fingerprints(int bucket_index) {
 		boolean does_run_exist = is_occupied(bucket_index);
 		HashSet<Long> set = new HashSet<Long>();
@@ -370,12 +352,14 @@ public class QuotientFilter {
 		return set;
 	}
 	
+	// Swaps the fingerprint in a given slot with a new one. Return the pre-existing fingerprint
 	long swap_fingerprints(int index, long new_fingerprint) {
 		long existing = get_fingerprint(index);
 		set_fingerprint(index, new_fingerprint);
 		return existing;
 	}
 	
+	// finds the first empty slot after the given slot index
 	int find_first_empty_slot(int index) {
 		while (!is_slot_empty(index)) {
 			index++;
@@ -383,6 +367,7 @@ public class QuotientFilter {
 		return index;
 	}
 	
+	// return the first slot to the right where the current run starting at the index parameter ends
 	int find_new_run_location(int index) {
 		if (!is_slot_empty(index)) {
 			index++;
@@ -393,60 +378,49 @@ public class QuotientFilter {
 		return index;
 	}
 	
-	boolean insert_new_run(int index, long long_fp) {
-		int first_empty_slot = find_first_empty_slot(index);
-		int run_start_index = find_run_start(index);
-		int start_of_this_new_run = find_new_run_location(run_start_index);
-		//System.out.println(first_empty_slot + "  " + start_of_this_new_run);
-
-		//print_important_bits();
+	boolean insert_new_run(int canonical_slot, long long_fp) {
+		int first_empty_slot = find_first_empty_slot(canonical_slot); // finds the first empty slot to the right of the canonical slot that is empty
+		int preexisting_run_start_index = find_run_start(canonical_slot); // scans the cluster leftwards and then to the right until reaching our run's would be location
+		int start_of_this_new_run = find_new_run_location(preexisting_run_start_index); // If there is already a run at the would-be location, find its end and insert the new run after it
+		boolean slot_initially_empty = is_slot_empty(start_of_this_new_run); 
 		
-		boolean slot_initially_empty = is_slot_empty(start_of_this_new_run);
-		set_occupied(index, true);
-		if (first_empty_slot != index) {
+		// modify some metadata flags to mark the new run
+		set_occupied(canonical_slot, true);
+		if (first_empty_slot != canonical_slot) {
 			set_shifted(start_of_this_new_run, true);
 		}
 		set_continuation(start_of_this_new_run, false);
+		
+		// if the slot was initially empty, we can just terminate, as there is nothing to push to the right
 		if (slot_initially_empty) {
 			set_fingerprint(start_of_this_new_run, long_fp);
 			num_existing_entries++;
 			return true; 
 		}
 		
+		// push all entries one slot to the right
+		// if we inserted this run in the middle of a cluster
 		int current_index = start_of_this_new_run;
 		boolean is_this_slot_empty;
-		//boolean finished_first_run = false;
 		boolean temp_continuation = false;
-		
-		//long long_fp = convert(fingerprint);
-		
 		do {
-			
 			if (current_index >= get_logical_num_slots_plus_extensions()) {
 				return false;
 			}
 			
 			is_this_slot_empty = is_slot_empty(current_index);
 			long_fp = swap_fingerprints(current_index, long_fp);
-			//System.out.println();
 
 			if (current_index > start_of_this_new_run) {
 				set_shifted(current_index, true);
 			}
 			
-			/*if (current_index > start_of_this_new_run && !finished_first_run && !is_continuation(current_index)) {
-				finished_first_run = true;
-				set_continuation(current_index, false);
-			}
-			else if (finished_first_run) { */
 			if (current_index > start_of_this_new_run) {
 				boolean current_continuation = is_continuation(current_index);
 				set_continuation(current_index, temp_continuation);
 				temp_continuation = current_continuation;
 			}
-
 			current_index++;
-			//is_new_run = !is_continuation(current_index);
 		} while (!is_this_slot_empty);
 		num_existing_entries++;
 		return true; 
@@ -456,7 +430,6 @@ public class QuotientFilter {
 		long long_fp = convert(fingerprint);
 		return insert(long_fp, index, insert_only_if_no_match);
 	}
-
 	
 	boolean insert(long long_fp, int index, boolean insert_only_if_no_match) {
 		if (index >= get_logical_num_slots_plus_extensions()) {
@@ -475,30 +448,24 @@ public class QuotientFilter {
 				return false; 
 			}
 		} 
-				
 		return insert_fingerprint_and_push_all_else(long_fp, run_start_index);
-		//System.out.println("filter size: " + filter.size() + " bits");
 	}
 	
+	// insert an fingerprint as the first fingerprint of the new run and push all other entries in the cluster to the right.
 	boolean insert_fingerprint_and_push_all_else(long long_fp, int run_start_index) {
-		
 		int current_index = run_start_index;
 		boolean is_this_slot_empty;
 		boolean finished_first_run = false;
 		boolean temp_continuation = false;
 				
 		do {
-			
 			if (current_index >= get_logical_num_slots_plus_extensions()) {	 
 				return false;
 			}
 			is_this_slot_empty = is_slot_empty(current_index);
-			//long_fp = swap_fingerprints(current_index, long_fp);  before we swapped here. but we changed it to keep older entries appearing first in the run. This allows queries to match more quickly on average.
-
 			if (current_index > run_start_index) {			
 				set_shifted(current_index, true);
 			}
-			
 			if (current_index > run_start_index && !finished_first_run && !is_continuation(current_index)) {	
 				finished_first_run = true;
 				set_continuation(current_index, true);
@@ -510,7 +477,6 @@ public class QuotientFilter {
 				temp_continuation = current_continuation;
 				long_fp = swap_fingerprints(current_index, long_fp);
 			}
-
 			current_index++;
 		} while (!is_this_slot_empty);
 		num_existing_entries++;
@@ -653,14 +619,6 @@ public class QuotientFilter {
 		int fingerprint_mask = (1 << fingerprintLength) - 1;
 		fingerprint_mask = fingerprint_mask << power_of_two_size;
 		int fingerprint = (large_hash & fingerprint_mask) >> power_of_two_size;
-		/*BitSet fingerprint_bs = new BitSet(fingerprintLength);
-		for (int i = 0; i < fingerprintLength; i++) {
-			int mask = (int)Math.pow(2, i);
-			int masked = fingerprint & mask;
-			boolean val = masked > 0;
-			fingerprint_bs.set(i, val);
-			//System.out.println(val);
-		}*/
 		return fingerprint;
 	}
 	
@@ -691,7 +649,6 @@ public class QuotientFilter {
 		long fingerprint = gen_fingerprint(large_hash);
 
 		boolean success = insert(fingerprint, slot_index, false);
-		//if (!success) {
 		if (!success) {
 			System.out.println("insertion failure");
 			System.out.println(input + "\t" + slot_index + "\t" + get_fingerprint_str(fingerprint, fingerprintLength));
@@ -808,11 +765,8 @@ public class QuotientFilter {
 				current_run_length++;
 			}
 		}
-		
-		 avg_run_length = sum_run_lengths / num_runs;
-		 avg_cluster_length = sum_cluster_lengths / num_clusters;
-
-
+		avg_run_length = sum_run_lengths / num_runs;
+		avg_cluster_length = sum_cluster_lengths / num_clusters;
 	}
 	
 }
