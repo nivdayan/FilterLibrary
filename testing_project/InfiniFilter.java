@@ -1,9 +1,6 @@
 
 package testing_project;
 
-import java.util.Map.Entry;
-import java.util.TreeMap;
-
 public class InfiniFilter extends QuotientFilter {
 
 	long empty_fingerprint;
@@ -176,7 +173,7 @@ public class InfiniFilter extends QuotientFilter {
 		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);
 	}
 	
-	public void print_filter_summary() {	
+	/*public void print_filter_summary() {	
 		super.print_filter_summary();
 		
 		TreeMap<Integer, Integer> histogram = new TreeMap<Integer, Integer>();
@@ -184,6 +181,7 @@ public class InfiniFilter extends QuotientFilter {
 		for (int i = 0; i <= fingerprintLength; i++) {
 			histogram.put(i, 0);
 		}
+		
 		
 		for (int i = 0; i < get_logical_num_slots_plus_extensions(); i++) {
 			int age = parse_unary(i); 
@@ -193,13 +191,13 @@ public class InfiniFilter extends QuotientFilter {
 		
 		System.out.println("fingerprint sizes histogram");
 		System.out.println("\tFP size" + "\t" + "count");
-		for ( Entry<Integer, Integer> e : histogram.entrySet()) {
+		for ( Entry<Integer, Integer> e : histogram.entrySet() ) {
 			int fingerprint_size = fingerprintLength - e.getKey() - 1;
 			if (fingerprint_size >= 0) {
 				System.out.println("\t" + fingerprint_size + "\t" + e.getValue());
 			}
 		}
 		
-	}
+	}*/
 
 }
