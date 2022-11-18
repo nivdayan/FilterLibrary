@@ -1,5 +1,5 @@
 
-package testing_project;
+package filters;
 
 public class InfiniFilter extends QuotientFilter {
 

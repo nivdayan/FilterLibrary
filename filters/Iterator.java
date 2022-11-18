@@ -1,4 +1,4 @@
-package testing_project;
+package filters;
 
 import java.util.LinkedList;
 import java.util.Queue;

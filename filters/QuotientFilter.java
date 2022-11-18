@@ -1,4 +1,4 @@
-package testing_project;
+package filters;
 
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -33,7 +33,7 @@ public class QuotientFilter {
 	int num_expansions;
 	
 	
-	QuotientFilter(int power_of_two, int bits_per_entry) {
+	public QuotientFilter(int power_of_two, int bits_per_entry) {
 		power_of_two_size = power_of_two;
 		bitPerEntry = bits_per_entry; 
 		fingerprintLength = bits_per_entry - 3;
@@ -78,7 +78,7 @@ public class QuotientFilter {
 	}
 	
 	// measures the number of bits per entry for the filter 
-	double measure_num_bits_per_entry() {
+	public double measure_num_bits_per_entry() {
 		return measure_num_bits_per_entry(this, new ArrayList<QuotientFilter>());
 	}
 	
@@ -110,7 +110,7 @@ public class QuotientFilter {
 	}
 	
 	// scans the quotient filter and returns the number of non-empty slots
-	int get_num_entries(boolean include_all_internal_filters) {
+	public int get_num_entries(boolean include_all_internal_filters) {
 		int slots = get_physcial_num_slots();
 		int num_entries = 0;
 		for (int i = 0; i < slots; i++) {
@@ -122,7 +122,7 @@ public class QuotientFilter {
 	}
 	
 	// returns the fraction of occupied slots in the filter
-	double get_utilization() {
+	public double get_utilization() {
 		int num_logical_slots = 1 << power_of_two_size;
 		int num_entries = get_num_entries(false);
 		double util = num_entries / (double) num_logical_slots;
@@ -640,7 +640,7 @@ public class QuotientFilter {
 
 	}
 	
-	boolean insert(int input, boolean insert_only_if_no_match) {
+	public boolean insert(int input, boolean insert_only_if_no_match) {
 		if (is_full) {
 			return false;
 		}
@@ -649,12 +649,12 @@ public class QuotientFilter {
 		long fingerprint = gen_fingerprint(large_hash);
 
 		boolean success = insert(fingerprint, slot_index, false);
-		if (!success) {
+		/*if (!success) {
 			System.out.println("insertion failure");
 			System.out.println(input + "\t" + slot_index + "\t" + get_fingerprint_str(fingerprint, fingerprintLength));
 			pretty_print();
 			System.exit(1);
-		}
+		}*/
 		
 		if (expand_autonomously && num_existing_entries >= max_entries_before_expansion) {
 			num_expansions++;
@@ -669,7 +669,7 @@ public class QuotientFilter {
 		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);
 	}
 	
-	boolean delete(int input) {
+	public boolean delete(int input) {
 		int large_hash = HashFunctions.normal_hash(input);
 		int slot_index = get_slot_index(large_hash);
 		long fp_long = gen_fingerprint(large_hash);
@@ -680,7 +680,7 @@ public class QuotientFilter {
 		return success; 
 	}
 	
-	boolean search(int input) {
+	public boolean search(int input) {
 		int large_hash = HashFunctions.normal_hash(input);
 		int slot_index = get_slot_index(large_hash);
 		long fingerprint = gen_fingerprint(large_hash);

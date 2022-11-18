@@ -1,4 +1,4 @@
-package testing_project;
+package filters;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 
-import testing_project.MultiplyingQF.SizeExpansion;
+import filters.MultiplyingQF.SizeExpansion;
 
 public class InfiniFilterExperiments {
 

@@ -1,7 +1,8 @@
 package bitmap_implementations;
 
 import java.util.BitSet;
-import testing_project.QuotientFilter;
+
+import filters.QuotientFilter;
 
 public class BitSetWrapper extends Bitmap {
 

@@ -1,5 +1,5 @@
 
-package testing_project;
+package filters;
 
 
 import java.math.BigInteger;  
@@ -15,9 +15,6 @@ public class HashFunctions {
 		MessageDigest md = MessageDigest.getInstance("SHA-256");  
 		return md.digest(input.getBytes(StandardCharsets.UTF_8));  
 	} 
-
-
-
 
 	public static int hash(String key, HashType ht) {
 		if (ht == HashType.cryptographic) {

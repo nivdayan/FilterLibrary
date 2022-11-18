@@ -1,4 +1,4 @@
-package testing_project;
+package filters;
 
 import java.util.BitSet;
 import java.util.HashSet;

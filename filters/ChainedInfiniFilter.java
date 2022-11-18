@@ -1,4 +1,4 @@
-package testing_project;
+package filters;
 
 import java.util.ArrayList;
 
@@ -75,7 +75,7 @@ public class ChainedInfiniFilter extends InfiniFilter {
 	
 	// The hash function is being computed here for each filter 
 	// However, it's not such an expensive function, so it's probably not a performance issue. 
-	boolean search(int input) {
+	public boolean search(int input) {
 		if (super.search(input)) {
 			return true;
 		}
@@ -177,7 +177,7 @@ public class ChainedInfiniFilter extends InfiniFilter {
 	}
 	
 	
-	boolean delete(int input) {
+	public boolean delete(int input) {
 		int large_hash = HashFunctions.normal_hash(input);
 		int slot_index = get_slot_index(large_hash);
 		long fp_long = gen_fingerprint(large_hash);
@@ -209,7 +209,7 @@ public class ChainedInfiniFilter extends InfiniFilter {
 
 	}
 	
-	double measure_num_bits_per_entry() {
+	public double measure_num_bits_per_entry() {
 		return measure_num_bits_per_entry(this, new ArrayList<QuotientFilter>(older_filters));
 	}
 	

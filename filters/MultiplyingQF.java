@@ -1,4 +1,4 @@
-package testing_project;
+package filters;
 
 import java.util.ArrayList;
 
@@ -22,7 +22,7 @@ public class MultiplyingQF extends QuotientFilter {
 	
 	ArrayList<QuotientFilter> older_filters;
 
-	int get_num_entries(boolean include_all_internal_filters) {
+	public int get_num_entries(boolean include_all_internal_filters) {
 		int num_entries = super.get_num_entries(false);
 		if (!include_all_internal_filters) {
 			return num_entries;
@@ -33,7 +33,7 @@ public class MultiplyingQF extends QuotientFilter {
 		return num_entries; 
 	}
 	
-	double get_utilization() {
+	public double get_utilization() {
 		int num_slots = 1 << power_of_two_size;
 		for (QuotientFilter q : older_filters) {
 			num_slots += 1 << q.power_of_two_size;
@@ -43,7 +43,7 @@ public class MultiplyingQF extends QuotientFilter {
 		return utilization;
 	}
 	
-	double measure_num_bits_per_entry() {
+	public double measure_num_bits_per_entry() {
 		return measure_num_bits_per_entry(this, older_filters);
 	}
 	
@@ -66,7 +66,7 @@ public class MultiplyingQF extends QuotientFilter {
 	
 	// The hash function is being computed here for each filter 
 	// However, it's not such an expensive function, so it's probably not a performance issue. 
-	boolean search(int input) {
+	public boolean search(int input) {
 		if (super.search(input)) {
 			return true;
 		}

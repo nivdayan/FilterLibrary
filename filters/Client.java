@@ -1,4 +1,4 @@
-package testing_project;
+package filters;
 
 public class Client {
 
