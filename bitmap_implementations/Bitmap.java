@@ -9,16 +9,16 @@ public abstract class Bitmap {
 		bitPerEntry = bits;
 	}
 	
-	public abstract int size();
-	public abstract void set(int bit_index, boolean value);
-	public abstract void setFromTo(int from, int to, long value);
-	public abstract boolean get(int bit_index);
-	public abstract long getFromTo(int from, int to);
+	public abstract long size();
+	public abstract void set(long bit_index, boolean value);
+	public abstract void setFromTo(long from, long to, long value);
+	public abstract boolean get(long bit_index);
+	public abstract long getFromTo(long from, long to);
 	
 	
 	public void print_important_bits() {	
-		for (int i = 0; i < size(); i++) {
-			int remainder = i % bitPerEntry;
+		for (long i = 0; i < size(); i++) {
+			long remainder = i % bitPerEntry;
 			if (remainder == 0) {
 				System.out.print(" ");
 			}
@@ -50,7 +50,7 @@ public abstract class Bitmap {
 	
 	
 	public void print() {	
-		for (int i = 0; i < size(); i++) {
+		for (long i = 0; i < size(); i++) {
 			System.out.print(get(i) ? "1" : "0");
 		}
 		System.out.println();

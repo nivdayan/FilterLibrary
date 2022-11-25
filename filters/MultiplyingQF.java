@@ -49,6 +49,7 @@ public class MultiplyingQF extends QuotientFilter {
 	
 	void expand() {
 		QuotientFilter placeholder = new QuotientFilter(power_of_two_size, bitPerEntry, filter);
+		placeholder.ht = this.ht;
 		older_filters.add(placeholder);
 		placeholder.num_existing_entries = num_existing_entries;
 		num_existing_entries = 0;
@@ -66,7 +67,7 @@ public class MultiplyingQF extends QuotientFilter {
 	
 	// The hash function is being computed here for each filter 
 	// However, it's not such an expensive function, so it's probably not a performance issue. 
-	public boolean search(int input) {
+	public boolean search(long input) {
 		if (super.search(input)) {
 			return true;
 		}

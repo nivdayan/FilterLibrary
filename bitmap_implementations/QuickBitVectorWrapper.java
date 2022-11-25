@@ -13,12 +13,12 @@ public class QuickBitVectorWrapper extends Bitmap {
 	}
 
 	@Override
-	public int size() {
+	public long size() {
 		return bs.length * Long.BYTES * 8;
 	}
 
 	@Override
-	public void set(int bit_index, boolean value) {
+	public void set(long bit_index, boolean value) {
 		if (value) {
 			QuickBitVector.set(bs, bit_index);
 		}
@@ -28,17 +28,17 @@ public class QuickBitVectorWrapper extends Bitmap {
 	}
 
 	@Override
-	public void setFromTo(int from, int to, long value) {
+	public void setFromTo(long from, long to, long value) {
 		QuickBitVector.putLongFromTo(bs, value, from, to - 1);
 	}
 
 	@Override
-	public boolean get(int bit_index) {
+	public boolean get(long bit_index) {
 		return QuickBitVector.get(bs, bit_index);
 	}
 
 	@Override
-	public long getFromTo(int from, int to) {
+	public long getFromTo(long from, long to) {
 		return QuickBitVector.getLongFromTo(bs, from, to - 1);
 	}
 	

@@ -50,8 +50,8 @@ protected QuickBitVector() {
  * @param to index of end bit (inclusive).
  * @return the bit mask having all bits between <tt>from</tt> and <tt>to</tt> set to 1.
  */
-public static final long bitMaskWithBitsSetFromTo(int from, int to) {
-	return pows[to-from+1] << from;
+public static final long bitMaskWithBitsSetFromTo(long from, long to) {
+	return pows[(int)(to-from+1)] << from;
 
 	// This turned out to be slower:
 	// 0xffffffffffffffffL == ~0L == -1L == all 64 bits set.
@@ -64,8 +64,8 @@ public static final long bitMaskWithBitsSetFromTo(int from, int to) {
  * @param     bits   the bitvector.
  * @param     bitIndex   the index of the bit to be cleared.
  */
-public static void clear(long[] bits, int bitIndex) {
-	bits[bitIndex >> ADDRESS_BITS_PER_UNIT] &= ~(1L << (bitIndex & BIT_INDEX_MASK));
+public static void clear(long[] bits, long bitIndex) {
+	bits[(int)(bitIndex >> ADDRESS_BITS_PER_UNIT)] &= ~(1L << (bitIndex & BIT_INDEX_MASK));
 }
 /**
  * Returns from the bitvector the value of the bit with the specified index.
@@ -76,8 +76,8 @@ public static void clear(long[] bits, int bitIndex) {
  * @param     bitIndex   the bit index.
  * @return    the value of the bit with the specified index.
  */
-public static boolean get(long[] bits, int bitIndex) {
-	return ((bits[bitIndex >> ADDRESS_BITS_PER_UNIT] & (1L << (bitIndex & BIT_INDEX_MASK))) != 0);
+public static boolean get(long[] bits, long bitIndex) {
+	return ((bits[(int)(bitIndex >> ADDRESS_BITS_PER_UNIT)] & (1L << (bitIndex & BIT_INDEX_MASK))) != 0);
 }
 /**
  * Returns a long value representing bits of a bitvector from index <tt>from</tt> to index <tt>to</tt>.
@@ -90,13 +90,13 @@ public static boolean get(long[] bits, int bitIndex) {
  * @param to index of end bit (inclusive).
  * @return the specified bits as long value.
  */
-public static long getLongFromTo(long[] bits, int from, int to) {
+public static long getLongFromTo(long[] bits, long from, long to) {
 	if (from>to) return 0L;
 	
-	final int fromIndex = from >> ADDRESS_BITS_PER_UNIT; //equivalent to from/64
-	final int toIndex = to >> ADDRESS_BITS_PER_UNIT;
-	final int fromOffset = from & BIT_INDEX_MASK; //equivalent to from%64
-	final int toOffset = to & BIT_INDEX_MASK;
+	final int fromIndex = (int)(from >> ADDRESS_BITS_PER_UNIT); //equivalent to from/64
+	final int toIndex = (int)(to >> ADDRESS_BITS_PER_UNIT);
+	final int fromOffset = (int)(from & BIT_INDEX_MASK); //equivalent to from%64
+	final int toOffset = (int)(to & BIT_INDEX_MASK);
 	//this is equivalent to the above, but slower:
 	//final int fromIndex=from/BITS_PER_UNIT;
 	//final int toIndex=to/BITS_PER_UNIT;
@@ -147,8 +147,8 @@ static public int leastSignificantBit(int value) {
  * @return    a low level bitvector.
  */
 public static long[] makeBitVector(int size, int bitsPerElement) {
-	int nBits = size*bitsPerElement;
-	int unitIndex = (nBits-1) >> ADDRESS_BITS_PER_UNIT;
+	long nBits = ((long)size)*bitsPerElement;
+	int unitIndex = (int)((nBits-1) >> ADDRESS_BITS_PER_UNIT);
 	long[] bitVector = new long[unitIndex + 1];
 	return bitVector;
 }
@@ -171,7 +171,7 @@ static public int mostSignificantBit(int value) {
 /**
  * Returns the index within the unit that contains the given bitIndex.
  */
-protected static int offset(int bitIndex) {
+protected static long offset(long bitIndex) {
 	return bitIndex & BIT_INDEX_MASK;
 	//equivalent to bitIndex%64
 }
@@ -219,7 +219,7 @@ private static long[] precomputePows() {
  * @param     bitIndex   the index of the bit to be changed.
  * @param     value   the value to be stored in the bit.
  */
-public static void put(long[] bits, int bitIndex, boolean value) {	
+public static void put(long[] bits, long bitIndex, boolean value) {	
 	if (value) 
 		set(bits, bitIndex);
 	else 
@@ -237,13 +237,13 @@ public static void put(long[] bits, int bitIndex, boolean value) {
  * @param from index of start bit (inclusive).
  * @param to index of end bit (inclusive).
  */
-public static void putLongFromTo(long[] bits, long value, int from, int to) {
+public static void putLongFromTo(long[] bits, long value, long from, long to) {
 	if (from>to) return;
 	
-	final int fromIndex=from >> ADDRESS_BITS_PER_UNIT; //equivalent to from/64
-	final int toIndex=to >> ADDRESS_BITS_PER_UNIT;
-	final int fromOffset=from & BIT_INDEX_MASK; //equivalent to from%64
-	final int toOffset=to & BIT_INDEX_MASK;
+	final int fromIndex=(int)(from >> ADDRESS_BITS_PER_UNIT); //equivalent to from/64
+	final int toIndex=(int)(to >> ADDRESS_BITS_PER_UNIT);
+	final int fromOffset=(int)(from & BIT_INDEX_MASK); //equivalent to from%64
+	final int toOffset=(int)(to & BIT_INDEX_MASK);
 	/*
 	this is equivalent to the above, but slower:
 	int fromIndex=from/BITS_PER_UNIT;
@@ -284,13 +284,13 @@ public static void putLongFromTo(long[] bits, long value, int from, int to) {
  * @param     bits   the bitvector.
  * @param     bitIndex   the index of the bit to be set.
  */
-public static void set(long[] bits, int bitIndex) {
-	bits[bitIndex >> ADDRESS_BITS_PER_UNIT] |= 1L << (bitIndex & BIT_INDEX_MASK);           
+public static void set(long[] bits, long bitIndex) {
+	bits[(int)(bitIndex >> ADDRESS_BITS_PER_UNIT)] |= 1L << (bitIndex & BIT_INDEX_MASK);           
 }
 /**
  * Returns the index of the unit that contains the given bitIndex.
  */
-protected static int unit(int bitIndex) {
+protected static long unit(long bitIndex) {
 	return bitIndex >> ADDRESS_BITS_PER_UNIT;
 	//equivalent to bitIndex/64
 }

@@ -75,7 +75,7 @@ public class ChainedInfiniFilter extends InfiniFilter {
 	
 	// The hash function is being computed here for each filter 
 	// However, it's not such an expensive function, so it's probably not a performance issue. 
-	public boolean search(int input) {
+	public boolean search(long input) {
 		if (super.search(input)) {
 			return true;
 		}
@@ -98,6 +98,7 @@ public class ChainedInfiniFilter extends InfiniFilter {
 		//System.out.println("starting expansion " + num_expansions);
 		if (num_expansions == original_fingerprint_size ) { // first time we create a former filter
 			former = new InfiniFilter(power_of_two_size - original_fingerprint_size + 1, original_fingerprint_size + 3);
+			former.ht = this.ht;
 			former.fprStyle = fprStyle;
 			count_until_replacing_former = original_fingerprint_size;
 			
@@ -120,6 +121,7 @@ public class ChainedInfiniFilter extends InfiniFilter {
 			count_until_expanding_former = FP_diff + 1;
 			
 			former = new InfiniFilter(former.power_of_two_size + 1, new_FP_size + 3);
+			former.ht = this.ht;
 			former.original_fingerprint_size = original_fingerprint_size;
 			former.fprStyle = fprStyle;
 			count_until_replacing_former = former.fingerprintLength; 
@@ -148,7 +150,7 @@ public class ChainedInfiniFilter extends InfiniFilter {
 		//System.out.println("finished expanding ------------");
 	}
 	
-	boolean rejuvenate(int key) {
+	boolean rejuvenate(long key) {
 		boolean success = super.rejuvenate(key);
 		if (success) {
 			return true;
@@ -177,8 +179,8 @@ public class ChainedInfiniFilter extends InfiniFilter {
 	}
 	
 	
-	public boolean delete(int input) {
-		int large_hash = HashFunctions.normal_hash(input);
+	public boolean delete(long input) {
+		long large_hash = get_hash(input);
 		int slot_index = get_slot_index(large_hash);
 		long fp_long = gen_fingerprint(large_hash);
 		//System.out.println("deleting  " + input + "\t b " + slot_index + " \t" + get_fingerprint_str(fp_long, fingerprintLength));
