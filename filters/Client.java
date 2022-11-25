@@ -23,7 +23,7 @@ public class Client {
 		Tests.test18(); // testing deletes & rejuv operations
 	
 		System.out.println("all tests passed");
-		//InfiniFilterExperiments.scalability_experiment();
+		InfiniFilterExperiments.scalability_experiment();
 		//InfiniFilterExperiments.rejuvenation_experiment();
 		//InfiniFilterExperiments.memory_experiment();
 		//InfiniFilterExperiments.experiment_false_positives();

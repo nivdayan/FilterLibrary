@@ -5,7 +5,6 @@ import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Set;
 
-import bitmap_implementations.BitSetWrapper;
 import bitmap_implementations.Bitmap;
 import bitmap_implementations.QuickBitVectorWrapper;
 
@@ -58,11 +57,7 @@ public class QuotientFilter {
 	}
 	
 	Bitmap make_filter(int init_size, int bits_per_entry) {
-		boolean use_new_imp = true;
-		if (use_new_imp) {
-			return new QuickBitVectorWrapper(bits_per_entry,  init_size + num_extension_slots);
-		}
-		return new BitSetWrapper(bits_per_entry,  init_size * 2);
+		return new QuickBitVectorWrapper(bits_per_entry,  init_size + num_extension_slots);
 	}
 	
 	QuotientFilter(int power_of_two, int bits_per_entry, Bitmap bitmap) {
@@ -130,7 +125,7 @@ public class QuotientFilter {
 	}
 	
 	public int get_physcial_num_slots() {
-		return filter.size() / bitPerEntry;
+		return (int) filter.size() / bitPerEntry;
 	}
 	
 	// returns the number of physical slots in the filter (including the extention/buffer slots at the end)
@@ -601,6 +596,8 @@ public class QuotientFilter {
 		System.out.println(str);
 	}
 	
+	
+	
 	String get_fingerprint_str(long fp, int length) {
 		String str = "";
 		for (int i = 0; i < length; i++) {
@@ -611,6 +608,7 @@ public class QuotientFilter {
 	
 	int get_slot_index(int large_hash) {
 		int slot_index_mask = (1 << power_of_two_size) - 1;
+		print_int_in_binary(slot_index_mask, 32);
 		int slot_index = large_hash & slot_index_mask;
 		return slot_index;
 	}
@@ -618,6 +616,7 @@ public class QuotientFilter {
 	long gen_fingerprint(int large_hash) {
 		int fingerprint_mask = (1 << fingerprintLength) - 1;
 		fingerprint_mask = fingerprint_mask << power_of_two_size;
+		print_int_in_binary(fingerprint_mask, 32);
 		int fingerprint = (large_hash & fingerprint_mask) >> power_of_two_size;
 		return fingerprint;
 	}
@@ -647,7 +646,12 @@ public class QuotientFilter {
 		int large_hash = HashFunctions.normal_hash(input);
 		int slot_index = get_slot_index(large_hash);
 		long fingerprint = gen_fingerprint(large_hash);
-
+		
+		print_int_in_binary(large_hash, 32);
+		print_int_in_binary(slot_index, 32);
+		print_int_in_binary((int)fingerprint, 32);
+		System.out.println(fingerprint);
+		System.out.println();
 		boolean success = insert(fingerprint, slot_index, false);
 		/*if (!success) {
 			System.out.println("insertion failure");
