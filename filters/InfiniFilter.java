@@ -46,8 +46,8 @@ public class InfiniFilter extends QuotientFilter {
 		return age;
 	}
 	
-	boolean rejuvenate(int key) {
-		int large_hash = HashFunctions.normal_hash(key);
+	boolean rejuvenate(long key) {
+		long large_hash = get_hash(key);
 		long fingerprint = gen_fingerprint(large_hash);
 		int ideal_index = get_slot_index(large_hash);
 		
@@ -89,16 +89,16 @@ public class InfiniFilter extends QuotientFilter {
 		return matching_fingerprint_index; 
 	}
 	
-	long gen_fingerprint(int large_hash) {
-		int fingerprint_mask = (1 << fingerprintLength) - 1;
+	long gen_fingerprint(long large_hash) {
+		long fingerprint_mask = (1 << fingerprintLength) - 1;
 		fingerprint_mask = fingerprint_mask << power_of_two_size;
-		int fingerprint = (large_hash & fingerprint_mask) >> power_of_two_size;
-		int unary_mask = ~(1 << (fingerprintLength - 1));
-		int updated_fingerprint = fingerprint & unary_mask;
+		long fingerprint = (large_hash & fingerprint_mask) >> power_of_two_size;
+		long unary_mask = ~(1 << (fingerprintLength - 1));
+		long updated_fingerprint = fingerprint & unary_mask;
 		/*System.out.println(); 
-		print_int_in_binary(unary_mask, fingerprintLength);
-		print_int_in_binary( fingerprint, fingerprintLength);
-		print_int_in_binary( updated_fingerprint, fingerprintLength);*/
+		print_long_in_binary(unary_mask, fingerprintLength);
+		print_long_in_binary( fingerprint, fingerprintLength);
+		print_long_in_binary( updated_fingerprint, fingerprintLength);*/
 		return updated_fingerprint;
 	}
 	

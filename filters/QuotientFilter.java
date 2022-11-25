@@ -5,6 +5,10 @@ import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Set;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
+
 import bitmap_implementations.Bitmap;
 import bitmap_implementations.QuickBitVectorWrapper;
 
@@ -30,6 +34,7 @@ public class QuotientFilter {
 	
 	int original_fingerprint_size; 
 	int num_expansions;
+	HashType ht;
 	
 	
 	public QuotientFilter(int power_of_two, int bits_per_entry) {
@@ -49,10 +54,11 @@ public class QuotientFilter {
 		
 		original_fingerprint_size = fingerprintLength;
 		num_expansions = 0;
+		ht = HashType.xxh;
 		//measure_num_bits_per_entry();
 	}
 	
-	boolean rejuvenate(int key) {
+	boolean rejuvenate(long key) {
 		return false;
 	}
 	
@@ -125,7 +131,7 @@ public class QuotientFilter {
 	}
 	
 	public int get_physcial_num_slots() {
-		return (int) filter.size() / bitPerEntry;
+		return (int)(filter.size() / bitPerEntry);
 	}
 	
 	// returns the number of physical slots in the filter (including the extention/buffer slots at the end)
@@ -148,7 +154,7 @@ public class QuotientFilter {
 	
 	// sets the fingerprint for a given slot index
 	void set_fingerprint(int index, long fingerprint) {
-		filter.setFromTo(index * bitPerEntry + 3, index * bitPerEntry + 3 + fingerprintLength, fingerprint);
+		filter.setFromTo((long)index * bitPerEntry + 3, (long)index * bitPerEntry + 3 + fingerprintLength, fingerprint);
 	}
 	
 	// print a nice representation of the filter that can be understood. 
@@ -187,7 +193,7 @@ public class QuotientFilter {
 
 	// return a fingerprint in a given slot index
 	long get_fingerprint(int index) {
-		return filter.getFromTo(index * bitPerEntry + 3, index * bitPerEntry + 3 + fingerprintLength);
+		return filter.getFromTo((long)index * bitPerEntry + 3, (long)index * bitPerEntry + 3 + fingerprintLength);
 	}
 	
 	// return an entire slot representation, including metadata flags and fingerprint
@@ -225,27 +231,27 @@ public class QuotientFilter {
 	}
 	
 	boolean is_occupied(int index) {
-		return filter.get(index * bitPerEntry);
+		return filter.get((long)index * bitPerEntry);
 	}
 	
 	boolean is_continuation(int index) {
-		return filter.get(index * bitPerEntry + 1);
+		return filter.get((long)index * bitPerEntry + 1);
 	}
 	
 	boolean is_shifted(int index) {
-		return filter.get(index * bitPerEntry + 2);
+		return filter.get((long)index * bitPerEntry + 2);
 	}
 	
 	void set_occupied(int index, boolean val) {
-		filter.set(index * bitPerEntry, val);
+		filter.set((long)index * bitPerEntry, val);
 	}
 	
 	void set_continuation(int index, boolean val) {
-		filter.set(index * bitPerEntry + 1, val);
+		filter.set((long)index * bitPerEntry + 1, val);
 	}
 	
 	void set_shifted(int index, boolean val) {
-		filter.set(index * bitPerEntry + 2, val);
+		filter.set((long)index * bitPerEntry + 2, val);
 	}
 	
 	boolean is_slot_empty(int index) {
@@ -596,7 +602,15 @@ public class QuotientFilter {
 		System.out.println(str);
 	}
 	
-	
+	void print_long_in_binary(long num, int length) {
+		String str = "";
+		for (int i = 0; i < length; i++) {
+			long mask = (long)Math.pow(2, i);
+			long masked = num & mask;
+			str += masked > 0 ? "1" : "0";
+		}
+		System.out.println(str);
+	}
 	
 	String get_fingerprint_str(long fp, int length) {
 		String str = "";
@@ -606,18 +620,18 @@ public class QuotientFilter {
 		return str;
 	}
 	
-	int get_slot_index(int large_hash) {
+	int get_slot_index(long large_hash) {
 		int slot_index_mask = (1 << power_of_two_size) - 1;
-		print_int_in_binary(slot_index_mask, 32);
-		int slot_index = large_hash & slot_index_mask;
+		int slot_index = ((int)(large_hash)) & slot_index_mask;
+		//System.out.format("\n**get_slot_index(): [total_hash:index_hash:int_index] --> [%016x:%016x:%016x]\n", large_hash, (int)large_hash, slot_index);
 		return slot_index;
 	}
 	
-	long gen_fingerprint(int large_hash) {
-		int fingerprint_mask = (1 << fingerprintLength) - 1;
+	long gen_fingerprint(long large_hash) {
+		long fingerprint_mask = (1 << fingerprintLength) - 1;
 		fingerprint_mask = fingerprint_mask << power_of_two_size;
-		print_int_in_binary(fingerprint_mask, 32);
-		int fingerprint = (large_hash & fingerprint_mask) >> power_of_two_size;
+		long fingerprint = (large_hash & fingerprint_mask) >> power_of_two_size;
+		//System.out.format("\n**gen_fingerprint(): [total_hash:fingerprint_hash:int_fingerprint] --> [%016x:%016x:%016x]\n", large_hash, ((int)(large_hash>>32)), fingerprint);
 		return fingerprint;
 	}
 	
@@ -638,20 +652,27 @@ public class QuotientFilter {
 		System.out.println();
 
 	}
+
+	void set_expansion_threshold(double thresh) {
+		expansion_threshold = thresh;
+		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);
+	}
+
+
 	
-	public boolean insert(int input, boolean insert_only_if_no_match) {
+	boolean _insert(long large_hash, boolean insert_only_if_no_match) {
 		if (is_full) {
 			return false;
 		}
-		int large_hash = HashFunctions.normal_hash(input);
 		int slot_index = get_slot_index(large_hash);
 		long fingerprint = gen_fingerprint(large_hash);
-		
-		print_int_in_binary(large_hash, 32);
-		print_int_in_binary(slot_index, 32);
-		print_int_in_binary((int)fingerprint, 32);
+
+		/*print_long_in_binary(large_hash, 64);
+		print_long_in_binary(slot_index, 32);
+		print_long_in_binary((int)fingerprint, 64);
 		System.out.println(fingerprint);
-		System.out.println();
+		System.out.println();*/
+		
 		boolean success = insert(fingerprint, slot_index, false);
 		/*if (!success) {
 			System.out.println("insertion failure");
@@ -664,17 +685,10 @@ public class QuotientFilter {
 			num_expansions++;
 			expand();
 		}
-		
 		return success; 
 	}
-	
-	void set_expansion_threshold(double thresh) {
-		expansion_threshold = thresh;
-		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);
-	}
-	
-	public boolean delete(int input) {
-		int large_hash = HashFunctions.normal_hash(input);
+
+	boolean _delete(long large_hash) {
 		int slot_index = get_slot_index(large_hash);
 		long fp_long = gen_fingerprint(large_hash);
 		boolean success = delete(fp_long, slot_index);
@@ -683,13 +697,67 @@ public class QuotientFilter {
 		}
 		return success; 
 	}
-	
-	public boolean search(int input) {
-		int large_hash = HashFunctions.normal_hash(input);
+
+	boolean _search(long large_hash) {
 		int slot_index = get_slot_index(large_hash);
 		long fingerprint = gen_fingerprint(large_hash);
-		
 		return search(fingerprint, slot_index);
+	}
+
+	public boolean insert(long input, boolean insert_only_if_no_match) {	
+		return _insert(get_hash(input), insert_only_if_no_match);
+	}
+
+	public boolean insert(String input, boolean insert_only_if_no_match) {
+		ByteBuffer input_buffer = ByteBuffer.wrap(input.getBytes(StandardCharsets.UTF_8));
+		return _insert(HashFunctions.xxhash(input_buffer), insert_only_if_no_match);
+	}
+
+	public boolean insert(byte[] input, boolean insert_only_if_no_match) {
+		ByteBuffer input_buffer = ByteBuffer.wrap(input);
+		return _insert(HashFunctions.xxhash(input_buffer), insert_only_if_no_match);
+	}
+
+	public boolean delete(long input) {
+		return _delete(get_hash(input));
+	}
+
+	public boolean delete(String input) {
+		ByteBuffer input_buffer = ByteBuffer.wrap(input.getBytes(StandardCharsets.UTF_8));
+		return _delete(HashFunctions.xxhash(input_buffer));
+	}
+
+	public boolean delete(byte[] input) {
+		ByteBuffer input_buffer = ByteBuffer.wrap(input);
+		return _delete(HashFunctions.xxhash(input_buffer));
+	}
+
+	long get_hash(long input) {
+		long hash = 0;
+		if (ht == HashType.arbitrary) {
+			hash = HashFunctions.normal_hash((int)input);
+		}
+		else if (ht == HashType.xxh) {
+			hash = HashFunctions.xxhash(input);
+		}
+		else {
+			System.exit(1);
+		}
+		return hash;
+	}
+	
+	public boolean search(long input) {
+		return _search(get_hash(input));
+	}
+
+	public boolean search(String input) {
+		ByteBuffer input_buffer = ByteBuffer.wrap(input.getBytes(StandardCharsets.UTF_8));
+		return _search(HashFunctions.xxhash(input_buffer));
+	}
+
+	public boolean search(byte[] input) {
+		ByteBuffer input_buffer = ByteBuffer.wrap(input);
+		return _search(HashFunctions.xxhash(input_buffer));
 	}
 	
 	public boolean get_bit_at_offset(int offset) {

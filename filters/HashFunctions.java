@@ -1,11 +1,12 @@
-
 package filters;
 
-
 import java.math.BigInteger;  
-import java.nio.charset.StandardCharsets; 
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;  
 import java.security.NoSuchAlgorithmException;  
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 // Java program to calculate SHA hash value  
 
@@ -45,5 +46,14 @@ public class HashFunctions {
 	    return x;
 	}
 
-}  
+	public static long xxhash(ByteBuffer buffer){
+		buffer.rewind();
+		return XxHash.xxHash64(buffer, 0L);
+	}
+
+	public static long xxhash(long input){
+		return XxHash.xxHash64(input, 0L);
+	}
+
+} 
 

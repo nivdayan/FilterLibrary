@@ -20,10 +20,13 @@ public class Client {
 		Tests.test15(); // testing deletes
 		Tests.test16(); // testing deletes
 		Tests.test17(); // testing deletes
-		Tests.test18(); // testing deletes & rejuv operations
-	
+		Tests.test18(); // testing deletes & rejuv operations*/
+		Tests.test19(); // testing xxhash
+		Tests.test20(1000000); //testing xxhash(ByteBuffer)==xxhash(long)
+		Tests.test21(1000000); // testing insert,search an delete of types int,long,String,byte[]
+		
 		System.out.println("all tests passed");
-		InfiniFilterExperiments.scalability_experiment();
+		//InfiniFilterExperiments.scalability_experiment();
 		//InfiniFilterExperiments.rejuvenation_experiment();
 		//InfiniFilterExperiments.memory_experiment();
 		//InfiniFilterExperiments.experiment_false_positives();

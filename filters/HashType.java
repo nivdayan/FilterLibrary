@@ -2,5 +2,5 @@ package filters;
 
 
 public enum HashType {
-	cryptographic, regular
+	cryptographic, arbitrary, xxh
 }
