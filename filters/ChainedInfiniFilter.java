@@ -50,11 +50,11 @@ public class ChainedInfiniFilter extends InfiniFilter {
 		older_filters = new ArrayList<InfiniFilter>();
 	}
 	
-	void handle_empty_fingerprint(int bucket_index, QuotientFilter current) {
-		int bucket1 = bucket_index;
-		int fingerprint = bucket_index >> former.power_of_two_size;
-		int slot_mask = (1 << former.power_of_two_size) - 1;
-		int slot = bucket1 & slot_mask;
+	void handle_empty_fingerprint(long bucket_index, QuotientFilter current) {
+		long bucket1 = bucket_index;
+		long fingerprint = bucket_index >> former.power_of_two_size;
+		long slot_mask = (1 << former.power_of_two_size) - 1;
+		long slot = bucket1 & slot_mask;
 		
 		//System.out.println("migrating");
 		
@@ -92,7 +92,6 @@ public class ChainedInfiniFilter extends InfiniFilter {
 	}
 	
 	void expand() {
-		
 		count_until_expanding_former--; 
 		
 		//System.out.println("starting expansion " + num_expansions);
@@ -181,7 +180,7 @@ public class ChainedInfiniFilter extends InfiniFilter {
 	
 	public boolean delete(long input) {
 		long large_hash = get_hash(input);
-		int slot_index = get_slot_index(large_hash);
+		long slot_index = get_slot_index(large_hash);
 		long fp_long = gen_fingerprint(large_hash);
 		//System.out.println("deleting  " + input + "\t b " + slot_index + " \t" + get_fingerprint_str(fp_long, fingerprintLength));
 		boolean success = delete(fp_long, slot_index);
@@ -208,12 +207,17 @@ public class ChainedInfiniFilter extends InfiniFilter {
 		}
 		
 		return success; 
-
 	}
 	
 	public double measure_num_bits_per_entry() {
-		return measure_num_bits_per_entry(this, new ArrayList<QuotientFilter>(older_filters));
+		ArrayList<QuotientFilter> filters = new ArrayList<QuotientFilter>(older_filters);
+		if (former != null) {
+			filters.add(former);
+		}
+		return measure_num_bits_per_entry(this, filters);
 	}
+	
+
 	
 	public void print_filter_summary() {	
 		super.print_filter_summary();
@@ -225,6 +229,34 @@ public class ChainedInfiniFilter extends InfiniFilter {
 			System.out.println();
 		}
 	}
-
+	
+	public void pretty_print() {	
+		System.out.println();
+		for (InfiniFilter f : older_filters) {
+			System.out.print(f.get_pretty_str(true));
+			System.out.println();
+		}
+		
+		System.out.print(former.get_pretty_str(true));
+		
+		System.out.print(get_pretty_str(true));
+	}
+	
+	public long get_num_entries(boolean include_all_internal_filters) {
+		long num_entries = super.get_num_entries(false);
+		if (!include_all_internal_filters) {
+			return num_entries;
+		}
+		for (QuotientFilter q : older_filters) {
+			num_entries += q.get_num_entries(false);
+		}
+		if (former != null) {
+			long former_num_entries = former.get_num_entries(false);
+			num_entries += former_num_entries;
+		}
+		return num_entries; 
+	}
+	
+	
 }
 

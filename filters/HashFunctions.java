@@ -54,6 +54,10 @@ public class HashFunctions {
 	public static long xxhash(long input){
 		return XxHash.xxHash64(input, 0L);
 	}
+	
+	public static long xxhash(long input, long seed){
+		return XxHash.xxHash64(input, seed);
+	}
 
 } 
 

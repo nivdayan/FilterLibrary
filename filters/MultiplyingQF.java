@@ -22,8 +22,8 @@ public class MultiplyingQF extends QuotientFilter {
 	
 	ArrayList<QuotientFilter> older_filters;
 
-	public int get_num_entries(boolean include_all_internal_filters) {
-		int num_entries = super.get_num_entries(false);
+	public long get_num_entries(boolean include_all_internal_filters) {
+		long num_entries = super.get_num_entries(false);
 		if (!include_all_internal_filters) {
 			return num_entries;
 		}
@@ -38,7 +38,7 @@ public class MultiplyingQF extends QuotientFilter {
 		for (QuotientFilter q : older_filters) {
 			num_slots += 1 << q.power_of_two_size;
 		}
-		int num_entries = get_num_entries(true);
+		long num_entries = get_num_entries(true);
 		double utilization = num_entries / (double) num_slots;
 		return utilization;
 	}
@@ -61,7 +61,7 @@ public class MultiplyingQF extends QuotientFilter {
 		num_extension_slots += 2;		
 		filter = make_filter(init_size, bitPerEntry);
 		
-		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);
+		max_entries_before_expansion = (long)(Math.pow(2, power_of_two_size) * expansion_threshold);
 		//System.out.println("expanding");
 	}
 	

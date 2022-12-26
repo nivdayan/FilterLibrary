@@ -8,6 +8,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import bitmap_implementations.Bitmap;
+import filters.InfiniFilterExperiments.baseline;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -50,6 +51,8 @@ public class Tests {
 		}
 		return true;
 	}
+	
+
 	
 	// This test is based on the example from https://en.wikipedia.org/wiki/Quotient_filter
 	// it performs the same insertions and query as the example and verifies that it gets the same results. 
@@ -123,29 +126,24 @@ public class Tests {
 
 	}
 	
-	
-
-	// Here we create a large(ish) filter, insert some random entries into it, and then make sure 
-	// we get (true) positives for all entries we had inserted. 
+	// insert some entries and make sure we get (true) positives for all entries we had inserted. 
 	// This is to verify we do not get any false negatives. 
 	// We then also check the false positive rate 
-	static public void test3() {
-		int bits_per_entry = 10;
-		int num_entries_power = 5;
-		int seed = 5; 
-		//int num_entries = (int)Math.pow(2, num_entries_power);
-		QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
+	static public void test_no_false_negatives(Filter filter, int num_entries) {
 		HashSet<Integer> added = new HashSet<Integer>();
+		int seed = 5;
 		Random rand = new Random(seed);
-		double load_factor = 1.00;
-		for (int i = 0; i < qf.get_logical_num_slots() * load_factor; i++) {
+		
+		for (int i = 0; i < num_entries; i++) {
 			int rand_num = rand.nextInt();
-			boolean success = qf.insert(rand_num, false);
+			boolean success = filter.insert(rand_num, false);
 			if (success) {
+				//System.out.println(i );
 				added.add(rand_num);
 			}
 			else {
 				System.out.println("insertion failed");
+				filter.pretty_print();
 			}
 
 		}
@@ -154,15 +152,39 @@ public class Tests {
 
 		for (Integer i : added) {
 			//System.out.println("searching  " + i );
-			boolean found = qf.search(i);
+			boolean found = filter.search(i);
 			if (!found) {
 				System.out.println("something went wrong!! seem to have false negative " + i);
-				qf.search(i);
+				filter.search(i);
 				System.exit(1);
 			}
 		}
 	}
+
+	// test we don't get any false negatives for quotient filter
+	static public void test3() {
+		int bits_per_entry = 10;
+		int num_entries_power = 10;
+		Filter filter = new QuotientFilter(num_entries_power, bits_per_entry);
+		int num_entries = (int) (Math.pow(2, num_entries_power) * 0.9 );
+		test_no_false_negatives(filter, num_entries);
+	}
 	
+	// test we don't get any false negatives for bloom filter
+	static public void test22() {
+		int bits_per_entry = 10;
+		int num_entries = 1024;
+		Filter filter = new BloomFilter(num_entries, bits_per_entry);
+		test_no_false_negatives(filter, num_entries);
+	}
+	
+	static public void test23() {
+		int bits_per_entry = 10;
+		int power_entries = 10;
+		Filter filter = new CuckooFilter(power_entries, bits_per_entry);
+		int num_entries = (int) (Math.pow(2, power_entries) * 0.95);
+		test_no_false_negatives(filter, num_entries);
+	}
 
 	// adds two entries to the end of the filter, causing an overflow
 	// checks this can be handled
@@ -604,7 +626,7 @@ public class Tests {
 	}
 
 	// this test ensures we issue enough insertions until the fingerprints of at least some of the first entries inserted 
-	// run out. This means that for these entries, we are going to try the double insertion technique to avoid false negatives. 
+	// run out. This means that for these entries, we are going to try the chaining technique to avoid false negatives. 
 	static public void test12() {
 		int bits_per_entry = 7;
 		int num_entries_power = 3;		
@@ -613,6 +635,7 @@ public class Tests {
 		qf.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.UNIFORM;
 		int max_key = (int)Math.pow(2, num_entries_power + qf.fingerprintLength * 4 + 1 );
 		for (int i = 0; i < max_key; i++) {
+			//System.out.println(i);
 			qf.insert(i, false);
 		}
 
@@ -654,7 +677,7 @@ public class Tests {
 		qf.rejuvenate(2);
 		//qf.pretty_print();
 
-		BitSet result = new BitSet(qf.get_logical_num_slots() * bits_per_entry);		
+		BitSet result = new BitSet((int)qf.get_logical_num_slots() * bits_per_entry);		
 		result = set_slot_in_test(result, bits_per_entry, 0, true, false, false, 3);
 
 		check_equality(qf, result, true);
@@ -1965,5 +1988,63 @@ public class Tests {
 				
 			}
 		}
+		
+		static public void test_FPR(Filter f, double model_FPR, long insertions) {
+			InfiniFilterExperiments.baseline results = new InfiniFilterExperiments.baseline();
+			InfiniFilterExperiments.scalability_experiment( f,  0, insertions, results);
+			double FPR = results.metrics.get("FPR").get(0);
+			//System.out.println(FPR + ", " + model_FPR);
+			if (FPR > model_FPR * 1.1) {
+				System.out.println("FPR is greater than expected");
+				System.exit(1);
+			}
+			else if (FPR < model_FPR / 2) {
+				System.out.println("FPR is lower than expected");
+				System.exit(1);
+			}
+		}
+		
+		
+		// testing the false positive rate is as expected
+		static public void test24() {
+			int num_entries_power = 15;
+			long num_entries = (long)(Math.pow(2, num_entries_power) * 0.9);
+			for (int i = 5; i <= 16; i++) {
+				int bits_per_entry = i;
+				Filter qf = new QuotientFilter(num_entries_power, bits_per_entry);
+				double model_FPR = Math.pow(2, - bits_per_entry + 3);
+				test_FPR(qf, model_FPR, num_entries);
+			}
+		}
+		
+		// testing the false positive rate is as expected
+		static public void test25() {
+			int num_entries_power = 15;
+			long num_entries = (long)(Math.pow(2, num_entries_power) * 0.9);
+			for (int i = 5; i <= 16; i++) {
+				int bits_per_entry = i;
+				Filter qf = new CuckooFilter(num_entries_power, bits_per_entry);
+				double model_FPR = Math.pow(2, - bits_per_entry + 3);
+				test_FPR(qf, model_FPR, num_entries);
+			}
+		}
+		
+		// testing the false positive rate is as expected
+		static public void test26() {
+			int num_entries = (int)Math.pow(2, 15);
+			for (int i = 5; i <= 16; i++) {
+				int bits_per_entry = i;
+				Filter qf = new BloomFilter(num_entries, bits_per_entry);
+				double model_FPR = Math.pow(2, - bits_per_entry * Math.log(2));
+				test_FPR(qf, model_FPR, num_entries);
+			}
+		}
+		
+
 
 }
+		
+		
+		
+		
+

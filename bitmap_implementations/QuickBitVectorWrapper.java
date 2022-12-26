@@ -7,14 +7,14 @@ public class QuickBitVectorWrapper extends Bitmap {
 	long[] bs;
 	
 	
-	public QuickBitVectorWrapper(int bits_per_entry, int num_entries) {
+	public QuickBitVectorWrapper(int bits_per_entry, long num_entries) {
 		super(bits_per_entry);
 		bs = QuickBitVector.makeBitVector(num_entries, bits_per_entry);
 	}
 
 	@Override
 	public long size() {
-		return bs.length * Long.BYTES * 8;
+		return bs.length * Long.BYTES * 8L;
 	}
 
 	@Override

@@ -8,15 +8,15 @@ public class InfiniFilter extends QuotientFilter {
 
 	InfiniFilter(int power_of_two, int bits_per_entry) {
 		super(power_of_two, bits_per_entry);
-		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);
+		max_entries_before_expansion = (long)(Math.pow(2, power_of_two_size) * expansion_threshold);
 		empty_fingerprint = (1 << fingerprintLength) - 2 ;
 	}
 	
-	protected boolean compare(int index, long fingerprint) {
-		int generation = parse_unary(index);
-		int first_fp_bit = index * bitPerEntry + 3;
-		int last_fp_bit = index * bitPerEntry + 3 + fingerprintLength - (generation + 1);
-		int actual_fp_length = last_fp_bit - first_fp_bit;
+	protected boolean compare(long index, long fingerprint) {
+		long generation = parse_unary(index);
+		long first_fp_bit = index * bitPerEntry + 3;
+		long last_fp_bit = index * bitPerEntry + 3 + fingerprintLength - (generation + 1);
+		long actual_fp_length = last_fp_bit - first_fp_bit;
 		long existing_fingerprint = filter.getFromTo(first_fp_bit, last_fp_bit);
 		long mask = (1 << actual_fp_length) - 1;
 		long adjusted_saught_fp = fingerprint & mask;
@@ -26,22 +26,22 @@ public class InfiniFilter extends QuotientFilter {
 	// this is the newer version of parsing the unary encoding. 
 	// it is done using just binary operations and no loop. 
 	// however, this optimization didn't yield much performance benefit 
-	int parse_unary(int slot_index) {
-		int f = (int)get_fingerprint(slot_index);
+	long parse_unary(long slot_index) {
+		long f = get_fingerprint(slot_index);
 		//.out.println();
 		//System.out.println(get_pretty_str(slot_index));
 		//print_int_in_binary(f, 32);
-		int inverted_fp = ~f;
+		long inverted_fp = ~f;
 		//print_int_in_binary(inverted_fp, 32);
-		int mask = (1 << fingerprintLength) - 1;
+		long mask = (1 << fingerprintLength) - 1;
 		//print_int_in_binary(mask, 32);
-		int masked = mask & inverted_fp;
+		long masked = mask & inverted_fp;
 		//print_int_in_binary(masked, 32);
-		int highest = Integer.highestOneBit(masked);
+		long highest = Long.highestOneBit(masked);
 		//print_int_in_binary(highest, 32);
-		int leading_zeros = Integer.numberOfTrailingZeros(highest);
+		long leading_zeros = Long.numberOfTrailingZeros(highest);
 		//System.out.println( leading_zeros );
-		int age = fingerprintLength - leading_zeros - 1;
+		long age = fingerprintLength - leading_zeros - 1;
 		//System.out.println( age );
 		return age;
 	}
@@ -49,15 +49,15 @@ public class InfiniFilter extends QuotientFilter {
 	boolean rejuvenate(long key) {
 		long large_hash = get_hash(key);
 		long fingerprint = gen_fingerprint(large_hash);
-		int ideal_index = get_slot_index(large_hash);
+		long ideal_index = get_slot_index(large_hash);
 		
 		boolean does_run_exist = is_occupied(ideal_index);
 		if (!does_run_exist) {
 			return false;
 		}
 		
-		int run_start_index = find_run_start(ideal_index);
-		int smallest_index = find_largest_matching_fingerprint_in_run(run_start_index, fingerprint);
+		long run_start_index = find_run_start(ideal_index);
+		long smallest_index = find_largest_matching_fingerprint_in_run(run_start_index, fingerprint);
 		if (smallest_index == -1) {
 			return false;
 		}
@@ -66,19 +66,19 @@ public class InfiniFilter extends QuotientFilter {
 	}
 
 	
-	int decide_which_fingerprint_to_delete(int index, long fingerprint) {
+	long decide_which_fingerprint_to_delete(long index, long fingerprint) {
 		return find_largest_matching_fingerprint_in_run(index, fingerprint);
 	}
 	
 	// returns the index of the entry if found, -1 otherwise
-	int find_largest_matching_fingerprint_in_run(int index, long fingerprint) {
+	long find_largest_matching_fingerprint_in_run(long index, long fingerprint) {
 		assert(!is_continuation(index));
-		int matching_fingerprint_index = -1;
-		int lowest_age = Integer.MAX_VALUE;
+		long matching_fingerprint_index = -1;
+		long lowest_age = Integer.MAX_VALUE;
 		do {
 			if (compare(index, fingerprint)) {
 				//System.out.println("found matching FP at index " + index);
-				int age = parse_unary(index);
+				long age = parse_unary(index);
 				if (age < lowest_age) {
 					lowest_age = age;
 					matching_fingerprint_index = index;
@@ -102,12 +102,12 @@ public class InfiniFilter extends QuotientFilter {
 		return updated_fingerprint;
 	}
 	
-	void handle_empty_fingerprint(int bucket_index, QuotientFilter insertee) {
-		int bucket1 = bucket_index;
+	void handle_empty_fingerprint(long bucket_index, QuotientFilter insertee) {
+		long bucket1 = bucket_index;
 		long bucket_mask = 1 << power_of_two_size; 		// setting this bit to the proper offset of the slot address field
 		long bucket2 = bucket1 | bucket_mask;	// adding the pivot bit to the slot address field
-		insertee.insert(empty_fingerprint, (int)bucket1, false);
-		insertee.insert(empty_fingerprint, (int)bucket2, false);
+		insertee.insert(empty_fingerprint, bucket1, false);
+		insertee.insert(empty_fingerprint, bucket2, false);
 	}
 	
 	private static int prep_unary_mask(int prev_FP_size, int new_FP_size) {
@@ -127,13 +127,13 @@ public class InfiniFilter extends QuotientFilter {
 		//System.out.println("FP size: " + new_fingerprint_size);
 		QuotientFilter new_qf = new QuotientFilter(power_of_two_size + 1, new_fingerprint_size + 3);
 		Iterator it = new Iterator(this);		
-		int unary_mask = prep_unary_mask(fingerprintLength, new_fingerprint_size);
+		long unary_mask = prep_unary_mask(fingerprintLength, new_fingerprint_size);
 		
 		long current_empty_fingerprint = empty_fingerprint;
 		empty_fingerprint = (1 << new_fingerprint_size) - 2; // One 
 				
 		while (it.next()) {
-			int bucket = it.bucket_index;
+			long bucket = it.bucket_index;
 			long fingerprint = it.fingerprint;
 			if (it.fingerprint != current_empty_fingerprint) {
 				long pivot_bit = (1 & fingerprint);	// getting the bit of the fingerprint we'll be sacrificing 
@@ -141,7 +141,7 @@ public class InfiniFilter extends QuotientFilter {
 				long updated_bucket = bucket | bucket_mask;	 // adding the pivot bit to the slot address field
 				long chopped_fingerprint = fingerprint >> 1; // getting rid of this pivot bit from the fingerprint 
 				long updated_fingerprint = chopped_fingerprint | unary_mask;				
-				new_qf.insert(updated_fingerprint, (int)updated_bucket, false);
+				new_qf.insert(updated_fingerprint, updated_bucket, false);
 				
 				/*System.out.println(bucket); 
 				System.out.print("bucket1      : ");

@@ -146,7 +146,7 @@ static public int leastSignificantBit(int value) {
  * @param     bitsPerElement   the number of bits one single element takes.
  * @return    a low level bitvector.
  */
-public static long[] makeBitVector(int size, int bitsPerElement) {
+public static long[] makeBitVector(long size, int bitsPerElement) {
 	long nBits = ((long)size)*bitsPerElement;
 	int unitIndex = (int)((nBits-1) >> ADDRESS_BITS_PER_UNIT);
 	long[] bitVector = new long[unitIndex + 1];
