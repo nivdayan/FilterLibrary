@@ -531,18 +531,28 @@ public class Tests {
 
 		int i = 0;
 		while (i < Math.pow(2, num_entries_power) - 2) {
-			qf.insert(i, false);
+			boolean success = qf.insert(i, false);
+			if (!success) {
+				System.out.println("test9: insertion should have worked");
+				System.exit(1);
+			}
 			i++;
 		}
 		qf.expand();
+		
+		//qf.pretty_print();
 		while (i < Math.pow(2, num_entries_power + 1) - 2) {
-			qf.insert(i, false);
+			boolean success = qf.insert(i, false);
+			if (!success) {
+				System.out.println("test9: insertion should have worked");
+				System.exit(1);
+			}
 			i++;
 		}
 
 		for (int j = 0; j < i; j++) {
 			if ( !qf.search(j) ) {
-				System.out.println("false negative  " + j);
+				System.out.println("test9: false negative  " + j);
 				System.exit(1);
 			}
 		}
