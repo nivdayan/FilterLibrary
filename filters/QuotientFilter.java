@@ -36,7 +36,7 @@ public class QuotientFilter extends Filter {
 		power_of_two_size = power_of_two;
 		bitPerEntry = bits_per_entry; 
 		fingerprintLength = bits_per_entry - 3;
-		long init_size = 1 << power_of_two;
+		long init_size = 1L << power_of_two;
 		
 		num_extension_slots = power_of_two * 2;
 		
@@ -91,10 +91,10 @@ public class QuotientFilter extends Filter {
 			long q_num_entries = q.get_num_entries(false);
 			num_entries += q_num_entries;
 		}
-		long init_size = 1 << current.power_of_two_size;
+		long init_size = 1L << current.power_of_two_size;
 		long num_bits = current.bitPerEntry * init_size + current.num_extension_slots * current.bitPerEntry;
 		for (QuotientFilter q : other_filters) {
-			init_size = 1 << q.power_of_two_size;
+			init_size = 1L << q.power_of_two_size;
 			num_bits += q.bitPerEntry * init_size + q.num_extension_slots * q.bitPerEntry;
 		}
 		//System.out.println("total entries: \t\t" + num_entries);
@@ -120,7 +120,7 @@ public class QuotientFilter extends Filter {
 	
 	// returns the fraction of occupied slots in the filter
 	public double get_utilization() {
-		long num_logical_slots = 1 << power_of_two_size;
+		long num_logical_slots = 1L << power_of_two_size;
 		long num_entries = get_num_entries(false);
 		double util = num_entries / (double) num_logical_slots;
 		return util;
@@ -133,12 +133,12 @@ public class QuotientFilter extends Filter {
 	
 	// returns the number of physical slots in the filter (including the extention/buffer slots at the end)
 	public long get_logical_num_slots_plus_extensions() {
-		return (1 << power_of_two_size) + num_extension_slots;
+		return (1L << power_of_two_size) + num_extension_slots;
 	}
 	
 	// returns the number of slots in the filter without the extension/buffer slots
 	public long get_logical_num_slots() {
-		return 1 << power_of_two_size;
+		return 1L << power_of_two_size;
 	}
 	
 	// sets the metadata flag bits for a given slot index
@@ -213,7 +213,7 @@ public class QuotientFilter extends Filter {
 	// summarize some statistical measures about the filter
 	public void print_filter_summary() {	
 		long num_entries = get_num_entries(false);
-		long slots = (1 << power_of_two_size) + num_extension_slots;
+		long slots = (1L << power_of_two_size) + num_extension_slots;
 		long num_bits = slots * bitPerEntry;
 		System.out.println("slots:\t" + slots);
 		System.out.println("entries:\t" + num_entries);
@@ -591,14 +591,14 @@ public class QuotientFilter extends Filter {
 
 	
 	long get_slot_index(long large_hash) {
-		long slot_index_mask = (1 << power_of_two_size) - 1;
+		long slot_index_mask = (1L << power_of_two_size) - 1;
 		long slot_index = large_hash & slot_index_mask;
 		//System.out.format("\n**get_slot_index(): [total_hash:index_hash:int_index] --> [%016x:%016x:%016x]\n", large_hash, (int)large_hash, slot_index);
 		return slot_index;
 	}
 	
 	long gen_fingerprint(long large_hash) {
-		long fingerprint_mask = (1 << fingerprintLength) - 1;
+		long fingerprint_mask = (1L << fingerprintLength) - 1L;
 		fingerprint_mask = fingerprint_mask << power_of_two_size;
 		long fingerprint = (large_hash & fingerprint_mask) >> power_of_two_size;
 		//System.out.format("\n**gen_fingerprint(): [total_hash:fingerprint_hash:int_fingerprint] --> [%016x:%016x:%016x]\n", large_hash, ((int)(large_hash>>32)), fingerprint);

@@ -53,7 +53,7 @@ public class ChainedInfiniFilter extends InfiniFilter {
 	void handle_empty_fingerprint(long bucket_index, QuotientFilter current) {
 		long bucket1 = bucket_index;
 		long fingerprint = bucket_index >> former.power_of_two_size;
-		long slot_mask = (1 << former.power_of_two_size) - 1;
+		long slot_mask = (1L << former.power_of_two_size) - 1L;
 		long slot = bucket1 & slot_mask;
 		
 		//System.out.println("migrating");

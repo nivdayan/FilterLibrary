@@ -9,7 +9,7 @@ public class InfiniFilter extends QuotientFilter {
 	InfiniFilter(int power_of_two, int bits_per_entry) {
 		super(power_of_two, bits_per_entry);
 		max_entries_before_expansion = (long)(Math.pow(2, power_of_two_size) * expansion_threshold);
-		empty_fingerprint = (1 << fingerprintLength) - 2 ;
+		empty_fingerprint = (1L << fingerprintLength) - 2L;
 	}
 	
 	protected boolean compare(long index, long fingerprint) {
@@ -18,7 +18,7 @@ public class InfiniFilter extends QuotientFilter {
 		long last_fp_bit = index * bitPerEntry + 3 + fingerprintLength - (generation + 1);
 		long actual_fp_length = last_fp_bit - first_fp_bit;
 		long existing_fingerprint = filter.getFromTo(first_fp_bit, last_fp_bit);
-		long mask = (1 << actual_fp_length) - 1;
+		long mask = (1L << actual_fp_length) - 1L;
 		long adjusted_saught_fp = fingerprint & mask;
 		return existing_fingerprint == adjusted_saught_fp;
 	}
@@ -33,7 +33,7 @@ public class InfiniFilter extends QuotientFilter {
 		//print_int_in_binary(f, 32);
 		long inverted_fp = ~f;
 		//print_int_in_binary(inverted_fp, 32);
-		long mask = (1 << fingerprintLength) - 1;
+		long mask = (1L << fingerprintLength) - 1;
 		//print_int_in_binary(mask, 32);
 		long masked = mask & inverted_fp;
 		//print_int_in_binary(masked, 32);
@@ -90,10 +90,10 @@ public class InfiniFilter extends QuotientFilter {
 	}
 	
 	long gen_fingerprint(long large_hash) {
-		long fingerprint_mask = (1 << fingerprintLength) - 1;
+		long fingerprint_mask = (1L << fingerprintLength) - 1L;
 		fingerprint_mask = fingerprint_mask << power_of_two_size;
 		long fingerprint = (large_hash & fingerprint_mask) >> power_of_two_size;
-		long unary_mask = ~(1 << (fingerprintLength - 1));
+		long unary_mask = ~(1L << (fingerprintLength - 1L));
 		long updated_fingerprint = fingerprint & unary_mask;
 		/*System.out.println(); 
 		print_long_in_binary(unary_mask, fingerprintLength);
@@ -104,7 +104,7 @@ public class InfiniFilter extends QuotientFilter {
 	
 	void handle_empty_fingerprint(long bucket_index, QuotientFilter insertee) {
 		long bucket1 = bucket_index;
-		long bucket_mask = 1 << power_of_two_size; 		// setting this bit to the proper offset of the slot address field
+		long bucket_mask = 1L << power_of_two_size; 		// setting this bit to the proper offset of the slot address field
 		long bucket2 = bucket1 | bucket_mask;	// adding the pivot bit to the slot address field
 		insertee.insert(empty_fingerprint, bucket1, false);
 		insertee.insert(empty_fingerprint, bucket2, false);
@@ -130,7 +130,7 @@ public class InfiniFilter extends QuotientFilter {
 		long unary_mask = prep_unary_mask(fingerprintLength, new_fingerprint_size);
 		
 		long current_empty_fingerprint = empty_fingerprint;
-		empty_fingerprint = (1 << new_fingerprint_size) - 2; // One 
+		empty_fingerprint = (1L << new_fingerprint_size) - 2; // One 
 				
 		while (it.next()) {
 			long bucket = it.bucket_index;
@@ -164,7 +164,7 @@ public class InfiniFilter extends QuotientFilter {
 			}
 		}
 		
-		empty_fingerprint = (1 << new_fingerprint_size) - 2 ;
+		empty_fingerprint = (1L << new_fingerprint_size) - 2 ;
 		fingerprintLength = new_fingerprint_size;
 		bitPerEntry = new_fingerprint_size + 3;
 		filter = new_qf.filter;

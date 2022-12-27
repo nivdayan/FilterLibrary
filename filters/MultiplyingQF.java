@@ -34,9 +34,9 @@ public class MultiplyingQF extends QuotientFilter {
 	}
 	
 	public double get_utilization() {
-		int num_slots = 1 << power_of_two_size;
+		long num_slots = 1L << power_of_two_size;
 		for (QuotientFilter q : older_filters) {
-			num_slots += 1 << q.power_of_two_size;
+			num_slots += 1L << q.power_of_two_size;
 		}
 		long num_entries = get_num_entries(true);
 		double utilization = num_entries / (double) num_slots;
@@ -57,7 +57,7 @@ public class MultiplyingQF extends QuotientFilter {
 		
 		fingerprintLength = FingerprintGrowthStrategy.get_new_fingerprint_size(original_fingerprint_size, num_expansions, fprStyle);
 		bitPerEntry = fingerprintLength + 3;
-		int init_size = 1 << power_of_two_size;
+		long init_size = 1L << power_of_two_size;
 		num_extension_slots += 2;		
 		filter = make_filter(init_size, bitPerEntry);
 		
