@@ -14,7 +14,7 @@ public class QuickBitVectorWrapper extends Bitmap {
 
 	@Override
 	public long size() {
-		return bs.length * Long.BYTES * 8L;
+		return (long)bs.length * Long.BYTES * 8L;
 	}
 
 	@Override

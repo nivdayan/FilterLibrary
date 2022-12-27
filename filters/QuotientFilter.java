@@ -127,7 +127,8 @@ public class QuotientFilter extends Filter {
 	}
 	
 	public long get_physcial_num_slots() {
-		return filter.size() / bitPerEntry;
+		long bits = filter.size();
+		return bits / bitPerEntry;
 	}
 	
 	// returns the number of physical slots in the filter (including the extention/buffer slots at the end)

@@ -32,13 +32,13 @@ public abstract class Bitmap {
 	
 
 	
-	public static boolean get_fingerprint_bit(int index, long fingerprint) {
+	public static boolean get_fingerprint_bit(long index, long fingerprint) {
 		long mask = 1 << index;
 		long and = fingerprint & mask;
 		return and != 0;
 	}
 	
-	public static long set_fingerprint_bit(int index, long fingerprint, boolean val) {
+	public static long set_fingerprint_bit(long index, long fingerprint, boolean val) {
 		if (val) {
 			fingerprint |= 1 << index;   
 		}
