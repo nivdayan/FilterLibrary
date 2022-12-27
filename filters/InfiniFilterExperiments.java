@@ -156,6 +156,7 @@ public class InfiniFilterExperiments {
 		long insertion_index = initial_key;
 		long start_insertions = System.nanoTime();
 
+		
 		//System.out.println("inserting: " + num_entries_to_insert + " to capacity " + Math.pow(2, qf.power_of_two_size));
 
 		boolean successful_insert = false;
@@ -192,6 +193,7 @@ public class InfiniFilterExperiments {
 		//int num_slots = (1 << qf.power_of_two_size) - 1;
 		//double utilization = qf.get_utilization();
 
+		//double num_entries = qf.get_num_entries(true);
 		double num_entries = qf.get_num_entries(true);
 
 		results.metrics.get("num_entries").add(num_entries);
@@ -276,7 +278,7 @@ public class InfiniFilterExperiments {
 
 	static public void scalability_experiment() {
 
-		int num_cycles = 30;
+		int num_cycles = 31;
 		int bits_per_entry = 16;
 		int num_entries_power = 10;		
 
