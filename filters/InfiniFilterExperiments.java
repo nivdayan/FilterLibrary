@@ -278,9 +278,9 @@ public class InfiniFilterExperiments {
 
 	static public void scalability_experiment() {
 
-		int num_cycles = 10;
+		int num_cycles = 31;
 		int bits_per_entry = 16;
-		int num_entries_power = 31;		
+		int num_entries_power = 10;		
 
 		System.gc();
 		{
