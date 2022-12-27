@@ -253,7 +253,7 @@ public class InfiniFilterExperiments {
 			if (gen.nextDouble() < fraction_queries) {
 				for (int i = 0; i < fraction_queries; i++) {
 					//long query_start = System.nanoTime();
-					long random_search_key = gen.nextLong(qf.get_num_existing_entries()); 
+					long random_search_key = gen.nextLong() % qf.get_num_existing_entries(); 
 					boolean found;
 					/*boolean found = qf.search(random_search_key);
 					if(!found) {
