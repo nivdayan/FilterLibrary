@@ -300,7 +300,7 @@ public class InfiniFilterExperiments {
 			int num_entries = (int) Math.pow(2, (num_entries_power + num_cycles) / 2);
 			Filter bloom = new BloomFilter(num_entries, bits_per_entry);
 			long starting_index = 0;
-			for (int i = num_entries_power; i < num_cycles; i++ ) {
+			for (int i = num_entries_power; i < (num_entries_power + num_cycles) / 2 + 1; i++ ) {
 				long end_key = (int)(Math.pow(2, i) ); // 
 				scalability_experiment(bloom, starting_index, end_key, bloom_res);
 				starting_index = end_key;
@@ -347,7 +347,7 @@ public class InfiniFilterExperiments {
 			qf.expand_autonomously = true; 
 			long starting_index = 0;
 			long end_key = qf.max_entries_before_expansion - 1;
-			for (int i = num_entries_power; i < num_cycles; i++ ) {
+			for (int i = num_entries_power; i <= num_cycles; i++ ) {
 				scalability_experiment(qf, starting_index, end_key,  chained_IF_res);
 				starting_index = end_key;
 				end_key = qf.max_entries_before_expansion * 2 - 1;
@@ -362,7 +362,7 @@ public class InfiniFilterExperiments {
 			qf2.expand_autonomously = true;
 			long starting_index = 0;
 			long end_key = qf2.max_entries_before_expansion - 1;
-			for (int i = num_entries_power; i < num_cycles && qf2.fingerprintLength > 0; i++ ) {
+			for (int i = num_entries_power; i <= num_cycles && qf2.fingerprintLength > 0; i++ ) {
 				scalability_experiment(qf2, starting_index, end_key, bit_sacrifice_res);
 				starting_index = end_key;
 				end_key = qf2.max_entries_before_expansion * 2 - 1;
@@ -378,7 +378,7 @@ public class InfiniFilterExperiments {
 			qf3.expand_autonomously = true;
 			long starting_index = 0;
 			long end_key = qf3.max_entries_before_expansion - 1;
-			for (int i = num_entries_power; i < num_cycles; i++ ) {
+			for (int i = num_entries_power; i <= num_cycles - 1; i++ ) {
 				scalability_experiment(qf3, starting_index, end_key, geometric_expansion_res);
 				starting_index = end_key + 1;
 				end_key = (long)(qf3.max_entries_before_expansion * 2 + starting_index - 1);

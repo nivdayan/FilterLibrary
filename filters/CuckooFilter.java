@@ -176,7 +176,7 @@ public class CuckooFilter extends Filter {
 			leftover_fingerprint = fingerprint;
 			return false;
 		}
-		int random_slot = gen.nextInt(0, bucket_size);
+		int random_slot = gen.nextInt(bucket_size);
 		long existing_fingerprint = replace(alternative_bucket, random_slot, fingerprint);
 		return replacement_algorithm(alternative_bucket, existing_fingerprint, swaps + 1);
 	}

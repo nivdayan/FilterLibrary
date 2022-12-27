@@ -13,7 +13,7 @@ public class Client {
 		Tests.test8(); // expansion test for FingerprintShrinkingQF
 		Tests.test9(); // expansion test for MultiplyingQF
 		Tests.test10(); // testing InfiniFilter
-		Tests.test11(); // testing InfiniFilter */
+		Tests.test11(); // testing InfiniFilter 
 		Tests.test12(); // testing InfiniFilter - chained
 		Tests.test13(); // testing InfiniFilter - rejuvenation 
 		Tests.test14(); // InfiniFilter deleting largest matching fingerprint 
@@ -29,13 +29,15 @@ public class Client {
 		Tests.test24(); // testing false positive rate for quotient filter  
 		Tests.test25(); // testing false positive rate for cuckoo filter 
 		Tests.test26(); // testing false positive rate for bloom filter 
+		//Tests.test27(); // exceeding the bound of the quotient filter 
+		
 		System.out.println("all tests passed");
 	}
 	
 	static public  void main(String[] args) {
 		run_tests();
 		
-		//InfiniFilterExperiments.scalability_experiment();
+		InfiniFilterExperiments.scalability_experiment();
 		
 		//InfiniFilterExperiments.rejuvenation_experiment();
 		//InfiniFilterExperiments.memory_experiment();
