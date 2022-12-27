@@ -12,7 +12,7 @@ public class MultiplyingQF extends QuotientFilter {
 	SizeExpansion sizeStyle;
 	FingerprintGrowthStrategy.FalsePositiveRateExpansion fprStyle;
 
-	MultiplyingQF(int power_of_two, int bits_per_entry) {
+	public MultiplyingQF(int power_of_two, int bits_per_entry) {
 		super(power_of_two, bits_per_entry);
 		older_filters = new ArrayList<QuotientFilter>();
 		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);

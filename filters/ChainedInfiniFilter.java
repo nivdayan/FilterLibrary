@@ -45,7 +45,7 @@ public class ChainedInfiniFilter extends InfiniFilter {
 	int count_until_expanding_former = 0;
 	int former_phase = 0;
 	
-	ChainedInfiniFilter(int power_of_two, int bits_per_entry) {
+	public ChainedInfiniFilter(int power_of_two, int bits_per_entry) {
 		super(power_of_two, bits_per_entry);
 		older_filters = new ArrayList<InfiniFilter>();
 	}
@@ -149,7 +149,7 @@ public class ChainedInfiniFilter extends InfiniFilter {
 		//System.out.println("finished expanding ------------");
 	}
 	
-	boolean rejuvenate(long key) {
+	public boolean rejuvenate(long key) {
 		boolean success = super.rejuvenate(key);
 		if (success) {
 			return true;

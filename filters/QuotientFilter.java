@@ -25,8 +25,8 @@ public class QuotientFilter extends Filter {
 	// statistics, computed in the compute_statistics method. method should be called before these are used
 	long num_runs; 
 	long num_clusters;
-	double avg_run_length;
-	double avg_cluster_length;
+	public double avg_run_length;
+	public double avg_cluster_length;
 	
 	int original_fingerprint_size; 
 	int num_expansions;
@@ -53,12 +53,32 @@ public class QuotientFilter extends Filter {
 		//measure_num_bits_per_entry();
 	}
 	
-	boolean rejuvenate(long key) {
+	public boolean rejuvenate(long key) {
 		return false;
+	}
+	
+	public long get_num_existing_entries() {
+		return num_existing_entries;
+	}
+	
+	public long get_max_entries_before_expansion() {
+		return max_entries_before_expansion;
+	}
+	
+	public boolean expand_autonomously() {
+		return expand_autonomously;
+	}
+	
+	public void set_expand_autonomously(boolean val) {
+		expand_autonomously = val;
 	}
 	
 	Bitmap make_filter(long init_size, int bits_per_entry) {
 		return new QuickBitVectorWrapper(bits_per_entry,  init_size + num_extension_slots);
+	}
+	
+	public int get_fingerprint_length() {
+		return fingerprintLength;
 	}
 	
 	QuotientFilter(int power_of_two, int bits_per_entry, Bitmap bitmap) {

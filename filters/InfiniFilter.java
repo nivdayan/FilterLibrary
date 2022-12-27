@@ -46,7 +46,7 @@ public class InfiniFilter extends QuotientFilter {
 		return age;
 	}
 	
-	boolean rejuvenate(long key) {
+	public boolean rejuvenate(long key) {
 		long large_hash = get_hash(key);
 		long fingerprint = gen_fingerprint(large_hash);
 		long ideal_index = get_slot_index(large_hash);

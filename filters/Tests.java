@@ -8,7 +8,8 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import bitmap_implementations.Bitmap;
-import filters.InfiniFilterExperiments.baseline;
+import infiniFilter_experiments.InfiniFilterExperiments;
+import infiniFilter_experiments.InfiniFilterExperiments.baseline;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
