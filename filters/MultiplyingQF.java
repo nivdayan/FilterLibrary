@@ -96,4 +96,14 @@ public class MultiplyingQF extends QuotientFilter {
 		System.out.println("sum FPRs: " + sum_FPRs);
 	}
 	
+	public void pretty_print() {	
+		
+		for (QuotientFilter q : older_filters) {
+			q.pretty_print();
+			System.out.println();
+		}
+		System.out.println();
+		super.pretty_print();
+	}
+	
 }
