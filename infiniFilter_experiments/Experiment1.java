@@ -89,6 +89,7 @@ public class Experiment1 {
 				//int num_insertions = original_qf_res.metrics.get("num_entries").get(i);
 				//orig.expand();
 				//System.out.println("# entries: " + qf.num_existing_entries + " new capacity: " + Math.pow(2, qf.power_of_two_size));
+				System.out.println("bloom filter " + i);
 			}
 		}
 		System.out.println("finished bloom");
@@ -102,6 +103,7 @@ public class Experiment1 {
 				long end_key = (int)(Math.pow(2, i) * 0.95); // 
 				InfiniFilterExperiments.scalability_experiment(cuckoo, starting_index, end_key, cuckoo_res);
 				starting_index = end_key;
+				System.out.println("cuckoo filter " + i);
 			}
 		}
 		System.out.println("finished cuckoo");
@@ -117,6 +119,7 @@ public class Experiment1 {
 				long end_key = (int)(Math.pow(2, i) * 0.90); // 
 				InfiniFilterExperiments.scalability_experiment(orig, starting_index, end_key, original_qf_res);
 				starting_index = end_key;
+				System.out.println("static quotient filter " + i);
 			}
 		}
 
@@ -133,6 +136,7 @@ public class Experiment1 {
 				InfiniFilterExperiments.scalability_experiment(qf, starting_index, end_key,  chained_IF_res);
 				starting_index = end_key;
 				end_key = qf.get_max_entries_before_expansion() * 2 - 1;
+				System.out.println("infinifilter " + i);
 			}
 		}	
 		System.out.println("finished infinifilter");
@@ -148,9 +152,10 @@ public class Experiment1 {
 				InfiniFilterExperiments.scalability_experiment(qf2, starting_index, end_key, bit_sacrifice_res);
 				starting_index = end_key;
 				end_key = qf2.get_max_entries_before_expansion() * 2 - 1;
+				System.out.println("bit sacrifice " + i);
 			}
 		}
-		System.out.println("finished BF");
+		System.out.println("finished bit sacrifice");
 		
 		System.gc();
 
@@ -167,7 +172,7 @@ public class Experiment1 {
 				//System.out.println("thresh  " + qf3.max_entries_before_expansion);
 				
 				//(long)(Math.pow(2, power_of_two_size) * expansion_threshold)
-				//System.out.println("# entries: " + qf3.num_existing_entries + " new capacity: " + Math.pow(2, qf3.power_of_two_size + 1));
+				System.out.println("geometric chaining " + i);
 			}
 		}
 		System.out.println("finished geometric chaining");
@@ -180,7 +185,6 @@ public class Experiment1 {
 		geometric_expansion_res.print("num_entries", "insertion_time", commas_before++, commas_after--);
 		bloom_res.print("num_entries", "insertion_time", commas_before++, commas_after--);
 		cuckoo_res.print("num_entries", "insertion_time", commas_before++, commas_after--);
-
 		
 		System.out.println();
 
@@ -204,7 +208,6 @@ public class Experiment1 {
 		bloom_res.print("num_entries", "FPR", commas_before++, commas_after--);
 		cuckoo_res.print("num_entries", "FPR", commas_before++, commas_after--);
 
-		
 		System.out.println();
 
 		commas_before = 1;
