@@ -6,14 +6,14 @@ import java.util.Queue;
 public class Iterator  {
 
 	QuotientFilter qf;
-	int index;
-	int bucket_index;
+	long index;
+	long bucket_index;
 	long fingerprint;
-	Queue<Integer> s;
+	Queue<Long> s;
 
 	Iterator(QuotientFilter new_qf) {
 		qf = new_qf;
-		s = new LinkedList<Integer>();
+		s = new LinkedList<Long>();
 		//s = new ArrayDeque<Integer>();
 		index = 0;
 		bucket_index = -1;

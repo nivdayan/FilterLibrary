@@ -21,7 +21,7 @@ public class BitSacrificer extends QuotientFilter {
 		//long start = System.nanoTime();
 		
 		while (it.next()) {
-			int bucket = it.bucket_index;
+			long bucket = it.bucket_index;
 			long fingerprint = it.fingerprint;
 			long pivot_bit = (1 & fingerprint);
 			long bucket_mask = pivot_bit << power_of_two_size;
