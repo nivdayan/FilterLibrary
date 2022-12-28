@@ -1,5 +1,6 @@
 package filters;
 
+import java.util.ArrayDeque;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -13,7 +14,7 @@ public class Iterator  {
 
 	Iterator(QuotientFilter new_qf) {
 		qf = new_qf;
-		s = new LinkedList<Long>();
+		s = new ArrayDeque<Long>(); 
 		//s = new ArrayDeque<Integer>();
 		index = 0;
 		bucket_index = -1;
