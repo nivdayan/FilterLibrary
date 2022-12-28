@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import bitmap_implementations.Bitmap;
+import infiniFilter_experiments.Experiment1;
 import infiniFilter_experiments.InfiniFilterExperiments;
 
 import java.nio.ByteBuffer;
@@ -1996,7 +1997,7 @@ public class Tests {
 		
 		static public void test_FPR(Filter f, double model_FPR, long insertions) {
 			InfiniFilterExperiments.baseline results = new InfiniFilterExperiments.baseline();
-			InfiniFilterExperiments.scalability_experiment( f,  0, insertions, results);
+			Experiment1.scalability_experiment( f,  0, insertions, results);
 			double FPR = results.metrics.get("FPR").get(0);
 			//System.out.println(FPR + ", " + model_FPR);
 			if (FPR > model_FPR * 1.1) {
