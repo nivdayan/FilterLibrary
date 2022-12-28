@@ -1,7 +1,6 @@
 package filters;
 
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -444,11 +443,6 @@ public class QuotientFilter extends Filter {
 		return true; 
 	}
 	
-	boolean insert(BitSet fingerprint, long index, boolean insert_only_if_no_match) {
-		long long_fp = convert(fingerprint);
-		return insert(long_fp, index, insert_only_if_no_match);
-	}
-	
 	boolean insert(long long_fp, long index, boolean insert_only_if_no_match) {
 		if (index >= get_logical_num_slots_plus_extensions()) {
 			return false;
@@ -499,14 +493,6 @@ public class QuotientFilter extends Filter {
 		} while (!is_this_slot_empty);
 		num_existing_entries++;
 		return true; 
-	}
-	
-	boolean delete(BitSet fingerprint, long index) {
-		boolean deleted = delete(convert(fingerprint), index);
-		if (deleted) {
-			num_existing_entries--;
-		}
-		return deleted;
 	}
 	
 	boolean delete(long fingerprint, long index) {
@@ -696,23 +682,6 @@ public class QuotientFilter extends Filter {
 	
 	public boolean get_bit_at_offset(int offset) {
 		return filter.get(offset);
-	}
-
-	public long convert(BitSet fp) {
-		long fp_long = 0;
-		for (int i = 0; i < fingerprintLength; i++) {
-			fp_long = Bitmap.set_fingerprint_bit(i, fp_long, fp.get(i));
-		}
-		return fp_long;
-	}
-	
-	public BitSet convert(long fp) {
-		BitSet bs = new BitSet(fingerprintLength);
-		for (int i = 0; i < fingerprintLength; i++) {
-			bs.set(i, Bitmap.get_fingerprint_bit(i, fp));
-			//fp_long = set_fingerprint_bit(i, fp_long, fp.get(i));
-		}
-		return bs;
 	}
 
 	public void compute_statistics() {

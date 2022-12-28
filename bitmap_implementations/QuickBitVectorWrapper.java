@@ -5,7 +5,6 @@ public class QuickBitVectorWrapper extends Bitmap {
 	long[] bs;
 	
 	public QuickBitVectorWrapper(int bits_per_entry, long num_entries) {
-		super(bits_per_entry);
 		bs = QuickBitVector.makeBitVector(num_entries, bits_per_entry);
 	}
 
