@@ -26,8 +26,6 @@ public class Experiment2 extends InfiniFilterExperiments {
 		long insertion_index = initial_num_entries;
 		Random gen = new Random(initial_num_entries);
 
-		long query_tally = 0;
-		
 		long start_insertions = System.nanoTime();
 
 		//System.out.println("inserting: " + num_entries_to_insert + " to capacity " + Math.pow(2, qf.power_of_two_size));
@@ -71,19 +69,16 @@ public class Experiment2 extends InfiniFilterExperiments {
 		double avg_queries = (end_queries - start_queries) / (double)num_qeuries;
 		double FPR = num_false_positives / (double)num_qeuries;
 		//int num_slots = (1 << qf.power_of_two_size) - 1;
-		double utilization = qf.get_utilization();
+		//double utilization = qf.get_utilization();
 		double num_entries = qf.get_num_entries(true);
 
-		long totes_insertion = end_insertions - start_insertions;
+		//long totes_insertion = end_insertions - start_insertions;
 		//System.out.println("insetion times: " + totes_insertion + "   query tally " + query_tally);
 		results.metrics.get("num_entries").add(num_entries);
 		results.metrics.get("insertion_time").add(avg_insertions);
 		results.metrics.get("query_time").add(avg_queries);
 		results.metrics.get("FPR").add(FPR);
 		results.metrics.get("memory").add(qf.measure_num_bits_per_entry());
-		qf.compute_statistics();
-		results.metrics.get("avg_run_length").add(qf.avg_run_length);
-		results.metrics.get("avg_cluster_length").add(qf.avg_cluster_length);
 
 	}
 	
@@ -183,7 +178,7 @@ public class Experiment2 extends InfiniFilterExperiments {
 		String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(Calendar.getInstance().getTime());
 
 		LocalDate ld = java.time.LocalDate.now();
-		String dir_name = "Exp1_" + timeStamp.toString();
+		String dir_name = "Exp2_" + timeStamp.toString();
 	    Path path = Paths.get(dir_name);
 
 		try {

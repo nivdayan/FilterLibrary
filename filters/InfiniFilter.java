@@ -6,6 +6,10 @@ public class InfiniFilter extends QuotientFilter {
 	long empty_fingerprint;
 	FingerprintGrowthStrategy.FalsePositiveRateExpansion fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.UNIFORM;
 
+	public void set_fpr_style(FingerprintGrowthStrategy.FalsePositiveRateExpansion val) {
+		fprStyle = val;
+	}
+	
 	InfiniFilter(int power_of_two, int bits_per_entry) {
 		super(power_of_two, bits_per_entry);
 		max_entries_before_expansion = (long)(Math.pow(2, power_of_two_size) * expansion_threshold);

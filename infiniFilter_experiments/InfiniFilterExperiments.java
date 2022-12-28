@@ -14,9 +14,11 @@ import filters.BloomFilter;
 import filters.ChainedInfiniFilter;
 import filters.CuckooFilter;
 import filters.Filter;
+import filters.FingerprintGrowthStrategy;
 import filters.InfiniFilter;
 import filters.MultiplyingQF;
 import filters.QuotientFilter;
+import infiniFilter_experiments.InfiniFilterExperiments.baseline;
 
 public class InfiniFilterExperiments {
 
@@ -205,14 +207,6 @@ public class InfiniFilterExperiments {
 	}
 
 
-
-
-
-
-}
-
-
-
 	
 	/*static public void increasing_memory_experiment() {
 
@@ -222,16 +216,18 @@ public class InfiniFilterExperiments {
 
 		System.gc();
 
-		scalability_experiment(new QuotientFilter(num_entries_power, bits_per_entry), num_entries_power, new baseline());
-		scalability_experiment(new QuotientFilter(num_entries_power, bits_per_entry), num_entries_power, new baseline());
-
+		{ QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
+		Experiment1.scalability_experiment(qf, 0, qf.get_max_entries_before_expansion() - 1, new baseline());}
+	{ QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
+	Experiment1.scalability_experiment(qf, 0, qf.get_max_entries_before_expansion() - 1, new baseline());}
+	
 		//orig.expand();
 		//System.out.println("# entries: " + qf.num_existing_entries + " new capacity: " + Math.pow(2, qf.power_of_two_size));
 
 		baseline original_qf_res = new baseline();
 		for (int i = num_entries_power; i < num_cycles; i++ ) {
 			QuotientFilter orig = new QuotientFilter(i, bits_per_entry);
-			orig.expand_autonomously = true; 
+			orig.set_expand_autonomously(true);
 			scalability_experiment(orig, i, original_qf_res);
 			//orig.expand();
 			//System.out.println("# entries: " + qf.num_existing_entries + " new capacity: " + Math.pow(2, qf.power_of_two_size));
@@ -243,7 +239,7 @@ public class InfiniFilterExperiments {
 		baseline bit_sacrifice_res = new baseline();
 		{
 			BitSacrificer qf2 = new BitSacrificer(num_entries_power, bits_per_entry);
-			qf2.expand_autonomously = true;
+			qf2.set_expand_autonomously(true);
 			
 			for (int i = num_entries_power; i < num_cycles && qf2.fingerprintLength > 0; i++ ) {
 				scalability_experiment(qf2, i, bit_sacrifice_res);
@@ -256,7 +252,7 @@ public class InfiniFilterExperiments {
 		baseline chained_IF_1 = new baseline();
 		{
 			InfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
-			qf.expand_autonomously = true; 
+			qf.set_expand_autonomously(true);
 			for (int i = num_entries_power; i < num_cycles; i++ ) {
 				rejuvenation_experiment(qf, i, chained_IF_1, 0);
 				//qf.expand();
@@ -270,7 +266,7 @@ public class InfiniFilterExperiments {
 		baseline chained_IF2 = new baseline();
 		{
 			InfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
-			qf.expand_autonomously = true; 
+			qf.set_expand_autonomously(true);
 			for (int i = num_entries_power; i < num_cycles; i++ ) {
 				rejuvenation_experiment(qf, i, chained_IF2, 0.2);
 				//qf.expand();
@@ -287,7 +283,7 @@ public class InfiniFilterExperiments {
 		baseline geometric_expansion_res = new baseline();
 		{
 			MultiplyingQF qf3 = new MultiplyingQF(num_entries_power, bits_per_entry);
-			qf3.expand_autonomously = true;
+			qf3.set_expand_autonomously(true);
 			for (int i = num_entries_power; i < num_cycles - 1; i++ ) {
 				scalability_experiment(qf3, i, geometric_expansion_res);
 				//System.out.println("# entries: " + qf3.num_existing_entries + " new capacity: " + Math.pow(2, qf3.power_of_two_size + 1));
@@ -335,7 +331,7 @@ public class InfiniFilterExperiments {
 		bit_sacrifice_res.print("num_entries", "memory", commas_before++, commas_after--);
 		geometric_expansion_res.print("num_entries", "memory", commas_before++, commas_after--);
 	}*/
-	
+
 	
 	/*static public void memory_experiment() {
 		int num_entries_power = 6;		
@@ -413,87 +409,7 @@ public class InfiniFilterExperiments {
 
 		}
 	}*/
-
-	/*static public void increasing_fingerprint_sizes_experiment() {
-
-		int num_cycles = 20;
-		int bits_per_entry = 8;
-		int num_entries_power = 6;		
-
-		InfiniFilter qf1 = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
-		qf1.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.UNIFORM;
-		qf1.expand_autonomously = true; 
-		baseline res1 = new baseline();
-		for (int i = num_entries_power; i < num_cycles; i++ ) {
-			scalability_experiment(qf1, i, res1);
-		}
-		
-		InfiniFilter qf2 = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
-		qf2.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.POLYNOMIAL;
-		qf2.expand_autonomously = true; 
-		baseline res2 = new baseline();
-		for (int i = num_entries_power; i < num_cycles; i++ ) {
-			scalability_experiment(qf2, i, res2);
-		}
-
-
-		InfiniFilter qf3 = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
-		qf3.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.GEOMETRIC;
-		qf3.expand_autonomously = true;
-		baseline res3 = new baseline();
-		for (int i = num_entries_power; i < num_cycles; i++ ) {
-			//scalability_experiment(qf3, i, res3);
-		}
-		
-		MultiplyingQF qf4 = new MultiplyingQF(num_entries_power, bits_per_entry);
-		qf4.sizeStyle = SizeExpansion.GEOMETRIC;
-		qf4.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.POLYNOMIAL;
-		qf4.expand_autonomously = true;
-		baseline res4 = new baseline();
-		for (int i = num_entries_power; i < num_cycles - 1; i++ ) {
-			scalability_experiment(qf4, i, res4);
-		}
-
-		
-
-		res1.print("num_entries", "insertion_time", 1, 2);
-		res2.print("num_entries", "insertion_time", 2, 1);
-		res4.print("num_entries", "insertion_time", 3, 0);
-
-		System.out.println();
-
-		res1.print("num_entries", "query_time", 1, 2);
-		res2.print("num_entries", "query_time", 2, 1);
-		res4.print("num_entries", "query_time", 3, 0);
-
-		System.out.println();
-
-		res1.print("num_entries", "FPR", 1, 2);
-		res2.print("num_entries", "FPR", 2, 1);
-		res4.print("num_entries", "FPR", 3, 0);
-
-		System.out.println();
-
-		res1.print("num_entries", "memory", 1, 2);
-		res2.print("num_entries", "memory", 2, 1);
-		res4.print("num_entries", "memory", 3, 0);
-		
-		/*System.out.println();
-		qf1.print_levels();
-		System.out.println();
-		qf2.print_levels();
-		System.out.println();
-		qf3.print_levels();*/
-		
-		/*System.out.println("--------------------------------------------");
-		qf1.print_filter_summary();
-		System.out.println("--------------------------------------------");
-		qf2.print_filter_summary();
-		System.out.println("--------------------------------------------");
-		qf3.print_filter_summary();
-		
-	}*/
 	
 	
-
+}
 

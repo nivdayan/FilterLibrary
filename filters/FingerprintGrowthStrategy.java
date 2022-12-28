@@ -3,7 +3,7 @@ package filters;
 
 public class FingerprintGrowthStrategy {
 
-	enum FalsePositiveRateExpansion {
+	public enum FalsePositiveRateExpansion {
 		UNIFORM,
 		POLYNOMIAL,
 		GEOMETRIC,

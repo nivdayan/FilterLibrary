@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public class MultiplyingQF extends QuotientFilter {
 
-	enum SizeExpansion {
+	public enum SizeExpansion {
 		LINEAR,
 		GEOMETRIC,
 	}
@@ -12,6 +12,14 @@ public class MultiplyingQF extends QuotientFilter {
 	SizeExpansion sizeStyle;
 	FingerprintGrowthStrategy.FalsePositiveRateExpansion fprStyle;
 
+	public void set_fpr_style(FingerprintGrowthStrategy.FalsePositiveRateExpansion val) {
+		fprStyle = val;
+	}
+	
+	public void set_growth_style(SizeExpansion val) {
+		sizeStyle = val;
+	}
+	
 	public MultiplyingQF(int power_of_two, int bits_per_entry) {
 		super(power_of_two, bits_per_entry);
 		older_filters = new ArrayList<QuotientFilter>();
