@@ -93,7 +93,7 @@ public class Experiment3 extends InfiniFilterExperiments {
 		String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(Calendar.getInstance().getTime());
 
 		LocalDate ld = java.time.LocalDate.now();
-		String dir_name = "Exp3_" + timeStamp.toString();
+		String dir_name = "Exp3_" + bits_per_entry + "_bytes_" +  timeStamp.toString();
 	    Path path = Paths.get(dir_name);
 
 		try {
