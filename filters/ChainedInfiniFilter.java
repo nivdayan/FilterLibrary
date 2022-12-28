@@ -154,6 +154,10 @@ public class ChainedInfiniFilter extends InfiniFilter {
 		if (success) {
 			return true;
 		}
+		if (former == null) {
+			System.out.println("Warning: it seems the key to be rejuvenrated does not exist. We must only ever call rejuvenrate on keys that exist.");
+			return false;
+		}
 		success = former.delete(key);
 		if (success) {
 			success = insert(key, false);

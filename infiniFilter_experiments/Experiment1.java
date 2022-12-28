@@ -21,46 +21,7 @@ import filters.MultiplyingQF;
 import filters.QuotientFilter;
 import infiniFilter_experiments.InfiniFilterExperiments.baseline;
 
-public class Experiment1 {
-
-	static int bits_per_entry = 16;
-	static int num_entries_power = 10;	
-	static int num_cycles = 22; // went up to 31
-	
-	static void parse_arguments(String[] args) {
-		if (args != null) {
-	        ArrayList<Integer> argsArr = new ArrayList<Integer>(args.length); // could be 9
-	        for (String val : args) {
-	            int temp = Integer.parseInt(val);
-	            argsArr.add(temp);
-	        }   
-	        if (argsArr.size() > 0 && argsArr.get(0) > 0) {
-	        	bits_per_entry = argsArr.get(0);
-	        }
-	        if (argsArr.size() > 1 && argsArr.get(1) > 0) {
-	        	num_entries_power = argsArr.get(1);
-	        }
-	        if (argsArr.size() > 2 && argsArr.get(2) > 0) {
-	        	num_cycles = argsArr.get(2);
-	        }
-		}
-	}
-	
-	public static File create_file(String file_name) {
-		try {
-			File f = new File( file_name  );
-			if (f.createNewFile()) {
-				System.out.println("Results File created: " + f.getName());
-			} else {
-				System.out.println("Results file will be overwritten.");
-			}
-			return f;
-		} catch (IOException e) {
-			System.out.println("An error occurred.");
-			e.printStackTrace();
-		}
-		return null;
-	}
+public class Experiment1 extends InfiniFilterExperiments {
 	
 	public static void main(String[] args) {
 		parse_arguments(args);
@@ -68,11 +29,11 @@ public class Experiment1 {
 		System.gc();
 		{
 			QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
-			InfiniFilterExperiments.scalability_experiment(qf, 0, qf.get_max_entries_before_expansion() - 1, new baseline());
+			scalability_experiment(qf, 0, qf.get_max_entries_before_expansion() - 1, new baseline());
 		}
 		{
 			QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
-			InfiniFilterExperiments.scalability_experiment(qf, 0, qf.get_max_entries_before_expansion() - 1, new baseline());
+			scalability_experiment(qf, 0, qf.get_max_entries_before_expansion() - 1, new baseline());
 		}
 		
 		System.gc();
@@ -84,7 +45,7 @@ public class Experiment1 {
 			long starting_index = 0;
 			for (int i = num_entries_power; i < (num_entries_power + num_cycles) / 2 + 1; i++ ) {
 				long end_key = (int)(Math.pow(2, i) ); // 
-				InfiniFilterExperiments.scalability_experiment(bloom, starting_index, end_key, bloom_res);
+				scalability_experiment(bloom, starting_index, end_key, bloom_res);
 				starting_index = end_key;
 				//int num_insertions = original_qf_res.metrics.get("num_entries").get(i);
 				//orig.expand();
@@ -101,7 +62,7 @@ public class Experiment1 {
 			long starting_index = 0;
 			for (int i = num_entries_power; i < (num_entries_power + num_cycles) / 2 + 1; i++ ) {
 				long end_key = (int)(Math.pow(2, i) * 0.95); // 
-				InfiniFilterExperiments.scalability_experiment(cuckoo, starting_index, end_key, cuckoo_res);
+				scalability_experiment(cuckoo, starting_index, end_key, cuckoo_res);
 				starting_index = end_key;
 				System.out.println("cuckoo filter " + i);
 			}
@@ -117,7 +78,7 @@ public class Experiment1 {
 			long starting_index = 0;
 			for (int i = num_entries_power; i < (num_entries_power + num_cycles) / 2 + 1; i++ ) {
 				long end_key = (int)(Math.pow(2, i) * 0.90); // 
-				InfiniFilterExperiments.scalability_experiment(orig, starting_index, end_key, original_qf_res);
+				scalability_experiment(orig, starting_index, end_key, original_qf_res);
 				starting_index = end_key;
 				System.out.println("static quotient filter " + i);
 			}
@@ -133,7 +94,7 @@ public class Experiment1 {
 			long starting_index = 0;
 			long end_key = qf.get_max_entries_before_expansion() - 1;
 			for (int i = num_entries_power; i <= num_cycles; i++ ) {
-				InfiniFilterExperiments.scalability_experiment(qf, starting_index, end_key,  chained_IF_res);
+				scalability_experiment(qf, starting_index, end_key,  chained_IF_res);
 				starting_index = end_key;
 				end_key = qf.get_max_entries_before_expansion() * 2 - 1;
 				System.out.println("infinifilter " + i);
@@ -149,7 +110,7 @@ public class Experiment1 {
 			long starting_index = 0;
 			long end_key = qf2.get_max_entries_before_expansion() - 1;
 			for (int i = num_entries_power; i <= num_cycles && qf2.get_fingerprint_length() > 0; i++ ) {
-				InfiniFilterExperiments.scalability_experiment(qf2, starting_index, end_key, bit_sacrifice_res);
+				scalability_experiment(qf2, starting_index, end_key, bit_sacrifice_res);
 				starting_index = end_key;
 				end_key = qf2.get_max_entries_before_expansion() * 2 - 1;
 				System.out.println("bit sacrifice " + i);
@@ -166,7 +127,7 @@ public class Experiment1 {
 			long starting_index = 0;
 			long end_key = qf3.get_max_entries_before_expansion() - 1;
 			for (int i = num_entries_power; i <= num_cycles - 1; i++ ) {
-				InfiniFilterExperiments.scalability_experiment(qf3, starting_index, end_key, geometric_expansion_res);
+				scalability_experiment(qf3, starting_index, end_key, geometric_expansion_res);
 				starting_index = end_key + 1;
 				end_key = (long)(qf3.get_max_entries_before_expansion() * 2 + starting_index - 1);
 				//System.out.println("thresh  " + qf3.max_entries_before_expansion);
@@ -348,6 +309,70 @@ public class Experiment1 {
 	        System.out.println("An error occurred.");
 	        e.printStackTrace();
 	      }
+
+	}
+	
+	
+	static public void scalability_experiment(Filter qf, long initial_key, long end_key, baseline results) {
+
+		int num_qeuries = 1000000;
+		int query_index = Integer.MAX_VALUE;
+		int num_false_positives = 0;
+
+		//int num_entries_to_insert = (int) (Math.pow(2, power) * (qf.expansion_threshold )) - qf.num_existing_entries;
+		//final int initial_num_entries = qf.get_num_entries(true);
+		
+		long initial_num_entries = initial_key;
+		long insertion_index = initial_key;
+		long start_insertions = System.nanoTime();
+
+		
+		//System.out.println("inserting: " + num_entries_to_insert + " to capacity " + Math.pow(2, qf.power_of_two_size));
+
+		boolean successful_insert = false;
+		do {
+			successful_insert = qf.insert(insertion_index, false);
+			insertion_index++;
+		} while (insertion_index < end_key && successful_insert);
+		
+		if (!successful_insert) {
+			System.out.println("an insertion failed");
+			System.exit(1);
+		}
+		
+		//qf.pretty_print();
+
+		long end_insertions = System.nanoTime();
+		long start_queries = System.nanoTime();
+
+		for (int i = 0; i < num_qeuries || num_false_positives < 10; i++) {
+			boolean found = qf.search(query_index--);
+			if (found) {
+				num_false_positives++;
+			}
+			if (i > num_qeuries * 10) {
+				break;
+			}
+		}
+		num_qeuries = Integer.MAX_VALUE - query_index;
+
+		long end_queries = System.nanoTime();
+		double avg_insertions = (end_insertions - start_insertions) / (double)(insertion_index - initial_num_entries);
+		double avg_queries = (end_queries - start_queries) / (double)num_qeuries;
+		double FPR = num_false_positives / (double)num_qeuries;
+		//int num_slots = (1 << qf.power_of_two_size) - 1;
+		//double utilization = qf.get_utilization();
+
+		//double num_entries = qf.get_num_entries(true);
+		double num_entries = qf.get_num_entries(true);
+
+		results.metrics.get("num_entries").add(num_entries);
+		results.metrics.get("insertion_time").add(avg_insertions);
+		results.metrics.get("query_time").add(avg_queries);
+		results.metrics.get("FPR").add(FPR);
+		double bits_per_entry = qf.measure_num_bits_per_entry();
+		//System.out.println(bits_per_entry);
+		results.metrics.get("memory").add(bits_per_entry);
 
 	}
 	
