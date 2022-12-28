@@ -235,11 +235,13 @@ public class Experiment1 {
 		String read_latency_file_name  = dir_name + "/read_speed.txt";
 		String FPR_file_name  = dir_name + "/false_positive_rate.txt";
 		String memory_file_name  = dir_name + "/memory.txt";
+		String all_file_name  = dir_name + "/all.txt";
 		
 		create_file(write_latency_file_name);
 		create_file(read_latency_file_name);
 		create_file(FPR_file_name);
 		create_file(memory_file_name);
+		create_file(all_file_name);
 		
 	    try {
 	        FileWriter insertion_writer = new FileWriter(write_latency_file_name);
@@ -294,6 +296,53 @@ public class Experiment1 {
 			cuckoo_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, mem_writer);
 	        
 			mem_writer.close();
+						
+	    	FileWriter all_writer = new FileWriter(all_file_name);
+
+			commas_before = 1;
+			commas_after = 5;
+			original_qf_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
+			chained_IF_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
+			bit_sacrifice_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
+			geometric_expansion_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
+			bloom_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
+			cuckoo_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
+
+			all_writer.write("\n");
+			
+			commas_before = 1;
+			commas_after = 5;
+			original_qf_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
+			chained_IF_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
+			bit_sacrifice_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
+			geometric_expansion_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
+			bloom_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
+			cuckoo_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
+
+			all_writer.write("\n");
+			
+			commas_before = 1;
+			commas_after = 5;
+			original_qf_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
+			chained_IF_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
+			bit_sacrifice_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
+			geometric_expansion_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
+			bloom_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
+			cuckoo_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
+
+			all_writer.write("\n");
+			
+			commas_before = 1;
+			commas_after = 5;
+			original_qf_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
+			chained_IF_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
+			bit_sacrifice_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
+			geometric_expansion_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
+			bloom_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
+			cuckoo_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
+	    	
+			all_writer.close();
+	    	
 	        System.out.println("Successfully wrote to the files.");
 	      } catch (IOException e) {
 	        System.out.println("An error occurred.");
