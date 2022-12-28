@@ -2,7 +2,6 @@ package filters;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 
 import bitmap_implementations.Bitmap;
 

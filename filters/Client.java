@@ -1,8 +1,5 @@
 package filters;
 
-import infiniFilter_experiments.Experiment1;
-import infiniFilter_experiments.InfiniFilterExperiments;
-
 public class Client {
 
 	static void run_tests() {

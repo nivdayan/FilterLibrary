@@ -4,12 +4,10 @@ import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import bitmap_implementations.Bitmap;
 import infiniFilter_experiments.InfiniFilterExperiments;
-import infiniFilter_experiments.InfiniFilterExperiments.baseline;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -219,7 +217,6 @@ public class Tests {
 		int bits_per_entry = 8;
 		int num_entries_power = 3;
 		int num_entries = (int)Math.pow(2, num_entries_power);
-		int fingerprint_size = bits_per_entry - 3;
 		QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
 
 		long fp1 = 1 << 4;
@@ -262,10 +259,10 @@ public class Tests {
 		int num_entries = (int)Math.pow(2, num_entries_power);
 		QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
 
-		long fp1 = 1 << 4;
+		/*long fp1 = 1 << 4;
 		long fp2 = 1 << 3;
 		long fp3 = 1 << 2;
-		long fp4 = 31;
+		long fp4 = 31;*/
 
 		qf.insert(0, 1, false);
 		qf.insert(0, 1, false);
@@ -320,10 +317,10 @@ public class Tests {
 		int num_entries = (int)Math.pow(2, num_entries_power);
 		QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
 
-		long fp1 = 1 << 4;
+		/*long fp1 = 1 << 4;
 		long fp2 = 1 << 3;
 		long fp3 = 1 << 2;
-		long fp4 = 31;
+		long fp4 = 31;*/
 
 		qf.insert(0, 1, false);
 		qf.insert(0, 1, false);
@@ -450,8 +447,6 @@ public class Tests {
 
 		int bits_per_entry = 8;
 		int num_entries_power = 4;
-		int num_entries = (int)Math.pow(2, num_entries_power);
-		int fingerprint_size = bits_per_entry - 3;
 		QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
 
 		qf.insert(0, 1, false);
@@ -700,7 +695,6 @@ public class Tests {
 		int bits_per_entry = 8;
 		int num_entries_power = 2;
 		int num_entries = (int)Math.pow(2, num_entries_power);
-		int fingerprint_size = bits_per_entry - 3;
 		InfiniFilter qf = new InfiniFilter(num_entries_power, bits_per_entry);
 		
 		int fp1 = 1;

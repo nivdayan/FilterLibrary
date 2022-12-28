@@ -1,7 +1,5 @@
 package bitmap_implementations;
 
-import java.util.BitSet;
-
 public abstract class Bitmap {
 	
 	int bitPerEntry;
