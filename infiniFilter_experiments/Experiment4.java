@@ -226,10 +226,10 @@ public class Experiment4 extends InfiniFilterExperiments {
 			e1.printStackTrace();
 		}
 		
-		String write_latency_file_name = dir_name + "/writes_speed.txt";
-		String read_latency_file_name  = dir_name + "/read_speed.txt";
-		String FPR_file_name  = dir_name + "/false_positive_rate.txt";
-		String memory_file_name  = dir_name + "/memory.txt";
+		String write_latency_file_name = dir_name + "/insertions.csv";
+		String read_latency_file_name  = dir_name + "/queries.txt";
+		String FPR_file_name  = dir_name + "/FPR.txt";
+		String memory_file_name  = dir_name + "/memory.csv";
 		String all_file_name  = dir_name + "/all.txt";
 		
 		create_file(write_latency_file_name);
@@ -242,7 +242,7 @@ public class Experiment4 extends InfiniFilterExperiments {
 	        FileWriter insertion_writer = new FileWriter(write_latency_file_name);
 	        
 			commas_before = 1;
-			commas_after = 3;
+			commas_after = 5;
 			original_qf_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, insertion_writer);
 			chained_IF_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, insertion_writer);
 			bit_sacrifice_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, insertion_writer);
@@ -255,7 +255,7 @@ public class Experiment4 extends InfiniFilterExperiments {
 	        FileWriter reads_writer = new FileWriter(read_latency_file_name);
 
 			commas_before = 1;
-			commas_after = 3;
+			commas_after = 5;
 			original_qf_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, reads_writer);
 			chained_IF_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, reads_writer);
 			bit_sacrifice_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, reads_writer);
@@ -268,7 +268,7 @@ public class Experiment4 extends InfiniFilterExperiments {
 	        FileWriter FPR_writer = new FileWriter(FPR_file_name);
 
 			commas_before = 1;
-			commas_after = 3;
+			commas_after = 5;
 			original_qf_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, FPR_writer);
 			chained_IF_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, FPR_writer);
 			bit_sacrifice_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, FPR_writer);
@@ -282,7 +282,7 @@ public class Experiment4 extends InfiniFilterExperiments {
 			//System.out.println();
 
 			commas_before = 1;
-			commas_after = 3;
+			commas_after = 5;
 			original_qf_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, mem_writer);
 			chained_IF_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, mem_writer);
 			bit_sacrifice_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, mem_writer);
@@ -295,7 +295,7 @@ public class Experiment4 extends InfiniFilterExperiments {
 	    	FileWriter all_writer = new FileWriter(all_file_name);
 
 			commas_before = 1;
-			commas_after = 3;
+			commas_after = 5;
 			original_qf_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
 			chained_IF_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
 			bit_sacrifice_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
@@ -306,7 +306,7 @@ public class Experiment4 extends InfiniFilterExperiments {
 			all_writer.write("\n");
 			
 			commas_before = 1;
-			commas_after = 3;
+			commas_after = 5;
 			original_qf_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
 			chained_IF_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
 			bit_sacrifice_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
@@ -317,7 +317,7 @@ public class Experiment4 extends InfiniFilterExperiments {
 			all_writer.write("\n");
 			
 			commas_before = 1;
-			commas_after = 3;
+			commas_after = 5;
 			original_qf_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
 			chained_IF_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
 			bit_sacrifice_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
@@ -328,7 +328,7 @@ public class Experiment4 extends InfiniFilterExperiments {
 			all_writer.write("\n");
 			
 			commas_before = 1;
-			commas_after = 3;
+			commas_after = 5;
 			original_qf_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
 			chained_IF_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
 			bit_sacrifice_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
