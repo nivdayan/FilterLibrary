@@ -246,6 +246,10 @@ public class Experiment4 extends InfiniFilterExperiments {
 			commas_after = 3;
 			original_qf_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, insertion_writer);
 			chained_IF_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, insertion_writer);
+			
+			bit_sacrifice_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, insertion_writer);
+			geometric_expansion_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, insertion_writer);
+			
 			bloom_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, insertion_writer);
 			cuckoo_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, insertion_writer);
 
@@ -257,6 +261,8 @@ public class Experiment4 extends InfiniFilterExperiments {
 			commas_after = 3;
 			original_qf_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, reads_writer);
 			chained_IF_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, reads_writer);
+			bit_sacrifice_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, reads_writer);
+			geometric_expansion_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, reads_writer);
 			bloom_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, reads_writer);
 			cuckoo_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, reads_writer);
 
@@ -268,6 +274,8 @@ public class Experiment4 extends InfiniFilterExperiments {
 			commas_after = 3;
 			original_qf_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, FPR_writer);
 			chained_IF_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, FPR_writer);
+			bit_sacrifice_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, FPR_writer);
+			geometric_expansion_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, FPR_writer);
 			bloom_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, FPR_writer);
 			cuckoo_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, FPR_writer);
 
@@ -280,6 +288,8 @@ public class Experiment4 extends InfiniFilterExperiments {
 			commas_after = 3;
 			original_qf_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, mem_writer);
 			chained_IF_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, mem_writer);
+			bit_sacrifice_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, mem_writer);
+			geometric_expansion_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, mem_writer);
 			bloom_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, mem_writer);
 			cuckoo_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, mem_writer);
 	        
@@ -291,6 +301,8 @@ public class Experiment4 extends InfiniFilterExperiments {
 			commas_after = 3;
 			original_qf_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
 			chained_IF_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
+			bit_sacrifice_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
+			geometric_expansion_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
 			bloom_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
 			cuckoo_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
 
@@ -300,6 +312,8 @@ public class Experiment4 extends InfiniFilterExperiments {
 			commas_after = 3;
 			original_qf_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
 			chained_IF_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
+			bit_sacrifice_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
+			geometric_expansion_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
 			bloom_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
 			cuckoo_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
 
@@ -309,6 +323,8 @@ public class Experiment4 extends InfiniFilterExperiments {
 			commas_after = 3;
 			original_qf_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
 			chained_IF_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
+			bit_sacrifice_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
+			geometric_expansion_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
 			bloom_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
 			cuckoo_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
 
@@ -318,6 +334,8 @@ public class Experiment4 extends InfiniFilterExperiments {
 			commas_after = 3;
 			original_qf_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
 			chained_IF_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
+			bit_sacrifice_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
+			geometric_expansion_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
 			bloom_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
 			cuckoo_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
 	    	
