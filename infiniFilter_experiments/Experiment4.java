@@ -53,6 +53,7 @@ public class Experiment4 extends InfiniFilterExperiments {
 		
 		ArrayList<Long> end_points = new ArrayList<Long>();
 		
+		//num_cycles = 31;
 		baseline chained_IF_res = new baseline();
 		{
 			InfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
@@ -60,7 +61,8 @@ public class Experiment4 extends InfiniFilterExperiments {
 			long starting_index = 0;
 			long end_key = qf.get_max_entries_before_expansion() - 1;
 			end_points.add(end_key);
-			for (int i = num_entries_power; i <= num_cycles * 4; i++ ) {
+			long max_key = (long) (qf.get_logical_num_slots() * Math.pow(2, num_cycles - num_entries_power));
+			for (int i = num_entries_power; end_key <= max_key; i++ ) {
 				scalability_experiment(qf, starting_index, end_key,  chained_IF_res);
 				starting_index = end_key;
 				long next_exp_threshold = qf.get_max_entries_before_expansion();
