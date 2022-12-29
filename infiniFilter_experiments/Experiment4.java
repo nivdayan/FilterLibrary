@@ -227,10 +227,10 @@ public class Experiment4 extends InfiniFilterExperiments {
 		}
 		
 		String write_latency_file_name = dir_name + "/insertions.csv";
-		String read_latency_file_name  = dir_name + "/queries.txt";
-		String FPR_file_name  = dir_name + "/FPR.txt";
+		String read_latency_file_name  = dir_name + "/queries.csv";
+		String FPR_file_name  = dir_name + "/FPR.csv";
 		String memory_file_name  = dir_name + "/memory.csv";
-		String all_file_name  = dir_name + "/all.txt";
+		String all_file_name  = dir_name + "/all.csv";
 		
 		create_file(write_latency_file_name);
 		create_file(read_latency_file_name);
