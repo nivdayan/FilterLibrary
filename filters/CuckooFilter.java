@@ -9,7 +9,7 @@ public class CuckooFilter extends Filter {
 
 	Bitmap filter;
 	long num_bits; 
-	long max_num_entries;
+	public long max_num_entries;
 	int current_num_entries;
 	long bits_per_entry;
 	int num_hash_functions;
