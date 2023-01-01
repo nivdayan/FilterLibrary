@@ -15,6 +15,7 @@ import filters.BloomFilter;
 import filters.ChainedInfiniFilter;
 import filters.CuckooFilter;
 import filters.Filter;
+import filters.FingerprintGrowthStrategy.FalsePositiveRateExpansion;
 import filters.InfiniFilter;
 import filters.MultiplyingQF;
 import filters.QuotientFilter;
@@ -53,6 +54,12 @@ public class Experiment4 extends InfiniFilterExperiments {
 		
 		ArrayList<Long> end_points = new ArrayList<Long>();
 		
+		
+
+		System.gc();
+		System.out.println("finished quotient");
+		
+		
 		//num_cycles = 31;
 		baseline chained_IF_res = new baseline();
 		{
@@ -68,24 +75,22 @@ public class Experiment4 extends InfiniFilterExperiments {
 				long next_exp_threshold = qf.get_max_entries_before_expansion();
 				end_key = starting_index + (long)(next_exp_threshold * 0.1 - 1);
 				end_points.add(end_key);
-				System.out.println("infinifilter " + i);
+				System.out.println("infinifilter with uniform FPs " + i);
 			}
 		}	
-		System.out.println("finished infinifilter");
+		System.out.println("finished infinifilter with uniform FPs");
 		
-		
-		System.gc();
 		
 		baseline original_qf_res = new baseline();
 		{
 			int power = (int) (  num_entries_power  + (num_cycles - num_entries_power) * (4.0 / 5.0)   );
 			QuotientFilter orig = new QuotientFilter(power, bits_per_entry);
-			System.out.println("num entries " + orig.get_logical_num_slots() );
+			//System.out.println("num entries " + orig.get_logical_num_slots() );
 			orig.set_expand_autonomously(false); 
 			long starting_index = 0;
 			long max_entries = (long)(orig.get_logical_num_slots() * 0.90);
 			ArrayList<Long> adjusted_end_points = adjust_end_points(end_points, max_entries);
-			System.out.println("last end point " + max_entries );
+			//System.out.println("last end point " + max_entries );
 			for (int i = 0; i < adjusted_end_points.size(); i++ ) {
 				scalability_experiment(orig, starting_index, adjusted_end_points.get(i), original_qf_res);
 				starting_index = adjusted_end_points.get(i);
@@ -93,9 +98,32 @@ public class Experiment4 extends InfiniFilterExperiments {
 			}
 		}
 
-		System.gc();
-		System.out.println("finished quotient");
 		
+		//num_cycles = 31;
+		baseline chained_IF_growing_res = new baseline();
+		{
+			InfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
+			qf.set_fpr_style(FalsePositiveRateExpansion.POLYNOMIAL);
+			qf.set_expand_autonomously(true); 
+			long starting_index = 0;
+			long end_key = qf.get_max_entries_before_expansion() - 1;
+			//end_points.add(end_key);
+			long max_key = (long) (qf.get_logical_num_slots() * Math.pow(2, num_cycles - num_entries_power));
+			for (int i = num_entries_power; end_key <= max_key; i++ ) {
+				scalability_experiment(qf, starting_index, end_key,  chained_IF_growing_res);
+				starting_index = end_key;
+				long next_exp_threshold = qf.get_max_entries_before_expansion();
+				end_key = starting_index + (long)(next_exp_threshold * 0.1 - 1);
+				//end_points.add(end_key);
+				System.out.println("infinifilter with poly FPs " + i);
+			}
+		}	
+		System.out.println("finished infinifilter with poly FPs");
+		
+		
+		System.gc();
+		
+
 		
 		System.gc();
 		
@@ -172,47 +200,52 @@ public class Experiment4 extends InfiniFilterExperiments {
 		
 
 		int commas_before = 1;
-		int commas_after = 5;
+		int commas_after = 6;
 		original_qf_res.print("num_entries", "insertion_time", commas_before++, commas_after--);
 		chained_IF_res.print("num_entries", "insertion_time", commas_before++, commas_after--);
 		bit_sacrifice_res.print("num_entries", "insertion_time", commas_before++, commas_after--);
 		geometric_expansion_res.print("num_entries", "insertion_time", commas_before++, commas_after--);
 		bloom_res.print("num_entries", "insertion_time", commas_before++, commas_after--);
 		cuckoo_res.print("num_entries", "insertion_time", commas_before++, commas_after--);
+		chained_IF_growing_res.print("num_entries", "insertion_time", commas_before++, commas_after--);
 		
 		System.out.println();
 
 		commas_before = 1;
-		commas_after = 5;
+		commas_after = 6;
 		original_qf_res.print("num_entries", "query_time", commas_before++, commas_after--);
 		chained_IF_res.print("num_entries", "query_time", commas_before++, commas_after--);
 		bit_sacrifice_res.print("num_entries", "query_time", commas_before++, commas_after--);
 		geometric_expansion_res.print("num_entries", "query_time", commas_before++, commas_after--);
 		bloom_res.print("num_entries", "query_time", commas_before++, commas_after--);
 		cuckoo_res.print("num_entries", "query_time", commas_before++, commas_after--);
-
+		chained_IF_growing_res.print("num_entries", "query_time", commas_before++, commas_after--);
+		
 		System.out.println();
 
 		commas_before = 1;
-		commas_after = 5;
+		commas_after = 6;
 		original_qf_res.print("num_entries", "FPR", commas_before++, commas_after--);
 		chained_IF_res.print("num_entries", "FPR", commas_before++, commas_after--);
 		bit_sacrifice_res.print("num_entries", "FPR", commas_before++, commas_after--);
 		geometric_expansion_res.print("num_entries", "FPR", commas_before++, commas_after--);
 		bloom_res.print("num_entries", "FPR", commas_before++, commas_after--);
 		cuckoo_res.print("num_entries", "FPR", commas_before++, commas_after--);
+		chained_IF_growing_res.print("num_entries", "FPR", commas_before++, commas_after--);
 
+		
 		System.out.println();
 
 		commas_before = 1;
-		commas_after = 5;
+		commas_after = 6;
 		original_qf_res.print("num_entries", "memory", commas_before++, commas_after--);
 		chained_IF_res.print("num_entries", "memory", commas_before++, commas_after--);
 		bit_sacrifice_res.print("num_entries", "memory", commas_before++, commas_after--);
 		geometric_expansion_res.print("num_entries", "memory", commas_before++, commas_after--);
 		bloom_res.print("num_entries", "memory", commas_before++, commas_after--);
 		cuckoo_res.print("num_entries", "memory", commas_before++, commas_after--);
-		
+		chained_IF_growing_res.print("num_entries", "memory", commas_before++, commas_after--);
+
 
 		String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(Calendar.getInstance().getTime());
 
@@ -249,93 +282,102 @@ public class Experiment4 extends InfiniFilterExperiments {
 			geometric_expansion_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, insertion_writer);
 			bloom_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, insertion_writer);
 			cuckoo_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, insertion_writer);
+			chained_IF_growing_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, insertion_writer);
 
+			
 			//System.out.println();
 			insertion_writer.close();
 	        FileWriter reads_writer = new FileWriter(read_latency_file_name);
 
 			commas_before = 1;
-			commas_after = 5;
+			commas_after = 6;
 			original_qf_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, reads_writer);
 			chained_IF_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, reads_writer);
 			bit_sacrifice_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, reads_writer);
 			geometric_expansion_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, reads_writer);
 			bloom_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, reads_writer);
 			cuckoo_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, reads_writer);
+			chained_IF_growing_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, reads_writer);
 
 			//System.out.println();
 			reads_writer.close();
 	        FileWriter FPR_writer = new FileWriter(FPR_file_name);
 
 			commas_before = 1;
-			commas_after = 5;
+			commas_after = 6;
 			original_qf_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, FPR_writer);
 			chained_IF_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, FPR_writer);
 			bit_sacrifice_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, FPR_writer);
 			geometric_expansion_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, FPR_writer);
 			bloom_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, FPR_writer);
 			cuckoo_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, FPR_writer);
-
+			chained_IF_growing_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, FPR_writer);
+			
 			FPR_writer.close();
 			FileWriter mem_writer = new FileWriter(memory_file_name);
 			
 			//System.out.println();
 
 			commas_before = 1;
-			commas_after = 5;
+			commas_after = 6;
 			original_qf_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, mem_writer);
 			chained_IF_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, mem_writer);
 			bit_sacrifice_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, mem_writer);
 			geometric_expansion_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, mem_writer);
 			bloom_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, mem_writer);
 			cuckoo_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, mem_writer);
-	        
+			chained_IF_growing_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, mem_writer);
+
 			mem_writer.close();
 						
 	    	FileWriter all_writer = new FileWriter(all_file_name);
 
 			commas_before = 1;
-			commas_after = 5;
+			commas_after = 6;
 			original_qf_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
 			chained_IF_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
 			bit_sacrifice_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
 			geometric_expansion_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
 			bloom_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
 			cuckoo_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
+			chained_IF_growing_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
 
 			all_writer.write("\n");
 			
 			commas_before = 1;
-			commas_after = 5;
+			commas_after = 6;
 			original_qf_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
 			chained_IF_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
 			bit_sacrifice_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
 			geometric_expansion_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
 			bloom_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
 			cuckoo_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
+			chained_IF_growing_res.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
 
 			all_writer.write("\n");
 			
 			commas_before = 1;
-			commas_after = 5;
+			commas_after = 6;
 			original_qf_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
 			chained_IF_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
 			bit_sacrifice_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
 			geometric_expansion_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
 			bloom_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
 			cuckoo_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
+			chained_IF_growing_res.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
 
 			all_writer.write("\n");
 			
 			commas_before = 1;
-			commas_after = 5;
+			commas_after = 6;
 			original_qf_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
 			chained_IF_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
 			bit_sacrifice_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
 			geometric_expansion_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
 			bloom_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
 			cuckoo_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
-	    	
+			chained_IF_growing_res.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
+
 			all_writer.close();
 	    	
 	        System.out.println("Successfully wrote to the files.");
