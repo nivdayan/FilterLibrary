@@ -275,7 +275,7 @@ public class Experiment4 extends InfiniFilterExperiments {
 	        FileWriter insertion_writer = new FileWriter(write_latency_file_name);
 	        
 			commas_before = 1;
-			commas_after = 5;
+			commas_after = 6;
 			original_qf_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, insertion_writer);
 			chained_IF_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, insertion_writer);
 			bit_sacrifice_res.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, insertion_writer);

@@ -43,8 +43,12 @@ public class BloomFilter extends Filter {
 	
 	@Override
 	protected boolean _insert(long large_hash, boolean insert_only_if_no_match) {
-		for (int i = 0; i < num_hash_functions; i++) {
-			long target_bit = get_target_bit(large_hash, i);
+		
+		long target_bit = Math.abs(large_hash % num_bits);
+		filter.set(target_bit, true);
+		
+		for (int i = 1; i < num_hash_functions; i++) {
+			target_bit = get_target_bit(large_hash, i);
 			//System.out.println(target_bit);
 			filter.set(target_bit, true);
 		}
@@ -54,8 +58,14 @@ public class BloomFilter extends Filter {
 
 	@Override
 	protected boolean _search(long large_hash) {
-		for (int i = 0; i < num_hash_functions; i++) {
-			long target_bit = get_target_bit(large_hash, i);
+		
+		long target_bit = Math.abs(large_hash % num_bits);
+		if (! filter.get(target_bit) ) {
+			return false;
+		}
+		
+		for (int i = 1; i < num_hash_functions; i++) {
+			target_bit = get_target_bit(large_hash, i);
 			if (! filter.get(target_bit) ) {
 				return false;
 			}
