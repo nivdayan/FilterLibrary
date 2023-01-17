@@ -20,7 +20,7 @@ public class QuotientFilter extends Filter {
 	// These three fields are used to prevent throwing exceptions when the buffer space of the filter is exceeded 
 	long last_empty_slot;
 	long last_cluster_start;
-	long backward_steps;
+	public long backward_steps;
 	
 	double expansion_threshold;
 	long max_entries_before_expansion;
@@ -57,8 +57,17 @@ public class QuotientFilter extends Filter {
 		ht = HashType.xxh;
 		
 		last_empty_slot = init_size + num_extension_slots - 1;
+		last_cluster_start = 0;
 		backward_steps = 0;
 		//measure_num_bits_per_entry();
+	}
+
+	//nuevo
+	void update(long init_size)
+	{
+		last_empty_slot = init_size + num_extension_slots - 1;
+		last_cluster_start = 0;
+		backward_steps = 0;
 	}
 	
 	public boolean rejuvenate(long key) {
@@ -95,6 +104,12 @@ public class QuotientFilter extends Filter {
 		fingerprintLength = bits_per_entry - 3;
 		filter = bitmap;
 		num_extension_slots = power_of_two * 2;
+
+		//nuevo
+		long init_size = 1L << power_of_two;
+		last_empty_slot = init_size + num_extension_slots - 1;
+		last_cluster_start = 0;
+		backward_steps = 0;
 	}
 	
 	void expand() {
@@ -745,8 +760,8 @@ public class QuotientFilter extends Filter {
 	}
 
 	public void compute_statistics() {
-		 num_runs = 0;
-		 num_clusters = 0; 
+		num_runs = 0;
+		num_clusters = 0; 
 		double sum_run_lengths = 0;
 		double sum_cluster_lengths = 0; 
 		
@@ -802,6 +817,75 @@ public class QuotientFilter extends Filter {
 		}
 		avg_run_length = sum_run_lengths / num_runs;
 		avg_cluster_length = sum_cluster_lengths / num_clusters;
+	}
+
+
+	void ar_sum1(ArrayList<Integer> ar, int index)
+	{
+		int s = ar.size();
+		if (s <= index)
+		{
+			for (int i = s; i<index+1; i++)
+			{
+				ar.add(0);
+			}
+		}
+		ar.set(index, ar.get(index)+1);
+	}
+
+	public ArrayList<Integer> measure_cluster_length()
+	{
+		ArrayList<Integer> ar = new ArrayList<Integer>();
+
+		num_runs = 0;
+		num_clusters = 0; 
+	
+		int current_run_length = 0;
+		int current_cluster_length = 0;
+
+		int cnt = 0;
+		
+		for (int i = 0; i < get_logical_num_slots_plus_extensions(); i++) {
+			
+			boolean occupied = is_occupied(i);
+			boolean continuation = is_continuation(i); 
+			boolean shifted = is_shifted(i);
+			
+			if 	(!occupied && !continuation && !shifted ) { // empty slot
+				if(current_cluster_length != 0) ar_sum1(ar, current_cluster_length-1);
+				current_cluster_length = 0;
+				current_run_length = 0;
+			}
+			else if (!occupied && !continuation && shifted ) { // start of new run
+				num_runs++;
+				current_run_length = 1;
+				current_cluster_length++;
+			}
+			else if (!occupied && continuation && shifted ) { // continuation of run
+				current_cluster_length++;
+				current_run_length++;
+			}
+			else if (occupied && !continuation && !shifted ) { // start of new cluster & run
+				if(current_cluster_length != 0) ar_sum1(ar, current_cluster_length-1);
+				num_runs++;
+				num_clusters++;
+				//if(current_cluster_length == 0) cnt++;
+				current_cluster_length = 1; 
+				current_run_length = 1;
+			}
+			else if (occupied && !continuation && shifted ) { // start of new run
+				num_runs++;
+				current_run_length = 1; 
+				current_cluster_length++;
+			}
+			else if (occupied && continuation && shifted ) { // continuation of run
+				current_cluster_length++;
+				current_run_length++;
+			}
+		}
+		if(current_cluster_length != 0) ar_sum1(ar, current_cluster_length-1);
+		//System.out.println("CNT = " + cnt);
+		return ar;
 	}
 	
 }
