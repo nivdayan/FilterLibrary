@@ -172,7 +172,7 @@ public class Tests {
 	
 	// test we don't get any false negatives for bloom filter
 	static public void test22() {
-		int bits_per_entry = 10;
+		int bits_per_entry = 11;
 		int num_entries = 1024;
 		Filter filter = new BloomFilter(num_entries, bits_per_entry);
 		test_no_false_negatives(filter, num_entries);
@@ -785,7 +785,7 @@ public class Tests {
 		for (Integer i : added) {
 			boolean found = qf.search(i);
 			if (!found) {
-				System.out.println("something went wrong!! seem to have false negative " + i);
+				System.out.println("test 15: something went wrong!! seem to have false negative " + i);
 				qf.search(i);
 				System.exit(1);
 			}
@@ -874,7 +874,7 @@ public class Tests {
 		for (Integer i : added) {
 			boolean found = qf.search(i);
 			if (!found) {
-				System.out.println("something went wrong!! seem to have false negative " + i);
+				System.out.println("test 18: something went wrong!! seem to have false negative " + i);
 				qf.search(i);
 				System.exit(1);
 			}

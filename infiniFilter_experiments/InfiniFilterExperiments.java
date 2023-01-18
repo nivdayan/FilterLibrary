@@ -24,7 +24,7 @@ public class InfiniFilterExperiments {
 
 	static int bits_per_entry = 16;
 	static int num_entries_power = 10;	
-	static int num_cycles = 22; // went up to 31
+	static int num_cycles = 23; // went up to 31
 	
 	static void parse_arguments(String[] args) {
 		if (args != null) {

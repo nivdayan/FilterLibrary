@@ -83,7 +83,7 @@ public abstract class Filter {
 		return 0;
 	}
 	
-	void print_int_in_binary(int num, int length) {
+	 static void print_int_in_binary(int num, int length) {
 		String str = "";
 		for (int i = 0; i < length; i++) {
 			int mask = (int)Math.pow(2, i);
@@ -93,7 +93,7 @@ public abstract class Filter {
 		System.out.println(str);
 	}
 	
-	void print_long_in_binary(long num, int length) {
+	 static void print_long_in_binary(long num, int length) {
 		String str = "";
 		for (int i = 0; i < length; i++) {
 			long mask = (long)Math.pow(2, i);
