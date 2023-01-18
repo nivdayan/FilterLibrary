@@ -3,9 +3,10 @@ package filters;
 
 public class FingerprintGrowthStrategy {
 
-	enum FalsePositiveRateExpansion {
+	public enum FalsePositiveRateExpansion {
 		UNIFORM,
 		POLYNOMIAL,
+		TRIANGULAR,
 		GEOMETRIC,
 	}
 	
@@ -19,6 +20,10 @@ public class FingerprintGrowthStrategy {
 		}
 		else if (fprStyle == FalsePositiveRateExpansion.POLYNOMIAL) {
 			double factor = 1.0 / Math.pow(num_expansions + 1, 2);
+			new_filter_FPR = factor * original_FPR; 
+		}
+		else if (fprStyle == FalsePositiveRateExpansion.TRIANGULAR) {
+			double factor = 1.0 / (num_expansions * (num_expansions + 1));
 			new_filter_FPR = factor * original_FPR; 
 		}
 		else if (fprStyle == FalsePositiveRateExpansion.UNIFORM) {

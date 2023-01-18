@@ -1,6 +1,5 @@
 package filters;
 
-import infiniFilter_experiments.Experiment1;
 import infiniFilter_experiments.InfiniFilterExperiments;
 
 public class Client {
@@ -39,9 +38,7 @@ public class Client {
 	
 	static public  void main(String[] args) {
 		run_tests();
-		
 		//Experiment1.main(null);
-		
 		//InfiniFilterExperiments.rejuvenation_experiment();
 		//InfiniFilterExperiments.memory_experiment();
 		//InfiniFilterExperiments.experiment_false_positives();

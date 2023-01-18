@@ -6,7 +6,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;  
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 // Java program to calculate SHA hash value  
 

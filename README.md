@@ -1,15 +1,30 @@
-# Compilation Instructions
+The code can be compiled and run using Java version 11 and above.
 
-The code can run on Java version 11 and above.
+# Compilation
 
-cd FilterLibrary  
 javac filters/*.java bitmap_implementations/*.java infiniFilter_experiments/*.java  
 
-# Running Instructions
+# Running Tests \& Experiments
 
-java filters.Client  # this will run the tests to make sure the code is working correctly  
+java filters.Client \t # this will run the tests to make sure the code is working correctly  
+
+# Running Experiments
 
 
-java infiniFilter_experiments.Experiment1 16 10 15    # compare many different baselines with 16 bits per entry, starting with 1K entries, and multiplying the data size up to a data size of 32K entries. 
 
+# Reproducing the Results
+
+Run the following commands 
+
+java infiniFilter_experiments.Experiment1 16 12 31    # Reproduce Figure 13, Parts (A) to (D)
+
+java infiniFilter_experiments.Experiment1 8 10 31    # Reproduce Figure 13, Parts (E) to (H)
+
+java infiniFilter_experiments.Experiment2 16 10 31    # Reproduce Figure 14, Parts (A) and (B)
+
+java infiniFilter_experiments.Experiment2 8 10 31    # Reproduce Figure 14, Parts (C) and (D)
+
+java infiniFilter_experiments.Experiment3 8 10 31    # Reproduce Figure 15
+
+java infiniFilter_experiments.Experiment4 16 10 31    # Reproduce Figure 16
 

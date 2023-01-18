@@ -4,12 +4,11 @@ import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import bitmap_implementations.Bitmap;
+import infiniFilter_experiments.Experiment1;
 import infiniFilter_experiments.InfiniFilterExperiments;
-import infiniFilter_experiments.InfiniFilterExperiments.baseline;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -173,7 +172,7 @@ public class Tests {
 	
 	// test we don't get any false negatives for bloom filter
 	static public void test22() {
-		int bits_per_entry = 10;
+		int bits_per_entry = 11;
 		int num_entries = 1024;
 		Filter filter = new BloomFilter(num_entries, bits_per_entry);
 		test_no_false_negatives(filter, num_entries);
@@ -219,7 +218,6 @@ public class Tests {
 		int bits_per_entry = 8;
 		int num_entries_power = 3;
 		int num_entries = (int)Math.pow(2, num_entries_power);
-		int fingerprint_size = bits_per_entry - 3;
 		QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
 
 		long fp1 = 1 << 4;
@@ -262,10 +260,10 @@ public class Tests {
 		int num_entries = (int)Math.pow(2, num_entries_power);
 		QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
 
-		long fp1 = 1 << 4;
+		/*long fp1 = 1 << 4;
 		long fp2 = 1 << 3;
 		long fp3 = 1 << 2;
-		long fp4 = 31;
+		long fp4 = 31;*/
 
 		qf.insert(0, 1, false);
 		qf.insert(0, 1, false);
@@ -320,10 +318,10 @@ public class Tests {
 		int num_entries = (int)Math.pow(2, num_entries_power);
 		QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
 
-		long fp1 = 1 << 4;
+		/*long fp1 = 1 << 4;
 		long fp2 = 1 << 3;
 		long fp3 = 1 << 2;
-		long fp4 = 31;
+		long fp4 = 31;*/
 
 		qf.insert(0, 1, false);
 		qf.insert(0, 1, false);
@@ -450,8 +448,6 @@ public class Tests {
 
 		int bits_per_entry = 8;
 		int num_entries_power = 4;
-		int num_entries = (int)Math.pow(2, num_entries_power);
-		int fingerprint_size = bits_per_entry - 3;
 		QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
 
 		qf.insert(0, 1, false);
@@ -700,7 +696,6 @@ public class Tests {
 		int bits_per_entry = 8;
 		int num_entries_power = 2;
 		int num_entries = (int)Math.pow(2, num_entries_power);
-		int fingerprint_size = bits_per_entry - 3;
 		InfiniFilter qf = new InfiniFilter(num_entries_power, bits_per_entry);
 		
 		int fp1 = 1;
@@ -790,7 +785,7 @@ public class Tests {
 		for (Integer i : added) {
 			boolean found = qf.search(i);
 			if (!found) {
-				System.out.println("something went wrong!! seem to have false negative " + i);
+				System.out.println("test 15: something went wrong!! seem to have false negative " + i);
 				qf.search(i);
 				System.exit(1);
 			}
@@ -879,7 +874,7 @@ public class Tests {
 		for (Integer i : added) {
 			boolean found = qf.search(i);
 			if (!found) {
-				System.out.println("something went wrong!! seem to have false negative " + i);
+				System.out.println("test 18: something went wrong!! seem to have false negative " + i);
 				qf.search(i);
 				System.exit(1);
 			}
@@ -2002,7 +1997,7 @@ public class Tests {
 		
 		static public void test_FPR(Filter f, double model_FPR, long insertions) {
 			InfiniFilterExperiments.baseline results = new InfiniFilterExperiments.baseline();
-			InfiniFilterExperiments.scalability_experiment( f,  0, insertions, results);
+			Experiment1.scalability_experiment( f,  0, insertions, results);
 			double FPR = results.metrics.get("FPR").get(0);
 			//System.out.println(FPR + ", " + model_FPR);
 			if (FPR > model_FPR * 1.1) {
