@@ -68,7 +68,7 @@ public class MultiplyingQF extends QuotientFilter {
 		long init_size = 1L << power_of_two_size;
 		num_extension_slots += 2;		
 		filter = make_filter(init_size, bitPerEntry);
-		
+		super.update(init_size);
 		max_entries_before_expansion = (long)(Math.pow(2, power_of_two_size) * expansion_threshold);
 		//System.out.println("expanding");
 	}

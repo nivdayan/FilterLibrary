@@ -16,6 +16,11 @@ public class QuotientFilter extends Filter {
 	int num_existing_entries;
 	Bitmap filter;
 	
+	// These three fields are used to prevent throwing exceptions when the buffer space of the filter is exceeded 
+	long last_empty_slot;
+	long last_cluster_start;
+	public long backward_steps;
+	
 	double expansion_threshold;
 	long max_entries_before_expansion;
 	boolean expand_autonomously;
@@ -49,7 +54,19 @@ public class QuotientFilter extends Filter {
 		original_fingerprint_size = fingerprintLength;
 		num_expansions = 0;
 		ht = HashType.xxh;
+		
+		last_empty_slot = init_size + num_extension_slots - 1;
+		last_cluster_start = 0;
+		backward_steps = 0;
 		//measure_num_bits_per_entry();
+	}
+
+	//nuevo
+	void update(long init_size)
+	{
+		last_empty_slot = init_size + num_extension_slots - 1;
+		last_cluster_start = 0;
+		backward_steps = 0;
 	}
 	
 	public boolean rejuvenate(long key) {
@@ -86,6 +103,12 @@ public class QuotientFilter extends Filter {
 		fingerprintLength = bits_per_entry - 3;
 		filter = bitmap;
 		num_extension_slots = power_of_two * 2;
+
+		//nuevo
+		long init_size = 1L << power_of_two;
+		last_empty_slot = init_size + num_extension_slots - 1;
+		last_cluster_start = 0;
+		backward_steps = 0;
 	}
 	
 	void expand() {
@@ -295,7 +318,7 @@ public class QuotientFilter extends Filter {
 			}
 			current_index--;
 		}
-		
+		last_cluster_start = current_index - 1;
 		while (true) {
 			if (!is_continuation(current_index)) {
 				runs_to_skip_counter--;
@@ -316,7 +339,7 @@ public class QuotientFilter extends Filter {
 				return index; 
 			}
 			index++;
-		} while (is_continuation(index));
+		} while (index < get_logical_num_slots_plus_extensions() && is_continuation(index));
 		return -1; 
 	}
 	
@@ -330,16 +353,16 @@ public class QuotientFilter extends Filter {
 				matching_fingerprint_index = index;
 			}
 			index++;
-		} while (is_continuation(index));
+		} while (index < get_logical_num_slots_plus_extensions() && is_continuation(index));
 		return matching_fingerprint_index; 
 	}
 	
 	// given the start of a run, find the last slot index that still belongs to this run
 	long find_run_end(long index) {
-		do {
+		while(index < get_logical_num_slots_plus_extensions() - 1 && is_continuation(index+1)) {
 			index++;
-		} while (is_continuation(index));
-		return index - 1; 
+		} 
+		return index; 
 	}
 	
 	// given a canonical index slot and a fingerprint, find the relevant run and check if there is a matching fingerprint within it
@@ -384,6 +407,16 @@ public class QuotientFilter extends Filter {
 		return index;
 	}
 	
+	// moves backwards to find the first empty slot
+	// used as a part of the mechanism to prevent exceptions when exceeding the quotient filter's bounds 
+	long find_backward_empty_slot(long index) {
+		while (index >= 0 && !is_slot_empty(index)) {
+			backward_steps++;
+			index--;
+		}
+		return index;
+	}
+	
 	// return the first slot to the right where the current run starting at the index parameter ends
 	long find_new_run_location(long index) {
 		if (!is_slot_empty(index)) {
@@ -411,6 +444,9 @@ public class QuotientFilter extends Filter {
 		// if the slot was initially empty, we can just terminate, as there is nothing to push to the right
 		if (slot_initially_empty) {
 			set_fingerprint(start_of_this_new_run, long_fp);
+			if (start_of_this_new_run == last_empty_slot) {  
+				last_empty_slot = find_backward_empty_slot(last_cluster_start);
+			}
 			num_existing_entries++;
 			return true; 
 		}
@@ -438,13 +474,16 @@ public class QuotientFilter extends Filter {
 				temp_continuation = current_continuation;
 			}
 			current_index++;
+			if (current_index == last_empty_slot) {  // TODO get this out of the while loop
+				last_empty_slot = find_backward_empty_slot(last_cluster_start);
+			}
 		} while (!is_this_slot_empty);
 		num_existing_entries++;
 		return true; 
 	}
 	
 	boolean insert(long long_fp, long index, boolean insert_only_if_no_match) {
-		if (index >= get_logical_num_slots_plus_extensions()) {
+		if (index > last_empty_slot) {
 			return false;
 		}
 		boolean does_run_exist = is_occupied(index);
@@ -489,6 +528,9 @@ public class QuotientFilter extends Filter {
 				temp_continuation = current_continuation;
 				long_fp = swap_fingerprints(current_index, long_fp);
 			}
+			if (current_index == last_empty_slot) {  
+				last_empty_slot = find_backward_empty_slot(last_cluster_start);
+			}
 			current_index++;
 		} while (!is_this_slot_empty);
 		num_existing_entries++;
@@ -513,10 +555,6 @@ public class QuotientFilter extends Filter {
 		}
 
 		long run_end = find_run_end(matching_fingerprint_index);
-		
-		if (matching_fingerprint_index == -1) {
-			return false;
-		}
 		
 		// the run has only one entry, we need to disable its is_occupied flag
 		// we just remember we need to do this here, and we do it later to not interfere with counts
@@ -553,12 +591,18 @@ public class QuotientFilter extends Filter {
 		do {
 			// we first check if the next run actually exists and if it is shifted.
 			// only if both conditions hold, we need to shift it back one slot.
-			boolean does_next_run_exist = !is_slot_empty(run_end + 1);
-			boolean is_next_run_shifted = is_shifted(run_end + 1);
-			if (!does_next_run_exist || !is_next_run_shifted) {
+			//boolean does_next_run_exist = !is_slot_empty(run_end + 1);
+			//boolean is_next_run_shifted = is_shifted(run_end + 1);
+			//if (!does_next_run_exist || !is_next_run_shifted) {
+			if (run_end >= get_logical_num_slots_plus_extensions()-1 ||
+				 is_slot_empty(run_end + 1) || !is_shifted(run_end + 1)) {
 				if (turn_off_occupied) {
 					// if we eliminated a run and now need to turn the is_occupied flag off, we do it at the end to not interfere in our counts 
 					set_occupied(index, false);
+					
+				}
+				if (run_end > last_empty_slot) {         
+					last_empty_slot = run_end;
 				}
 				return true;
 			}
@@ -685,8 +729,8 @@ public class QuotientFilter extends Filter {
 	}
 
 	public void compute_statistics() {
-		 num_runs = 0;
-		 num_clusters = 0; 
+		num_runs = 0;
+		num_clusters = 0; 
 		double sum_run_lengths = 0;
 		double sum_cluster_lengths = 0; 
 		
@@ -742,6 +786,75 @@ public class QuotientFilter extends Filter {
 		}
 		avg_run_length = sum_run_lengths / num_runs;
 		avg_cluster_length = sum_cluster_lengths / num_clusters;
+	}
+
+
+	void ar_sum1(ArrayList<Integer> ar, int index)
+	{
+		int s = ar.size();
+		if (s <= index)
+		{
+			for (int i = s; i<index+1; i++)
+			{
+				ar.add(0);
+			}
+		}
+		ar.set(index, ar.get(index)+1);
+	}
+
+	public ArrayList<Integer> measure_cluster_length()
+	{
+		ArrayList<Integer> ar = new ArrayList<Integer>();
+
+		num_runs = 0;
+		num_clusters = 0; 
+	
+		int current_run_length = 0;
+		int current_cluster_length = 0;
+
+		int cnt = 0;
+		
+		for (int i = 0; i < get_logical_num_slots_plus_extensions(); i++) {
+			
+			boolean occupied = is_occupied(i);
+			boolean continuation = is_continuation(i); 
+			boolean shifted = is_shifted(i);
+			
+			if 	(!occupied && !continuation && !shifted ) { // empty slot
+				if(current_cluster_length != 0) ar_sum1(ar, current_cluster_length-1);
+				current_cluster_length = 0;
+				current_run_length = 0;
+			}
+			else if (!occupied && !continuation && shifted ) { // start of new run
+				num_runs++;
+				current_run_length = 1;
+				current_cluster_length++;
+			}
+			else if (!occupied && continuation && shifted ) { // continuation of run
+				current_cluster_length++;
+				current_run_length++;
+			}
+			else if (occupied && !continuation && !shifted ) { // start of new cluster & run
+				if(current_cluster_length != 0) ar_sum1(ar, current_cluster_length-1);
+				num_runs++;
+				num_clusters++;
+				//if(current_cluster_length == 0) cnt++;
+				current_cluster_length = 1; 
+				current_run_length = 1;
+			}
+			else if (occupied && !continuation && shifted ) { // start of new run
+				num_runs++;
+				current_run_length = 1; 
+				current_cluster_length++;
+			}
+			else if (occupied && continuation && shifted ) { // continuation of run
+				current_cluster_length++;
+				current_run_length++;
+			}
+		}
+		if(current_cluster_length != 0) ar_sum1(ar, current_cluster_length-1);
+		//System.out.println("CNT = " + cnt);
+		return ar;
 	}
 	
 }

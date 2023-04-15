@@ -176,6 +176,9 @@ public class InfiniFilter extends QuotientFilter {
 		power_of_two_size++;
 		num_extension_slots += 2;
 		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);
+		last_empty_slot = new_qf.last_empty_slot;
+		last_cluster_start = new_qf.last_cluster_start;
+		backward_steps = new_qf.backward_steps;
 	}
 	
 	/*public void print_filter_summary() {	
