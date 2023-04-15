@@ -114,6 +114,7 @@ public class InfiniFilter extends QuotientFilter {
 		insertee.insert(empty_fingerprint, bucket2, false);
 	}
 	
+	// determines what is the new length of fingerprints to be used for entries inserted in the current generation
 	private static int prep_unary_mask(int prev_FP_size, int new_FP_size) {
 		int fingerprint_diff = new_FP_size - prev_FP_size;
 		

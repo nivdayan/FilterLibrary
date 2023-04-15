@@ -10,6 +10,7 @@ public class FingerprintGrowthStrategy {
 		GEOMETRIC,
 	}
 	
+	// determines what is the new length of fingerprints to be used for entries inserted in the current generation
 	static int  get_new_fingerprint_size(int original_fingerprint_size, int num_expansions, FalsePositiveRateExpansion fprStyle) {
 		
 		double original_FPR = Math.pow(2, -original_fingerprint_size);

@@ -1,6 +1,5 @@
 package infiniFilter_experiments;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -8,9 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Calendar;
-
 import filters.BitSacrificer;
 import filters.BloomFilter;
 import filters.ChainedInfiniFilter;
@@ -19,7 +16,6 @@ import filters.Filter;
 import filters.InfiniFilter;
 import filters.MultiplyingQF;
 import filters.QuotientFilter;
-import infiniFilter_experiments.InfiniFilterExperiments.baseline;
 
 public class Experiment1 extends InfiniFilterExperiments {
 	
