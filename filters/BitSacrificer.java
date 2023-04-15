@@ -48,6 +48,9 @@ public class BitSacrificer extends QuotientFilter {
 		//long end = System.nanoTime();
 		//double time = (end - start) / 1000;
 		//System.out.println("time BS  " + time + "   " + new_qf.get_num_entries(false));
+		last_empty_slot = new_qf.last_empty_slot;
+		last_cluster_start = new_qf.last_cluster_start;
+		backward_steps = new_qf.backward_steps;
 		
 		filter = new_qf.filter;
 		power_of_two_size++;
