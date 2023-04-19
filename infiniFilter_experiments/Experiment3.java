@@ -11,8 +11,8 @@ import java.util.Calendar;
 
 import filters.ChainedInfiniFilter;
 import filters.FingerprintGrowthStrategy;
-import filters.InfiniFilter;
-import filters.MultiplyingQF;
+import filters.BasicInfiniFilter;
+import filters.Chaining;
 
 public class Experiment3 extends InfiniFilterExperiments {
 
@@ -20,7 +20,7 @@ public class Experiment3 extends InfiniFilterExperiments {
 
 		parse_arguments(args);
 
-		InfiniFilter qf1 = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
+		BasicInfiniFilter qf1 = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
 		qf1.set_fpr_style(FingerprintGrowthStrategy.FalsePositiveRateExpansion.UNIFORM);
 		qf1.set_expand_autonomously(true); 
 		baseline res1 = new baseline();
@@ -33,7 +33,7 @@ public class Experiment3 extends InfiniFilterExperiments {
 			System.out.println("infinifilter uniform FPR " + i);
 		}
 		
-		InfiniFilter qf2 = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
+		BasicInfiniFilter qf2 = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
 		qf2.set_fpr_style(FingerprintGrowthStrategy.FalsePositiveRateExpansion.POLYNOMIAL);
 		qf2.set_expand_autonomously(true); 
 		baseline res2 = new baseline();
@@ -46,8 +46,8 @@ public class Experiment3 extends InfiniFilterExperiments {
 			System.out.println("infinifilter polynomial FPR " + i);
 		}
 
-		MultiplyingQF qf3 = new MultiplyingQF(num_entries_power, bits_per_entry);
-		qf3.set_growth_style(MultiplyingQF.SizeExpansion.GEOMETRIC);
+		Chaining qf3 = new Chaining(num_entries_power, bits_per_entry);
+		qf3.set_growth_style(Chaining.SizeExpansion.GEOMETRIC);
 		qf3.set_fpr_style(FingerprintGrowthStrategy.FalsePositiveRateExpansion.POLYNOMIAL);
 		qf3.set_expand_autonomously(true); 
 		baseline res3 = new baseline();
@@ -60,7 +60,7 @@ public class Experiment3 extends InfiniFilterExperiments {
 			System.out.println("geometric chaining polynomial FPR " + i);
 		}
 		
-		InfiniFilter qf4 = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
+		BasicInfiniFilter qf4 = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
 		qf4.set_fpr_style(FingerprintGrowthStrategy.FalsePositiveRateExpansion.TRIANGULAR);
 		qf4.set_expand_autonomously(true); 
 		baseline res4 = new baseline();

@@ -1,19 +1,19 @@
 package filters;
 
 
-public class BitSacrificer extends QuotientFilter {
+public class FingerprintSacrifice extends QuotientFilter {
 
-	public BitSacrificer(int power_of_two, int bits_per_entry) {
+	public FingerprintSacrifice(int power_of_two, int bits_per_entry) {
 		super(power_of_two, bits_per_entry);
 		// TODO Auto-generated constructor stub
 		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);
 	}
 	
-	void expand() {
+	boolean expand() {
 		
 		if (fingerprintLength == 0) {
 			is_full = true;
-			return;
+			return false;
 		}
 		
 		QuotientFilter new_qf = new QuotientFilter(power_of_two_size + 1, bitPerEntry - 1);
@@ -58,7 +58,7 @@ public class BitSacrificer extends QuotientFilter {
 		bitPerEntry--;
 		fingerprintLength--;
 		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);
-
+		return true;
 	}
 	
 }

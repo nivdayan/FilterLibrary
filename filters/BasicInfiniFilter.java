@@ -1,16 +1,17 @@
 
 package filters;
 
-public class InfiniFilter extends QuotientFilter {
+public class BasicInfiniFilter extends QuotientFilter {
 
 	long empty_fingerprint;
+	int num_void_entries = 0;
 	FingerprintGrowthStrategy.FalsePositiveRateExpansion fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.UNIFORM;
 
 	public void set_fpr_style(FingerprintGrowthStrategy.FalsePositiveRateExpansion val) {
 		fprStyle = val;
 	}
 	
-	InfiniFilter(int power_of_two, int bits_per_entry) {
+	BasicInfiniFilter(int power_of_two, int bits_per_entry) {
 		super(power_of_two, bits_per_entry);
 		max_entries_before_expansion = (long)(Math.pow(2, power_of_two_size) * expansion_threshold);
 		empty_fingerprint = (1L << fingerprintLength) - 2L;
@@ -50,6 +51,8 @@ public class InfiniFilter extends QuotientFilter {
 		return age;
 	}
 	
+	// TODO if we rejuvenate a void entry, we should subtract from num_void_entries 
+	// as if this count reaches zero, we can have shorter chains
 	public boolean rejuvenate(long key) {
 		long large_hash = get_hash(key);
 		long fingerprint = gen_fingerprint(large_hash);
@@ -107,11 +110,12 @@ public class InfiniFilter extends QuotientFilter {
 	}
 	
 	void handle_empty_fingerprint(long bucket_index, QuotientFilter insertee) {
-		long bucket1 = bucket_index;
+		System.out.println("called");
+		/*long bucket1 = bucket_index;
 		long bucket_mask = 1L << power_of_two_size; 		// setting this bit to the proper offset of the slot address field
 		long bucket2 = bucket1 | bucket_mask;	// adding the pivot bit to the slot address field
 		insertee.insert(empty_fingerprint, bucket1, false);
-		insertee.insert(empty_fingerprint, bucket2, false);
+		insertee.insert(empty_fingerprint, bucket2, false);*/
 	}
 	
 	private static int prep_unary_mask(int prev_FP_size, int new_FP_size) {
@@ -126,7 +130,22 @@ public class InfiniFilter extends QuotientFilter {
 		return unary_mask;
 	}
 	
-	void expand() {
+	int get_num_void_entries() {
+		int num = 0;
+		for (int i = 0; i < get_physcial_num_slots(); i++) {
+			long fp = get_fingerprint(i);
+			if (fp == empty_fingerprint) {
+				num++;
+			}
+		}
+		return num;
+	}
+	
+	
+	boolean expand() {
+		if (is_full()) {
+			return false;
+		}
 		int new_fingerprint_size = FingerprintGrowthStrategy.get_new_fingerprint_size(original_fingerprint_size, num_expansions, fprStyle);
 		//System.out.println("FP size: " + new_fingerprint_size);
 		QuotientFilter new_qf = new QuotientFilter(power_of_two_size + 1, new_fingerprint_size + 3);
@@ -135,7 +154,8 @@ public class InfiniFilter extends QuotientFilter {
 		
 		long current_empty_fingerprint = empty_fingerprint;
 		empty_fingerprint = (1L << new_fingerprint_size) - 2; // One 
-				
+		num_void_entries = 0;
+		
 		while (it.next()) {
 			long bucket = it.bucket_index;
 			long fingerprint = it.fingerprint;
@@ -147,6 +167,11 @@ public class InfiniFilter extends QuotientFilter {
 				long updated_fingerprint = chopped_fingerprint | unary_mask;				
 				new_qf.insert(updated_fingerprint, updated_bucket, false);
 				
+				num_void_entries += updated_fingerprint == empty_fingerprint ? 1 : 0;
+				//if (updated_fingerprint == empty_fingerprint) {
+				//	num_void_entries++;
+					//is_full = true;
+				//}
 				/*System.out.println(bucket); 
 				System.out.print("bucket1      : ");
 				print_int_in_binary( bucket, power_of_two_size);
@@ -178,6 +203,23 @@ public class InfiniFilter extends QuotientFilter {
 		last_empty_slot = new_qf.last_empty_slot;
 		last_cluster_start = new_qf.last_cluster_start;
 		backward_steps = new_qf.backward_steps;
+		if (num_void_entries > 0) {
+			//is_full = true;
+		}
+		return true;
+	}
+	
+	boolean is_full() {
+		return num_void_entries > 0;
+	}
+	
+	public void print_filter_summary() {
+		super.print_filter_summary();
+		int num_void_entries = get_num_void_entries();
+		System.out.println("void entries: " + num_void_entries);
+		System.out.println("is full: " + is_full);
+		System.out.println("original fingerprint size: " + original_fingerprint_size);
+		System.out.println("num expansions : " + num_expansions);
 	}
 	
 	/*public void print_filter_summary() {	

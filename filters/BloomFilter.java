@@ -18,7 +18,7 @@ public class BloomFilter extends Filter {
 		num_bits = new_bits_per_entry * max_num_entries;
 		bits_per_entry = new_bits_per_entry;
 		num_hash_functions = (int) Math.round( bits_per_entry * Math.log(2) );
-		ht = HashType.xxh;		
+		hash_type = HashType.xxh;		
 		current_num_entries = 0;
 	}
 	
@@ -28,7 +28,8 @@ public class BloomFilter extends Filter {
 	}
 
 	@Override
-	void expand() {
+	boolean expand() {
+		return false;
 	}
 
 	@Override

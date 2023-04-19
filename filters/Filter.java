@@ -7,10 +7,10 @@ import bitmap_implementations.Bitmap;
 
 public abstract class Filter {
 	
-	HashType ht;
+	HashType hash_type;
 	
 	abstract boolean rejuvenate(long key);
-	abstract void expand();
+	abstract boolean expand();
 	protected abstract boolean _delete(long large_hash);
 	abstract protected boolean _insert(long large_hash, boolean insert_only_if_no_match);
 	abstract protected boolean _search(long large_hash);
@@ -61,10 +61,10 @@ public abstract class Filter {
 	
 	long get_hash(long input) {
 		long hash = 0;
-		if (ht == HashType.arbitrary) {
+		if (hash_type == HashType.arbitrary) {
 			hash = HashFunctions.normal_hash((int)input);
 		}
-		else if (ht == HashType.xxh) {
+		else if (hash_type == HashType.xxh) {
 			hash = HashFunctions.xxhash(input);
 		}
 		else {

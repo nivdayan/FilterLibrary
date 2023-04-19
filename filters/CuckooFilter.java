@@ -28,7 +28,7 @@ public class CuckooFilter extends Filter {
 		filter = new QuickBitVectorWrapper(new_bits_per_entry,  (int)max_num_entries);
 		num_bits = new_bits_per_entry * max_num_entries;
 		bits_per_entry = new_bits_per_entry;
-		ht = HashType.xxh;
+		hash_type = HashType.xxh;
 		current_num_entries = 0;
 
 		power_of_two_buckets = (int)(power_of_two - Math.log(bucket_size) / Math.log(2));
@@ -41,7 +41,8 @@ public class CuckooFilter extends Filter {
 	}
 
 	@Override
-	void expand() {		
+	boolean expand() {	
+		return false;
 	}
 
 	@Override

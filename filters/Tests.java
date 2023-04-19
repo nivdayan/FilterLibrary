@@ -481,7 +481,7 @@ public class Tests {
 
 		int bits_per_entry = 10;
 		int num_entries_power = 4;
-		BitSacrificer qf = new BitSacrificer(num_entries_power, bits_per_entry);
+		FingerprintSacrifice qf = new FingerprintSacrifice(num_entries_power, bits_per_entry);
 		qf.max_entries_before_expansion = Integer.MAX_VALUE; // disable automatic expansion
 		//qf.print_key(1);
 
@@ -522,7 +522,7 @@ public class Tests {
 
 		int bits_per_entry = 10;
 		int num_entries_power = 3;
-		MultiplyingQF qf = new MultiplyingQF(num_entries_power, bits_per_entry);
+		Chaining qf = new Chaining(num_entries_power, bits_per_entry);
 		qf.max_entries_before_expansion = Integer.MAX_VALUE; // disable automatic expansion
 
 		int i = 0;
@@ -558,8 +558,8 @@ public class Tests {
 	static public void test10() {
 		int bits_per_entry = 10;
 		int num_entries_power = 3;		
-		InfiniFilter qf = new InfiniFilter(num_entries_power, bits_per_entry);
-		qf.ht = HashType.arbitrary;
+		BasicInfiniFilter qf = new BasicInfiniFilter(num_entries_power, bits_per_entry);
+		qf.hash_type = HashType.arbitrary;
 		int i = 1;
 		while (i < Math.pow(2, num_entries_power) - 1) {
 			qf.insert(i, false);
@@ -590,7 +590,7 @@ public class Tests {
 			boolean found = qf.search(i);
 			//qf.compare(0, 0);
 			if (!found) {
-				System.out.println("not found entry " + i);
+				System.out.println("not found entry " + i + "   test 10");
 				System.exit(1);
 			}
 			i++;
@@ -602,18 +602,18 @@ public class Tests {
 	static public void test11() {
 		int bits_per_entry = 7;
 		int num_entries_power = 3;		
-		InfiniFilter qf = new InfiniFilter(num_entries_power, bits_per_entry);
+		BasicInfiniFilter qf = new AlephFilter(num_entries_power, bits_per_entry);
 		qf.expand_autonomously = true;
 		int max_key = (int)Math.pow(2, num_entries_power + qf.fingerprintLength + 1);
 		//int max_key = (int)Math.pow(2, num_entries_power + 4 );
-		for (int i = 0; i < max_key; i++) {
+		for (int i = 0; i < max_key; i++) {			
 			qf.insert(i, false);
 		}
 
 		for (int i = 0; i < max_key; i++) {
 			boolean found = qf.search(i);
 			if (!found) {
-				System.out.println("not found entry " + i);
+				System.out.println("not found entry " + i + " in test11");
 				System.exit(1);
 			}
 		}
@@ -637,19 +637,51 @@ public class Tests {
 	static public void test12() {
 		int bits_per_entry = 7;
 		int num_entries_power = 3;		
-		InfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
+		ChainedInfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
 		qf.expand_autonomously = true;
-		qf.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.UNIFORM;
-		int max_key = (int)Math.pow(2, num_entries_power + qf.fingerprintLength * 4 + 1 );
+		qf.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.POLYNOMIAL;
+		//int max_key = (int)Math.pow(2, num_entries_power + qf.fingerprintLength * 4 + 1 );
+		int max_key = (int)Math.pow(2, num_entries_power + qf.fingerprintLength * 3 + 7 );
 		for (int i = 0; i < max_key; i++) {
 			//System.out.println(i);
-			qf.insert(i, false);
+
+			if (i == 25) {
+				//System.out.println();
+			}
+			
+			boolean success = qf.insert(i, false);
+			if (!success) {
+				System.out.println("insertion " + i + " failing at test12");
+				System.exit(1);
+			}
+			
+			if (i == 6577) {
+				//System.out.println();
+			}
+			if (qf.secondary_IF != null && !qf.search(25)) {
+				//System.out.println("");
+			}
+			
+			if (26320 == i) {
+				//qf.pretty_print();
+				//boolean found = qf.search(66);
+				//System.out.println();
+			}
+			
+			boolean found = qf.search(66);
+			if (!found && i > 66) {
+				System.out.println("not found entry " + i + " in test12");
+				//qf.pretty_print();
+				//qf.search(6);
+				System.exit(1);
+			}
 		}
 
 		for (int i = 0; i < max_key; i++) {
+
 			boolean found = qf.search(i);
 			if (!found) {
-				System.out.println("not found entry " + i);
+				System.out.println("not found entry " + i + " in test12");
 				System.exit(1);
 			}
 		}
@@ -673,8 +705,8 @@ public class Tests {
 	static public void test13() {
 		int bits_per_entry = 7;
 		int num_entries_power = 2;		
-		InfiniFilter qf = new InfiniFilter(num_entries_power, bits_per_entry);
-		qf.ht = HashType.arbitrary;
+		BasicInfiniFilter qf = new BasicInfiniFilter(num_entries_power, bits_per_entry);
+		qf.hash_type = HashType.arbitrary;
 		qf.expand_autonomously = false;
 
 		qf.insert(2, false);
@@ -696,7 +728,7 @@ public class Tests {
 		int bits_per_entry = 8;
 		int num_entries_power = 2;
 		int num_entries = (int)Math.pow(2, num_entries_power);
-		InfiniFilter qf = new InfiniFilter(num_entries_power, bits_per_entry);
+		BasicInfiniFilter qf = new BasicInfiniFilter(num_entries_power, bits_per_entry);
 		
 		int fp1 = 1;
 		int fp2 = 2;
@@ -733,7 +765,7 @@ public class Tests {
 		int num_entries_power = 3;
 		int seed = 2;  // 10
 		//int num_entries = (int)Math.pow(2, num_entries_power);
-		InfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
+		BasicInfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
 		qf.expand_autonomously = true;
 		TreeSet<Integer> added = new TreeSet<Integer>();
 		Random rand = new Random(seed);
@@ -800,7 +832,7 @@ public class Tests {
 		int num_entries_power = 3;
 		int seed = 5;  // 10
 		//int num_entries = (int)Math.pow(2, num_entries_power);
-		InfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
+		BasicInfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
 		qf.expand_autonomously = true;
 		TreeSet<Integer> added = new TreeSet<Integer>();
 		Random rand = new Random(seed);
@@ -2046,6 +2078,32 @@ public class Tests {
 			}
 		}
 		
+		// this test ensures the basic infinifilter stops expanding after F expansions, where F is the original fingerprint size
+		static public void test27() {
+			int bits_per_entry = 10;
+			int num_entries_power = 3;		
+			BasicInfiniFilter qf = new BasicInfiniFilter(num_entries_power, bits_per_entry);
+			qf.expand_autonomously = true;
+			qf.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.UNIFORM;
+			int max_key = (int)Math.pow(2, num_entries_power + qf.fingerprintLength * 4 + 1 );
+			for (int i = 0; i < max_key; i++) {
+				//System.out.println(i);
+				boolean success = qf.insert(i, false);
+				if (!success) {
+					break;
+				}
+			}
+			if (qf.num_expansions > qf.original_fingerprint_size) {
+				System.out.println("too many expansions took place for basic IF");
+				System.exit(1);
+			}
+			int num_void = qf.get_num_void_entries();
+			if (num_void == 0) {
+				System.out.println("too few expansions took place for basic IF as there should be at least some void entries");
+				System.exit(1);
+			}
+
+		}
 
 
 }

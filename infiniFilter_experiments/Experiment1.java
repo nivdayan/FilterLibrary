@@ -8,13 +8,13 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.Calendar;
-import filters.BitSacrificer;
+import filters.FingerprintSacrifice;
 import filters.BloomFilter;
 import filters.ChainedInfiniFilter;
 import filters.CuckooFilter;
 import filters.Filter;
-import filters.InfiniFilter;
-import filters.MultiplyingQF;
+import filters.BasicInfiniFilter;
+import filters.Chaining;
 import filters.QuotientFilter;
 
 public class Experiment1 extends InfiniFilterExperiments {
@@ -85,7 +85,7 @@ public class Experiment1 extends InfiniFilterExperiments {
 
 		baseline chained_IF_res = new baseline();
 		{
-			InfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
+			BasicInfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
 			qf.set_expand_autonomously(true); 
 			long starting_index = 0;
 			long end_key = qf.get_max_entries_before_expansion() - 1;
@@ -101,7 +101,7 @@ public class Experiment1 extends InfiniFilterExperiments {
 		
 		baseline bit_sacrifice_res = new baseline();
 		{
-			BitSacrificer qf2 = new BitSacrificer(num_entries_power, bits_per_entry);
+			FingerprintSacrifice qf2 = new FingerprintSacrifice(num_entries_power, bits_per_entry);
 			qf2.set_expand_autonomously(true); 
 			long starting_index = 0;
 			long end_key = qf2.get_max_entries_before_expansion() - 1;
@@ -118,7 +118,7 @@ public class Experiment1 extends InfiniFilterExperiments {
 
 		baseline geometric_expansion_res = new baseline();
 		{
-			MultiplyingQF qf3 = new MultiplyingQF(num_entries_power, bits_per_entry);
+			Chaining qf3 = new Chaining(num_entries_power, bits_per_entry);
 			qf3.set_expand_autonomously(true);
 			long starting_index = 0;
 			long end_key = qf3.get_max_entries_before_expansion() - 1;

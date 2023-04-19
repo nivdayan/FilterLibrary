@@ -9,14 +9,14 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 
-import filters.BitSacrificer;
+import filters.FingerprintSacrifice;
 import filters.BloomFilter;
 import filters.ChainedInfiniFilter;
 import filters.CuckooFilter;
 import filters.Filter;
 import filters.FingerprintGrowthStrategy;
-import filters.InfiniFilter;
-import filters.MultiplyingQF;
+import filters.BasicInfiniFilter;
+import filters.Chaining;
 import filters.QuotientFilter;
 import infiniFilter_experiments.InfiniFilterExperiments.baseline;
 

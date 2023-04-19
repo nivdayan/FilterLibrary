@@ -35,14 +35,14 @@ public class Client {
 		Tests.test24(); // testing false positive rate for quotient filter  
 		Tests.test25(); // testing false positive rate for cuckoo filter 
 		Tests.test26(); // testing false positive rate for bloom filter 
-		//Tests.test27(); // exceeding the bound of the quotient filter 
+		Tests.test27(); // exceeding the bound of the quotient filter 
 		
 		System.out.println("all tests passed");
 	}
 	
 	static public  void main(String[] args) {
-		run_tests();
-		//Experiment1.main(null);
+		//run_tests();
+		Experiment1.main(null);
 		//Experiment4.main(null);
 		//InfiniFilterExperiments.rejuvenation_experiment();
 		//InfiniFilterExperiments.memory_experiment();

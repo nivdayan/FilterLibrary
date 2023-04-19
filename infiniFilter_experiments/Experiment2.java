@@ -11,7 +11,7 @@ import java.util.Calendar;
 import java.util.Random;
 
 import filters.ChainedInfiniFilter;
-import filters.InfiniFilter;
+import filters.BasicInfiniFilter;
 import filters.QuotientFilter;
 
 public class Experiment2 extends InfiniFilterExperiments {
@@ -94,7 +94,7 @@ public class Experiment2 extends InfiniFilterExperiments {
 		System.gc();
 		baseline chained_IF_1 = new baseline();
 		{
-			InfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
+			BasicInfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
 			qf.set_expand_autonomously(true);
 			for (int i = num_entries_power; i <= num_cycles; i++ ) {
 				rejuvenation_experiment(qf, i, chained_IF_1, 0);
@@ -105,7 +105,7 @@ public class Experiment2 extends InfiniFilterExperiments {
 		System.gc();
 		baseline chained_IF_2 = new baseline();
 		{
-			InfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
+			BasicInfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
 			qf.set_expand_autonomously(true);
 			for (int i = num_entries_power; i <= num_cycles; i++ ) {
 				rejuvenation_experiment(qf, i, chained_IF_2, 0.2);
@@ -116,7 +116,7 @@ public class Experiment2 extends InfiniFilterExperiments {
 		System.gc();
 		baseline chained_IF_3 = new baseline();
 		{
-			InfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
+			BasicInfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
 			qf.set_expand_autonomously(true);
 			for (int i = num_entries_power; i <= num_cycles; i++ ) {
 				rejuvenation_experiment(qf, i, chained_IF_3, 1);
@@ -128,7 +128,7 @@ public class Experiment2 extends InfiniFilterExperiments {
 		
 		baseline chained_IF_4 = new baseline();
 		{
-			InfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
+			BasicInfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
 			qf.set_expand_autonomously(true);
 			for (int i = num_entries_power; i <= num_cycles; i++ ) {
 				rejuvenation_experiment(qf, i, chained_IF_4, 2);

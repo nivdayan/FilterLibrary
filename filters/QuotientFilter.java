@@ -53,7 +53,7 @@ public class QuotientFilter extends Filter {
 		
 		original_fingerprint_size = fingerprintLength;
 		num_expansions = 0;
-		ht = HashType.xxh;
+		hash_type = HashType.xxh;
 		
 		last_empty_slot = init_size + num_extension_slots - 1;
 		last_cluster_start = 0;
@@ -111,8 +111,9 @@ public class QuotientFilter extends Filter {
 		backward_steps = 0;
 	}
 	
-	void expand() {
+	boolean expand() {
 		is_full = true;
+		return false;
 	}
 	
 	// measures the number of bits per entry for the filter 
@@ -263,10 +264,10 @@ public class QuotientFilter extends Filter {
 		System.out.println("bits/entry\t:" + num_bits / (double)num_entries);
 		System.out.println("FP length:\t" + fingerprintLength);
 		compute_statistics();	
-		System.out.println("num runs: \t\t" + num_runs);
-		System.out.println("avg run length: \t" + avg_run_length);
-		System.out.println("num clusters: \t\t" + num_clusters);
-		System.out.println("avg cluster length: \t" + avg_cluster_length);
+		//System.out.println("num runs: \t\t" + num_runs);
+		//System.out.println("avg run length: \t" + avg_run_length);
+		//System.out.println("num clusters: \t\t" + num_clusters);
+		//System.out.println("avg cluster length: \t" + avg_cluster_length);
 	}
 	
 	boolean is_occupied(long index) {
@@ -700,8 +701,11 @@ public class QuotientFilter extends Filter {
 		}*/
 		
 		if (expand_autonomously && num_existing_entries >= max_entries_before_expansion) {
-			num_expansions++;
-			expand();
+			boolean expanded = expand();
+			if (expanded) {
+				num_expansions++;
+			}
+			
 		}
 		return success; 
 	}
