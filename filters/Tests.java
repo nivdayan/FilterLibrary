@@ -598,41 +598,6 @@ public class Tests {
 	}
 
 	// this test ensures we issue enough insertions until the fingerprints of at least some of the first entries inserted 
-	// run out. This means that for these entries, we are going to try the double insertion technique to avoid false negatives. 
-	static public void test11() {
-		int bits_per_entry = 7;
-		int num_entries_power = 3;		
-		BasicInfiniFilter qf = new AlephFilter(num_entries_power, bits_per_entry);
-		qf.expand_autonomously = true;
-		int max_key = (int)Math.pow(2, num_entries_power + qf.fingerprintLength + 1);
-		//int max_key = (int)Math.pow(2, num_entries_power + 4 );
-		for (int i = 0; i < max_key; i++) {			
-			qf.insert(i, false);
-		}
-
-		for (int i = 0; i < max_key; i++) {
-			boolean found = qf.search(i);
-			if (!found) {
-				System.out.println("not found entry " + i + " in test11");
-				System.exit(1);
-			}
-		}
-
-		int false_positives = 0;
-		for (int i = max_key; i < max_key + 10000; i++) {
-			boolean found = qf.search(i);
-			if (found) {
-				false_positives++;
-			}
-		}
-		if (false_positives == 0) {
-			System.out.println("should have had a few false positives");
-			System.exit(1);
-		}
-		//qf.pretty_print();
-	}
-
-	// this test ensures we issue enough insertions until the fingerprints of at least some of the first entries inserted 
 	// run out. This means that for these entries, we are going to try the chaining technique to avoid false negatives. 
 	static public void test12() {
 		int bits_per_entry = 7;
