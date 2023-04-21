@@ -132,6 +132,7 @@ public class ChainedInfiniFilter extends BasicInfiniFilter {
 		// creating secondary IF for the first time 
 		if (secondary_IF == null && num_void_entries > 0) { // first time we create a former filter
 			int power = (int) Math.ceil( Math.log(num_void_entries) / Math.log(2) );
+			power = Math.max(power, 3);
 			int FP_size = power_of_two_size - power + 1; 
 			secondary_IF = new BasicInfiniFilter(power, FP_size + 3);
 			secondary_IF.hash_type = this.hash_type;
