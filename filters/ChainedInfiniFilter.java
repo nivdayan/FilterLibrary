@@ -127,7 +127,7 @@ public class ChainedInfiniFilter extends BasicInfiniFilter {
 	}
 	
 	boolean expand() {	
-		//print_filter_summary();
+		print_filter_summary();
 		
 		// creating secondary IF for the first time 
 		if (secondary_IF == null && num_void_entries > 0) { // first time we create a former filter
@@ -151,18 +151,20 @@ public class ChainedInfiniFilter extends BasicInfiniFilter {
 		}
 		// we expand the secondary infinifilter
 		else if (secondary_IF != null) {  // standard procedure
-			int num_entries = secondary_IF.num_existing_entries;
+			int num_entries = secondary_IF.num_existing_entries + num_void_entries;
 			long logical_slots = secondary_IF.get_logical_num_slots();
 			double secondary_fullness = num_entries / (double)logical_slots;
-			if (secondary_fullness > expansion_threshold / 2.0) {
+			while (secondary_fullness > expansion_threshold / 2.0) {
 				secondary_IF.num_expansions++;
-				secondary_IF.expand();				
+				secondary_IF.expand();
+				logical_slots = secondary_IF.get_logical_num_slots();
+				secondary_fullness = num_entries / (double)logical_slots;
 			}
 		}
 		prep_masks();
 		super.expand();
 		
-		//print_filter_summary();
+		print_filter_summary();
 		
 		return true;
 	}

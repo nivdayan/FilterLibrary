@@ -148,6 +148,7 @@ public class BasicInfiniFilter extends QuotientFilter {
 		}
 		int new_fingerprint_size = FingerprintGrowthStrategy.get_new_fingerprint_size(original_fingerprint_size, num_expansions, fprStyle);
 		//System.out.println("FP size: " + new_fingerprint_size);
+		new_fingerprint_size = Math.max(new_fingerprint_size, fingerprintLength);
 		QuotientFilter new_qf = new QuotientFilter(power_of_two_size + 1, new_fingerprint_size + 3);
 		Iterator it = new Iterator(this);		
 		long unary_mask = prep_unary_mask(fingerprintLength, new_fingerprint_size);
