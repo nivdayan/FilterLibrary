@@ -132,7 +132,7 @@ public class BasicInfiniFilter extends QuotientFilter {
 	
 	int get_num_void_entries() {
 		int num = 0;
-		for (int i = 0; i < get_physcial_num_slots(); i++) {
+		for (long i = 0; i < get_physcial_num_slots(); i++) {
 			long fp = get_fingerprint(i);
 			if (fp == empty_fingerprint) {
 				num++;

@@ -741,7 +741,8 @@ public class QuotientFilter extends Filter {
 		int current_run_length = 0;
 		int current_cluster_length = 0;
 		
-		for (int i = 0; i < get_logical_num_slots_plus_extensions(); i++) {
+		long num_slots = get_logical_num_slots_plus_extensions();		
+		for (long i = 0; i < num_slots; i++) {
 			
 			boolean occupied = is_occupied(i);
 			boolean continuation = is_continuation(i); 
