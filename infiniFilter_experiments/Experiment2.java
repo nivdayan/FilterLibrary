@@ -97,7 +97,7 @@ public class Experiment2 extends InfiniFilterExperiments {
 			BasicInfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
 			qf.set_expand_autonomously(true);
 			for (int i = num_entries_power; i <= num_cycles; i++ ) {
-				rejuvenation_experiment(qf, i, chained_IF_1, 0);
+				//rejuvenation_experiment(qf, i, chained_IF_1, 0);
 				System.out.println("infinifilter " + 0 + " rejuv  " + i);
 			}
 		}	
@@ -108,7 +108,7 @@ public class Experiment2 extends InfiniFilterExperiments {
 			BasicInfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
 			qf.set_expand_autonomously(true);
 			for (int i = num_entries_power; i <= num_cycles; i++ ) {
-				rejuvenation_experiment(qf, i, chained_IF_2, 0.2);
+				//rejuvenation_experiment(qf, i, chained_IF_2, 0.2);
 				System.out.println("infinifilter " + 0.2 + " rejuv  " + i);
 			}
 		}	
