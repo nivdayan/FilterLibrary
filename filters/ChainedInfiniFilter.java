@@ -127,7 +127,7 @@ public class ChainedInfiniFilter extends BasicInfiniFilter {
 	}
 	
 	boolean expand() {	
-		print_filter_summary();
+		//print_filter_summary();
 		
 		// creating secondary IF for the first time 
 		if (secondary_IF == null && num_void_entries > 0) { // first time we create a former filter
@@ -164,7 +164,7 @@ public class ChainedInfiniFilter extends BasicInfiniFilter {
 		prep_masks();
 		super.expand();
 		
-		print_filter_summary();
+		//print_filter_summary();
 		
 		return true;
 	}
