@@ -65,13 +65,40 @@ public class ChainedInfiniFilter extends BasicInfiniFilter {
 		if (secondary_IF == null) {
 			return;
 		}
-		slot_mask = (1L << secondary_IF.power_of_two_size) - 1L;
-		fingerprint_mask = (1L << secondary_IF.fingerprintLength - 1) - 1L;
 
-		long actual_FP_length = power_of_two_size - secondary_IF.power_of_two_size;
-		long num_padding_bits =  secondary_IF.fingerprintLength - actual_FP_length ;
-		unary_mask = (1L << num_padding_bits - 1) - 1L;
-		unary_mask = unary_mask << (actual_FP_length + 1);
+		prep_masks(power_of_two_size, secondary_IF.power_of_two_size, secondary_IF.fingerprintLength);
+
+	}
+	
+	void prep_masks(long active_IF_power_of_two, long secondary_IF_power_of_two, long secondary_FP_length) {
+
+		long _slot_mask = (1L << secondary_IF_power_of_two) - 1L;
+
+		long actual_FP_length = active_IF_power_of_two - secondary_IF_power_of_two;
+		long FP_mask_num_bits = Math.min(secondary_FP_length - 1, actual_FP_length);
+		
+		long _fingerprint_mask = (1L << FP_mask_num_bits ) - 1L;
+		
+		long num_padding_bits =  secondary_FP_length - FP_mask_num_bits;
+		long _unary_mask = 0;
+		long unary_mask1 = 0;
+
+		if (num_padding_bits > 0) {
+			unary_mask1 = (1L << num_padding_bits - 1) - 1L;
+			_unary_mask = unary_mask1 << (actual_FP_length + 1);			
+		}
+
+		/*QuotientFilter.print_long_in_binary(_slot_mask, 32);
+		QuotientFilter.print_long_in_binary(_fingerprint_mask, 32);
+		QuotientFilter.print_long_in_binary(unary_mask1, 32);
+		QuotientFilter.print_long_in_binary(_unary_mask, 32);*/
+		
+		
+		unary_mask = _unary_mask;
+		slot_mask = _slot_mask;
+		fingerprint_mask = _fingerprint_mask;
+		
+		//System.out.println();
 	}
 	
 	void handle_empty_fingerprint(long bucket_index, QuotientFilter current) {
@@ -88,17 +115,15 @@ public class ChainedInfiniFilter extends BasicInfiniFilter {
 		
 		//unary_mask = unary_mask <<
 		//if (bucket_index == 16269) {
-		/*	System.out.println();
-			print_long_in_binary( bucket1, power_of_two_size);
+			
+			/*print_long_in_binary( bucket1, power_of_two_size + 1);
 			print_long_in_binary( slot_mask, 32);
-			//print_long_in_binary( slot_mask, 32);
-			print_long_in_binary( slot, secondary_IF.power_of_two_size);
+			print_long_in_binary( slot, secondary_IF.power_of_two_size + 2);
 			print_long_in_binary( fingerprint_mask, 32);
 			print_long_in_binary( unary_mask, 32);
 			print_long_in_binary( fingerprint, 32);
 			print_long_in_binary( adjusted_fingerprint, 32);
 			System.out.println();*/
-		//}
 		
 		num_existing_entries--;
 		//secondary_IF.num_existing_entries++;
@@ -126,18 +151,22 @@ public class ChainedInfiniFilter extends BasicInfiniFilter {
 		return false;
 	}
 	
+	void create_secondary(int power, int FP_size) {
+		power = Math.max(power, 3);
+		secondary_IF = new BasicInfiniFilter(power, FP_size + 3);
+		secondary_IF.hash_type = this.hash_type;
+		secondary_IF.fprStyle = fprStyle;
+		secondary_IF.original_fingerprint_size = original_fingerprint_size;
+	}
+	
 	boolean expand() {	
 		//print_filter_summary();
-		
 		// creating secondary IF for the first time 
+		
 		if (secondary_IF == null && num_void_entries > 0) { // first time we create a former filter
 			int power = (int) Math.ceil( Math.log(num_void_entries) / Math.log(2) );
-			power = Math.max(power, 3);
 			int FP_size = power_of_two_size - power + 1; 
-			secondary_IF = new BasicInfiniFilter(power, FP_size + 3);
-			secondary_IF.hash_type = this.hash_type;
-			secondary_IF.fprStyle = fprStyle;
-			secondary_IF.original_fingerprint_size = original_fingerprint_size;
+			create_secondary(power, FP_size);
 		}
 		// the secondary infinifilter is full, so we add it to the chain
 		else if (secondary_IF != null && secondary_IF.num_void_entries > 0) { // our former filter is full 
@@ -147,26 +176,31 @@ public class ChainedInfiniFilter extends BasicInfiniFilter {
 			secondary_IF.hash_type = this.hash_type;
 			secondary_IF.original_fingerprint_size = orig_FP;
 			secondary_IF.fprStyle = fprStyle;
-			//System.out.println(former.power_of_two_size +  " " + former.fingerprintLength);
 		}
 		// we expand the secondary infinifilter
 		else if (secondary_IF != null) {  // standard procedure
-			int num_entries = secondary_IF.num_existing_entries + num_void_entries;
-			long logical_slots = secondary_IF.get_logical_num_slots();
-			double secondary_fullness = num_entries / (double)logical_slots;
-			while (secondary_fullness > expansion_threshold / 2.0) {
-				secondary_IF.num_expansions++;
-				secondary_IF.expand();
-				logical_slots = secondary_IF.get_logical_num_slots();
-				secondary_fullness = num_entries / (double)logical_slots;
-			}
+			expand_secondary_IF();
 		}
 		prep_masks();
 		super.expand();
-		
-		//print_filter_summary();
-		
+		//System.out.println(num_expansions + "\t" + num_distinct_void_entries + "\t" + fingerprintLength + "\t" + num_existing_entries);
 		return true;
+	}
+	
+
+	
+	void expand_secondary_IF() {
+		int num_entries = secondary_IF.num_existing_entries + num_void_entries;
+		long logical_slots = secondary_IF.get_logical_num_slots();
+		double secondary_fullness = num_entries / (double)logical_slots;
+		// sometimes we may also want to widen the fingerprint bits, not just expand when we reach capacity
+		// need to consider this 
+		do  {
+			secondary_IF.num_expansions++;
+			secondary_IF.expand();
+			logical_slots = secondary_IF.get_logical_num_slots();
+			secondary_fullness = num_entries / (double)logical_slots;
+		} while (secondary_fullness > expansion_threshold / 2.0);
 	}
 	
 	// TODO if we rejuvenate a void entry, we should subtract from num_void_entries 
@@ -259,14 +293,20 @@ public class ChainedInfiniFilter extends BasicInfiniFilter {
 	
 	public void pretty_print() {	
 		System.out.println();
+		System.out.println("Active IF");
 		System.out.print(get_pretty_str(true));
 		System.out.println();
-		System.out.print(secondary_IF.get_pretty_str(true));
-		System.out.println();
-		for (BasicInfiniFilter f : chain) {
-			System.out.print(f.get_pretty_str(true));
+		if (secondary_IF != null) {
+			System.out.println("Secondary IF");
+			System.out.print(secondary_IF.get_pretty_str(true));
 			System.out.println();
 		}
+		for (int i = 0; i < chain.size(); i++) {
+			System.out.println("Chain #" + i);
+			System.out.print(chain.get(i).get_pretty_str(true));
+			System.out.println();	
+		}
+		
 	}
 	
 	public long get_num_entries(boolean include_all_internal_filters) {

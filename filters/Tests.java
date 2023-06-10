@@ -721,10 +721,6 @@ public class Tests {
 		//qf.pretty_print();
 	}
 	
-	
-	// Here we're going to create a largish filter, and then perform deletes and insertions
-	// we want to make sure we indeed get a positive for every entry that we inserted and still not deleted
-	// for every 2 insertions, we make one deletes, in order to still allow the filter to expand 
 	static public void test15() {
 		int bits_per_entry = 10;
 		int num_entries_power = 3;
@@ -732,6 +728,15 @@ public class Tests {
 		//int num_entries = (int)Math.pow(2, num_entries_power);
 		BasicInfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
 		qf.expand_autonomously = true;
+		test_insertions_and_deletes(qf);
+	}
+	
+	// Here we're going to create a largish filter, and then perform deletes and insertions
+	// we want to make sure we indeed get a positive for every entry that we inserted and still not deleted
+	// for every 2 insertions, we make one deletes, in order to still allow the filter to expand 
+	static public void test_insertions_and_deletes(BasicInfiniFilter qf) {
+		int num_entries_power = qf.power_of_two_size;
+		int seed = 2;  // 10
 		TreeSet<Integer> added = new TreeSet<Integer>();
 		Random rand = new Random(seed);
 		double num_entries_to_insert = Math.pow(2, num_entries_power + 10); // we'll expand 3-4 times
@@ -739,7 +744,7 @@ public class Tests {
 		for (int i = 0; i < num_entries_to_insert; i++) {
 			int rand_num = rand.nextInt();
 			if (!added.contains(rand_num)) {
-				boolean success = qf.insert(rand_num, false);
+				boolean success = qf.insert(rand_num, false);		
 				if (success) {
 					added.add(rand_num);
 					boolean found = qf.search(rand_num);
@@ -757,9 +762,8 @@ public class Tests {
 					if (to_del > added.first()) {
 					int r = added.floor(to_del);
 					added.remove(r);
-					
 					boolean deleted = true;
-						deleted = qf.delete(r);
+					deleted = qf.delete(r);
 					if (!deleted) {
 						System.out.println("not deleted");
 						System.exit(1);

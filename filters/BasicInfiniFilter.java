@@ -3,10 +3,11 @@ package filters;
 
 public class BasicInfiniFilter extends QuotientFilter {
 
-	long empty_fingerprint;
+	protected long empty_fingerprint;
 	int num_void_entries = 0;
 	FingerprintGrowthStrategy.FalsePositiveRateExpansion fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.UNIFORM;
-
+	int num_distinct_void_entries = 0;
+	
 	public void set_fpr_style(FingerprintGrowthStrategy.FalsePositiveRateExpansion val) {
 		fprStyle = val;
 	}
@@ -14,7 +15,11 @@ public class BasicInfiniFilter extends QuotientFilter {
 	BasicInfiniFilter(int power_of_two, int bits_per_entry) {
 		super(power_of_two, bits_per_entry);
 		max_entries_before_expansion = (long)(Math.pow(2, power_of_two_size) * expansion_threshold);
-		empty_fingerprint = (1L << fingerprintLength) - 2L;
+		set_empty_fingerprint(fingerprintLength);
+	}
+	
+	void set_empty_fingerprint(long fp_length) {
+		empty_fingerprint = (1L << fp_length) - 2L;
 	}
 	
 	protected boolean compare(long index, long fingerprint) {
@@ -35,15 +40,15 @@ public class BasicInfiniFilter extends QuotientFilter {
 		long f = get_fingerprint(slot_index);
 		//.out.println();
 		//System.out.println(get_pretty_str(slot_index));
-		//print_int_in_binary(f, 32);
+		//print_long_in_binary(f, 32);
 		long inverted_fp = ~f;
-		//print_int_in_binary(inverted_fp, 32);
+		//print_long_in_binary(inverted_fp, 32);
 		long mask = (1L << fingerprintLength) - 1;
-		//print_int_in_binary(mask, 32);
+		//print_long_in_binary(mask, 32);
 		long masked = mask & inverted_fp;
-		//print_int_in_binary(masked, 32);
+		//print_long_in_binary(masked, 32);
 		long highest = Long.highestOneBit(masked);
-		//print_int_in_binary(highest, 32);
+		//print_long_in_binary(highest, 32);
 		long leading_zeros = Long.numberOfTrailingZeros(highest);
 		//System.out.println( leading_zeros );
 		long age = fingerprintLength - leading_zeros - 1;
@@ -141,6 +146,9 @@ public class BasicInfiniFilter extends QuotientFilter {
 		return num;
 	}
 	
+	void report_void_entry_creation(long slot) {
+		num_distinct_void_entries++;
+	}
 	
 	boolean expand() {
 		if (is_full()) {
@@ -154,7 +162,9 @@ public class BasicInfiniFilter extends QuotientFilter {
 		long unary_mask = prep_unary_mask(fingerprintLength, new_fingerprint_size);
 		
 		long current_empty_fingerprint = empty_fingerprint;
-		empty_fingerprint = (1L << new_fingerprint_size) - 2; // One 
+		set_empty_fingerprint(new_fingerprint_size);
+		//print_long_in_binary(current_empty_fingerprint, 32);
+		//print_long_in_binary(empty_fingerprint, 32);
 		num_void_entries = 0;
 		
 		while (it.next()) {
@@ -169,6 +179,10 @@ public class BasicInfiniFilter extends QuotientFilter {
 				new_qf.insert(updated_fingerprint, updated_bucket, false);
 				
 				num_void_entries += updated_fingerprint == empty_fingerprint ? 1 : 0;
+				//print_long_in_binary(updated_fingerprint, 32);
+				if (updated_fingerprint == empty_fingerprint) {
+					report_void_entry_creation(updated_bucket);
+				}
 				//if (updated_fingerprint == empty_fingerprint) {
 				//	num_void_entries++;
 					//is_full = true;
@@ -198,6 +212,7 @@ public class BasicInfiniFilter extends QuotientFilter {
 		fingerprintLength = new_fingerprint_size;
 		bitPerEntry = new_fingerprint_size + 3;
 		filter = new_qf.filter;
+		num_existing_entries = new_qf.num_existing_entries;
 		power_of_two_size++;
 		num_extension_slots += 2;
 		max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);

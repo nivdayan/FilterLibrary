@@ -538,23 +538,7 @@ public class QuotientFilter extends Filter {
 		return true; 
 	}
 	
-	boolean delete(long fingerprint, long index) {
-		if (index >= get_logical_num_slots()) {
-			return false;
-		}
-		// if the run doesn't exist, the key can't have possibly been inserted
-		boolean does_run_exist = is_occupied(index);
-		if (!does_run_exist) {
-			return false;
-		}
-		long run_start_index = find_run_start(index);
-		
-		long matching_fingerprint_index = decide_which_fingerprint_to_delete(run_start_index, fingerprint);
-		if (matching_fingerprint_index == -1) {
-			// we didn't find a matching fingerprint
-			return false;
-		}
-
+	boolean delete(long fingerprint, long canonical_slot, long run_start_index, long matching_fingerprint_index) {
 		long run_end = find_run_end(matching_fingerprint_index);
 		
 		// the run has only one entry, we need to disable its is_occupied flag
@@ -571,7 +555,7 @@ public class QuotientFilter extends Filter {
 		// we can do this by counting the number of continuation flags set to true 
 		// and the number of occupied flags set to false from the start of the cluster to the given cell
 		// and then subtracting: num_shifted_count - num_non_occupied = number of slots by which an entry is shifted 
-		long cluster_start = find_cluster_start(index);
+		long cluster_start = find_cluster_start(canonical_slot);
 		long num_shifted_count = 0;
 		long num_non_occupied = 0;
 		for (long i = cluster_start; i <= run_end; i++) {
@@ -599,7 +583,7 @@ public class QuotientFilter extends Filter {
 				 is_slot_empty(run_end + 1) || !is_shifted(run_end + 1)) {
 				if (turn_off_occupied) {
 					// if we eliminated a run and now need to turn the is_occupied flag off, we do it at the end to not interfere in our counts 
-					set_occupied(index, false);
+					set_occupied(canonical_slot, false);
 					
 				}
 				if (run_end > last_empty_slot) {         
@@ -636,6 +620,27 @@ public class QuotientFilter extends Filter {
 			set_shifted(run_end, false);
 			set_continuation(run_end, false);
 		} while (true);
+	}
+	
+	boolean delete(long fingerprint, long canonical_slot) {
+		if (canonical_slot >= get_logical_num_slots()) {
+			return false;
+		}
+		// if the run doesn't exist, the key can't have possibly been inserted
+		boolean does_run_exist = is_occupied(canonical_slot);
+		if (!does_run_exist) {
+			return false;
+		}
+		long run_start_index = find_run_start(canonical_slot);
+		
+		long matching_fingerprint_index = decide_which_fingerprint_to_delete(run_start_index, fingerprint);
+		
+		if (matching_fingerprint_index == -1) {
+			// we didn't find a matching fingerprint
+			return false;
+		}
+
+		return delete(fingerprint, canonical_slot, run_start_index, matching_fingerprint_index);
 		
 	}
 
@@ -685,12 +690,12 @@ public class QuotientFilter extends Filter {
 		}
 		long slot_index = get_slot_index(large_hash);
 		long fingerprint = gen_fingerprint(large_hash);
-
+		
 		/*print_long_in_binary(large_hash, 64);
 		print_long_in_binary(slot_index, 32);
 		print_long_in_binary((int)fingerprint, 64);
-		System.out.println(fingerprint);
-		System.out.println();*/
+		System.out.println(slot_index + "  " + fingerprint );
+		System.out.println(); */
 		
 		boolean success = insert(fingerprint, slot_index, false);
 		/*if (!success) {
