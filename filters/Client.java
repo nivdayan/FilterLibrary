@@ -40,12 +40,20 @@ public class Client {
 	}
 	
 	static public  void main(String[] args) {
-		run_tests();
+		
+		//aleph_tests.test1();
+		aleph_tests.run_tests();
+		
+		//run_tests();
+		
+		
+		
 		
 		//QuotientFilter new_qf = new QuotientFilter(30 + 1, 13 + 3);
 		
 		
 		//Experiment2.main(null);
+		//Experiment3.main(null);
 		
 		//Experiment4.main(null);
 		//InfiniFilterExperiments.rejuvenation_experiment();
