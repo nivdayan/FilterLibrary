@@ -35,10 +35,16 @@ public class aleph_tests {
 			boolean success = qf.search(i);	
 			Assert(!success);
 		}
+
 		
 		// a key inserted before any expansions 
 		Assert(qf.num_existing_entries == 0);
+		Assert(qf.num_void_entries == 0);
+		Assert(qf.num_distinct_void_entries == 0);
+		
 		Assert(qf.secondary_IF.num_existing_entries == 0);
+		Assert(qf.secondary_IF.num_void_entries == 0);
+		Assert(qf.secondary_IF.num_distinct_void_entries == 0);
 		System.out.println("success");
 	}
 	

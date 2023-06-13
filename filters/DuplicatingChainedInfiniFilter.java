@@ -29,6 +29,7 @@ public class DuplicatingChainedInfiniFilter extends ChainedInfiniFilter {
 		insertee.insert(empty_fingerprint, bucket1, false);
 		insertee.insert(empty_fingerprint, bucket2, false);
 		num_existing_entries++;
+		num_void_entries += 1;
 		//System.out.println("void splitting " + bucket1 + "  " + bucket2 );
 		//pretty_print();
 	}
@@ -192,6 +193,8 @@ public class DuplicatingChainedInfiniFilter extends ChainedInfiniFilter {
 			}
 		}
 		num_existing_entries -= num_duplicates;
+
+		num_void_entries -= num_duplicates;
 		//System.out.println(num_existing_entries + "  " + num_duplicates);
 		//pretty_print();
 		return true;
@@ -256,6 +259,8 @@ public class DuplicatingChainedInfiniFilter extends ChainedInfiniFilter {
 		if (!success) {
 			return false;
 		}
+
+		num_distinct_void_entries--;
 		
 		long secondary_slot_index = secondary_IF.get_slot_index(slot_index);
 		long fp_long = secondary_IF.gen_fingerprint(slot_index);

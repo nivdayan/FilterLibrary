@@ -39,16 +39,18 @@ public class Client {
 		System.out.println("all tests passed");
 	}
 	
-	static public  void main(String[] args) {
-		
+	static public  void main(String[] args) {		
 		//aleph_tests.test1();
 		aleph_tests.run_tests();
 		
 		//run_tests();
+	
 		
+		//aleph_tests.test1();
+		aleph_tests.run_tests();
 		
-		
-		
+		run_tests();
+				
 		//QuotientFilter new_qf = new QuotientFilter(30 + 1, 13 + 3);
 		
 		

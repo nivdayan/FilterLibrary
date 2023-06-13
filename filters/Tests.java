@@ -753,7 +753,6 @@ public class Tests {
 						qf.pretty_print();
 						System.exit(1);
 					}
-					
 				}
 			}
 			
