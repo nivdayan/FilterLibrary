@@ -1,24 +1,29 @@
 package filters;
 
-import java.util.ArrayList;
-
 public class aleph_tests {
 	
-	static public void insert_all_and_then_delete_all(DuplicatingChainedInfiniFilter qf) {
+	static public void insert_all_and_then_delete_all(DuplicatingChainedInfiniFilter qf, int num_entries_power) {
 
-		int max_key = (int)Math.pow(2, qf.power_of_two_size + qf.fingerprintLength + 1);
+		int max_key = (int)Math.pow(2, num_entries_power);
+
 		for (int i = 0; i < max_key; i++) {		
 			boolean success = qf.insert(i, false);
 			Assert(success);
 		}
 
 		//qf.pretty_print();
+		//System.out.println("before expansion " + qf.num_expansions + "\t" + qf.num_existing_entries + "\t" + qf.num_void_entries + "\t" + qf.num_distinct_void_entries);
+		
+		//qf.pretty_print();
+		//qf.print_filter_summary();
+		//qf.print_age_histogram();
 		
 		for (int i = 0; i < max_key; i++) {		
+			//System.out.println("removing key " + i);
 			boolean success = qf.search(i);	
 			Assert(success);
-			success = qf.delete(i);
-			Assert(success);
+			long removed_fp = qf.delete(i);
+			Assert(removed_fp > -1);
 			success = qf.search(i);
 			//Assert(!success);
 		}
@@ -27,61 +32,59 @@ public class aleph_tests {
 			qf.expand(); // we need to expand to remove all void entries 
 		}
 		
-		//qf.pretty_print();
-		//System.out.println("num_existing_entries "  + qf.num_existing_entries);
-		//System.out.println("secondary_IF.num_existing_entries "  + qf.secondary_IF.num_existing_entries);
+		/*qf.pretty_print();
+		qf.print_filter_summary();
+		qf.print_age_histogram();
+		System.out.println("num_existing_entries "  + qf.num_existing_entries);
+		System.out.println("secondary_IF.num_existing_entries "  + qf.secondary_IF.num_existing_entries);*/
 		
 		for (int i = 0; i < max_key; i++) {		
 			boolean success = qf.search(i);	
 			Assert(!success);
 		}
 
-		
 		// a key inserted before any expansions 
 		Assert(qf.num_existing_entries == 0);
 		Assert(qf.num_void_entries == 0);
 		Assert(qf.num_distinct_void_entries == 0);
-		
-		Assert(qf.secondary_IF.num_existing_entries == 0);
-		Assert(qf.secondary_IF.num_void_entries == 0);
-		Assert(qf.secondary_IF.num_distinct_void_entries == 0);
+		if (qf.secondary_IF != null) {
+			Assert(qf.secondary_IF.num_existing_entries == 0);
+			Assert(qf.secondary_IF.num_void_entries == 0);
+			Assert(qf.secondary_IF.num_distinct_void_entries == 0);
+		}
 		System.out.println("success");
 	}
 	
 	static public void test3() {
 		int bits_per_entry = 10;
 		int num_entries_power = 3;	
-		DuplicatingChainedInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, bits_per_entry, false);
-		qf.expand_autonomously = true;
+		DuplicatingChainedInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, bits_per_entry, false, -1);
 		qf.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.UNIFORM;
-		insert_all_and_then_delete_all(qf);
+		insert_all_and_then_delete_all(qf, qf.power_of_two_size + qf.fingerprintLength + 1);
 	}
 	
 	static public void test4() {
 		int bits_per_entry = 10;
 		int num_entries_power = 3;	
-		DuplicatingChainedInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, bits_per_entry, false);
-		qf.expand_autonomously = true;
+		DuplicatingChainedInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, bits_per_entry, false, -1);
 		qf.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.POLYNOMIAL;
-		insert_all_and_then_delete_all(qf);
+		insert_all_and_then_delete_all(qf, qf.power_of_two_size + qf.fingerprintLength + 1);
 	}
 	
 	static public void test5() {
 		int bits_per_entry = 10;
 		int num_entries_power = 3;	
-		DuplicatingChainedInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, bits_per_entry, true);
-		qf.expand_autonomously = true;
+		DuplicatingChainedInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, bits_per_entry, true, -1);
 		qf.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.UNIFORM;
-		insert_all_and_then_delete_all(qf);
+		insert_all_and_then_delete_all(qf, qf.power_of_two_size + qf.fingerprintLength + 1);
 	}
 	
 	static public void test6() {
 		int bits_per_entry = 10;
 		int num_entries_power = 3;	
-		DuplicatingChainedInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, bits_per_entry, true);
-		qf.expand_autonomously = true;
+		DuplicatingChainedInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, bits_per_entry, true, -1);
 		qf.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.POLYNOMIAL;
-		insert_all_and_then_delete_all(qf);
+		insert_all_and_then_delete_all(qf, qf.power_of_two_size + qf.fingerprintLength + 1);
 	}
 
 	
@@ -97,6 +100,12 @@ public class aleph_tests {
 		test8();	
 		test9();
 		test10();
+		test11();
+			
+		test12();
+		test13();
+		test14();
+		test15();
 		
 		//test7();
 	}
@@ -106,8 +115,7 @@ public class aleph_tests {
 		int num_entries_power = 3;
 		int seed = 2;  // 10
 		//int num_entries = (int)Math.pow(2, num_entries_power);
-		BasicInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, bits_per_entry, false);
-		qf.expand_autonomously = true;
+		BasicInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, bits_per_entry, false, -1);
 		qf.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.UNIFORM;
 		Tests.test_insertions_and_deletes(qf);
 		System.out.println("success");
@@ -118,8 +126,7 @@ public class aleph_tests {
 		int num_entries_power = 3;
 		int seed = 2;  // 10
 		//int num_entries = (int)Math.pow(2, num_entries_power);
-		BasicInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, bits_per_entry, false);
-		qf.expand_autonomously = true;
+		BasicInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, bits_per_entry, false, -1);
 		qf.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.POLYNOMIAL;
 		Tests.test_insertions_and_deletes(qf);
 		System.out.println("success");
@@ -130,8 +137,7 @@ public class aleph_tests {
 		int num_entries_power = 3;
 		int seed = 2;  // 10
 		//int num_entries = (int)Math.pow(2, num_entries_power);
-		DuplicatingChainedInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, bits_per_entry, true);
-		qf.expand_autonomously = true;
+		DuplicatingChainedInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, bits_per_entry, true, -1);
 		qf.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.UNIFORM;
 		Tests.test_insertions_and_deletes(qf);
 		System.out.println("success");
@@ -142,20 +148,125 @@ public class aleph_tests {
 		int num_entries_power = 3;
 		int seed = 2;  // 10
 		//int num_entries = (int)Math.pow(2, num_entries_power);
-		BasicInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, bits_per_entry, true);
+		BasicInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, bits_per_entry, true, -1);
+		qf.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.POLYNOMIAL;
+		Tests.test_insertions_and_deletes(qf);
+		System.out.println("success");
+	}
+	
+	
+	static public void many_insertions(ChainedInfiniFilter qf) {
+
+		int max_key = (int)Math.pow(2, qf.power_of_two_size + 10);
+		for (int i = 0; i < max_key; i++) {		
+			boolean success = qf.insert(i, false);
+			Assert(success);
+		}
+
+		//qf.pretty_print();
+		
+		for (int i = 0; i < max_key; i++) {		
+			boolean success = qf.search(i);	
+			Assert(success);
+		}
+		
+		double false_positives = 0;
+		for (long i = Long.MAX_VALUE; i >= Long.MAX_VALUE - 10000; i--) {		
+			boolean success = qf.search(i);	
+			if (success) {
+				false_positives++;
+			}
+		}
+		//System.out.println("FPR: " + false_positives / 10000.0);
+		
+		//qf.print_filter_summary();
+		
+
+		//System.out.println("new test finished");
+	}
+	
+	static public void test11() {
+		int bits_per_entry = 8;
+		int num_entries_power = 3;
+		int seed = 2;  // 10
+		//int num_entries = (int)Math.pow(2, num_entries_power);
+		ChainedInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, bits_per_entry, true, -1);
+		//ChainedInfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
 		qf.expand_autonomously = true;
 		qf.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.POLYNOMIAL;
+		aleph_tests.many_insertions(qf);
+		System.out.println("success");
+	}
+	
+	static public void test12_() {
+		int bits_per_entry = 13;
+		int num_entries_power = 3;
+		int seed = 2;  // 10
+		//int num_entries = (int)Math.pow(2, num_entries_power);
+		int fp_size = DuplicatingChainedInfiniFilter.derive_init_fingerprint_size(bits_per_entry - 3, 10);
+		DuplicatingChainedInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, fp_size + 3, true, 10);
+		//ChainedInfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
+		qf.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.POLYNOMIAL_SHRINK;
+		aleph_tests.many_insertions(qf);
+		System.out.println("success");
+	}
+	
+	static public void test12() {
+		int bits_per_entry = 13;
+		int num_entries_power = 3;
+		//int seed = 2;  // 10
+		//int num_entries = (int)Math.pow(2, num_entries_power);
+		int fp_size = DuplicatingChainedInfiniFilter.derive_init_fingerprint_size(bits_per_entry - 3, 10);
+		DuplicatingChainedInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, fp_size + 3, true, 10);
+		//ChainedInfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
+		qf.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.POLYNOMIAL_SHRINK;
+		insert_all_and_then_delete_all(qf, 21);
+	}
+	
+	static public void test13() {
+		int bits_per_entry = 13;
+		int num_entries_power = 3;
+		//int seed = 2;  // 10
+		//int num_entries = (int)Math.pow(2, num_entries_power);
+		int fp_size = DuplicatingChainedInfiniFilter.derive_init_fingerprint_size(bits_per_entry - 3, 10);
+		DuplicatingChainedInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, fp_size + 3, true, 10);
+		//ChainedInfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
+		qf.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.POLYNOMIAL_SHRINK;
+		Tests.test_insertions_and_deletes(qf);
+		System.out.println("success");
+	}
+	
+	static public void test14() {
+		int bits_per_entry = 13;
+		int num_entries_power = 3;
+		//int seed = 2;  // 10
+		//int num_entries = (int)Math.pow(2, num_entries_power);
+		int fp_size = DuplicatingChainedInfiniFilter.derive_init_fingerprint_size(bits_per_entry - 3, 10);
+		DuplicatingChainedInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, fp_size + 3, false, 10);
+		//ChainedInfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
+		qf.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.POLYNOMIAL_SHRINK;
+		insert_all_and_then_delete_all(qf, 21);
+	}
+	
+	static public void test15() {
+		int bits_per_entry = 13;
+		int num_entries_power = 3;
+		//int seed = 2;  // 10
+		//int num_entries = (int)Math.pow(2, num_entries_power);
+		int fp_size = DuplicatingChainedInfiniFilter.derive_init_fingerprint_size(bits_per_entry - 3, 10);
+		DuplicatingChainedInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, fp_size + 3, false, 10);
+		//ChainedInfiniFilter qf = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
+		qf.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.POLYNOMIAL_SHRINK;
 		Tests.test_insertions_and_deletes(qf);
 		System.out.println("success");
 	}
 	
 
 	
-	static public void test12() {
+	static public void test16() {
 		int bits_per_entry = 10;
 		int num_entries_power = 3;	
-		DuplicatingChainedInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, bits_per_entry, true);
-		qf.expand_autonomously = true;
+		DuplicatingChainedInfiniFilter qf = new DuplicatingChainedInfiniFilter(num_entries_power, bits_per_entry, true, -1);
 		qf.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.UNIFORM;
 		int max_key = (int)Math.pow(2, num_entries_power + qf.fingerprintLength + 1);
 		for (int i = 0; i < max_key; i++) {		
@@ -167,8 +278,8 @@ public class aleph_tests {
 		
 		boolean success = qf.search(0);
 		
-		success = qf.delete(0);
-		Assert(success);
+		long removed_fp = qf.delete(0);
+		Assert(removed_fp > -1);
 		
 		qf.pretty_print();
 		

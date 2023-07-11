@@ -34,7 +34,7 @@ public class QuotientFilter extends Filter {
 	
 	int original_fingerprint_size; 
 	int num_expansions;
-	
+
 	
 	public QuotientFilter(int power_of_two, int bits_per_entry) {
 		power_of_two_size = power_of_two;
@@ -48,7 +48,7 @@ public class QuotientFilter extends Filter {
 		
 		expansion_threshold = 0.8;
 		max_entries_before_expansion = (int) (init_size * expansion_threshold);
-		expand_autonomously = false;
+		expand_autonomously = true;
 		is_full = false;
 		
 		original_fingerprint_size = fingerprintLength;
@@ -59,6 +59,10 @@ public class QuotientFilter extends Filter {
 		last_cluster_start = 0;
 		backward_steps = 0;
 		//measure_num_bits_per_entry();
+	}
+	
+	void setup() {
+		
 	}
 
 	//nuevo
@@ -127,29 +131,36 @@ public class QuotientFilter extends Filter {
 		//System.out.println("--------------------------");
 		//current.print_filter_summary();
 		//System.out.println();
-		double num_entries = current.get_num_entries(false);
+		double num_entries = current.get_num_occupied_slots(false);
+		double total_count = current.num_existing_entries;
 		for (QuotientFilter q : other_filters) {
 			//q.print_filter_summary();
 			//System.out.println();
-			long q_num_entries = q.get_num_entries(false);
-			num_entries += q_num_entries;
+			//long q_num_entries = q.get_num_occupied_slots(false);
+			//num_entries += q_num_entries;
+			total_count += q.num_existing_entries;
 		}
-		long init_size = 1L << current.power_of_two_size;
-		long num_bits = current.bitPerEntry * init_size + current.num_extension_slots * current.bitPerEntry;
+		//System.out.println("entry count: " + total_count + "  " + num_entries); 
+		double init_size = 1L << current.power_of_two_size;
+		double num_bits = current.bitPerEntry * init_size + current.num_extension_slots * current.bitPerEntry;
 		for (QuotientFilter q : other_filters) {
 			init_size = 1L << q.power_of_two_size;
 			num_bits += q.bitPerEntry * init_size + q.num_extension_slots * q.bitPerEntry;
 		}
 		//System.out.println("total entries: \t\t" + num_entries);
 		//System.out.println("total bits: \t\t" + num_bits);
-		double bits_per_entry = num_bits / num_entries;
+		
+		//System.out.println("entries:  " + total_count + "  bits:  " + num_bits); 
+
+		
+		double bits_per_entry = num_bits / total_count;
 		//System.out.println("total bits/entry: \t" + bits_per_entry);
 		//System.out.println();
  		return bits_per_entry;
 	}
 	
 	// scans the quotient filter and returns the number of non-empty slots
-	public long get_num_entries(boolean include_all_internal_filters) {
+	public long get_num_occupied_slots(boolean include_all_internal_filters) {
 		//long bits = filter.size();
 		long slots = get_physcial_num_slots();
 		long num_entries = 0;
@@ -164,7 +175,7 @@ public class QuotientFilter extends Filter {
 	// returns the fraction of occupied slots in the filter
 	public double get_utilization() {
 		long num_logical_slots = 1L << power_of_two_size;
-		long num_entries = get_num_entries(false);
+		long num_entries = get_num_occupied_slots(false);
 		double util = num_entries / (double) num_logical_slots;
 		return util;
 	}
@@ -206,8 +217,11 @@ public class QuotientFilter extends Filter {
 		long all_slots = get_logical_num_slots_plus_extensions();
 		
 		for (long i = 0; i < filter.size(); i++) {
+		//for (long i = 0; i < 100; i++) {
+
 			long remainder = i % bitPerEntry;
 			if (remainder == 0) {
+				long slot = i / bitPerEntry;
 				long slot_num = i/bitPerEntry;
 				sbr.append(" ");
 				if (vertical) {
@@ -255,7 +269,7 @@ public class QuotientFilter extends Filter {
 	
 	// summarize some statistical measures about the filter
 	public void print_filter_summary() {	
-		long num_entries = get_num_entries(false);
+		long num_entries = get_num_occupied_slots(false);
 		long slots = (1L << power_of_two_size) + num_extension_slots;
 		long num_bits = slots * bitPerEntry;
 		System.out.println("slots:\t" + slots);
@@ -622,14 +636,14 @@ public class QuotientFilter extends Filter {
 		} while (true);
 	}
 	
-	boolean delete(long fingerprint, long canonical_slot) {
+	long delete(long fingerprint, long canonical_slot) {
 		if (canonical_slot >= get_logical_num_slots()) {
-			return false;
+			return -1;
 		}
 		// if the run doesn't exist, the key can't have possibly been inserted
 		boolean does_run_exist = is_occupied(canonical_slot);
 		if (!does_run_exist) {
-			return false;
+			return -1;
 		}
 		long run_start_index = find_run_start(canonical_slot);
 		
@@ -637,10 +651,15 @@ public class QuotientFilter extends Filter {
 		
 		if (matching_fingerprint_index == -1) {
 			// we didn't find a matching fingerprint
-			return false;
+			return -1;
 		}
+		
+		long removed_fp = get_fingerprint(matching_fingerprint_index);
 
-		return delete(fingerprint, canonical_slot, run_start_index, matching_fingerprint_index);
+
+		boolean success = delete(fingerprint, canonical_slot, run_start_index, matching_fingerprint_index);
+		
+		return success ? removed_fp : -1;
 		
 	}
 
@@ -715,14 +734,14 @@ public class QuotientFilter extends Filter {
 		return success; 
 	}
 
-	protected boolean _delete(long large_hash) {
+	protected long _delete(long large_hash) {
 		long slot_index = get_slot_index(large_hash);
 		long fp_long = gen_fingerprint(large_hash);
-		boolean success = delete(fp_long, slot_index);
-		if (success) {
+		long removed_fp = delete(fp_long, slot_index);
+		if (removed_fp > -1) {
 			num_existing_entries--;
 		}
-		return success; 
+		return removed_fp; 
 	}
 
 	protected boolean _search(long large_hash) {
@@ -866,6 +885,8 @@ public class QuotientFilter extends Filter {
 		//System.out.println("CNT = " + cnt);
 		return ar;
 	}
+
+
 	
 }
 

@@ -2,17 +2,35 @@ package filters;
 
 import java.util.ArrayList;
 
+import filters.FingerprintGrowthStrategy.FalsePositiveRateExpansion;
+
 public class DuplicatingChainedInfiniFilter extends ChainedInfiniFilter {
 
 	final boolean lazy_deletes;
 	long deleted_void_fingerprint = 0;
 	ArrayList<Long> deleted_void_entries;
+	//final long num_expansions_estimate;
 	
-	public DuplicatingChainedInfiniFilter(int power_of_two, int bits_per_entry, boolean _lazy_updates) {
+	public static int derive_init_fingerprint_size(int expected_fp_bits, int expected_expansions) {
+		//int new_fingerprint_size = FingerprintGrowthStrategy.get_new_fingerprint_size(expected_fp_bits, 0, expected_expansions, FalsePositiveRateExpansion.POLYNOMIAL_SHRINK);
+		double original_FPR = Math.pow(2, -expected_fp_bits);
+		double current = expected_expansions + 1;
+		double factor = 1.0 / Math.pow(current, 2);
+		double new_filter_FPR = factor * original_FPR; 
+		double fingerprint_size = Math.ceil( Math.log(1.0/new_filter_FPR) / Math.log(2) );
+		int fingerprint_size_int = (int) fingerprint_size;
+		return fingerprint_size_int;
+	}
+	
+	public DuplicatingChainedInfiniFilter(int power_of_two, int bits_per_entry, boolean _lazy_updates, int new_num_expansions_estimate) {
 		super(power_of_two, bits_per_entry);
 		set_deleted_void_fingerprint();
 		deleted_void_entries = new ArrayList<>();
 		lazy_deletes = _lazy_updates;
+		num_expansions_estimate = new_num_expansions_estimate;
+		if (num_expansions_estimate > -1) {
+			fprStyle = FalsePositiveRateExpansion.POLYNOMIAL_SHRINK;
+		}
 	}
 	
 	void set_deleted_void_fingerprint() {
@@ -39,12 +57,28 @@ public class DuplicatingChainedInfiniFilter extends ChainedInfiniFilter {
 		super.report_void_entry_creation(slot);
 
 		if (secondary_IF == null) {
-			int FP_size = power_of_two_size - num_expansions + 3; 
-			create_secondary(power_of_two_size - num_expansions + 1, FP_size );
+			int power = power_of_two_size - num_expansions + 1;
+			//int FP_size_wanted = power_of_two_size - num_expansions + 3; 
+			int FP_size_min_size = power_of_two_size + 2 - power;
+			//int FP_size = Math.min(FP_size_min_size, FP_size_wanted);
+			
+			create_secondary(power, FP_size_min_size );
 			prep_masks(power_of_two_size + 1, secondary_IF.power_of_two_size, secondary_IF.fingerprintLength);
 			set_deleted_void_fingerprint();
 		}
 
+		if (exceeding_secondary_threshold()) {
+			//pretty_print();
+			consider_expanding_secondary();
+			prep_masks();
+		}
+		
+		/*if (slot == 3565) {
+			System.out.println("" + secondary_IF.power_of_two_size);
+			System.out.println("" + (secondary_IF.fingerprintLength - 1));
+			System.out.println();
+		}*/
+		
 		super.handle_empty_fingerprint(slot, this);	
 
 	}
@@ -68,12 +102,23 @@ public class DuplicatingChainedInfiniFilter extends ChainedInfiniFilter {
 		deleted_void_entries.clear();
 	}
 	
+	boolean exceeding_secondary_threshold() {
+		int num_entries = secondary_IF.num_existing_entries;
+		long logical_slots = secondary_IF.get_logical_num_slots();
+		double secondary_fullness = num_entries / (double)logical_slots;
+		return secondary_fullness > expansion_threshold / 2.0;
+	}
+	
 	boolean expand() {
+		//pretty_print();
+		//print_filter_summary();
+		//print_age_histogram();
+		//double util = get_utilization();
+		//System.out.println("before expansion " + num_expansions + "\t" + util + "\t" + num_existing_entries + "\t" + num_void_entries + "\t" + num_distinct_void_entries);
 		
 		if (!deleted_void_entries.isEmpty()) {
 			remove_deleted_void_entry_duplicates();
 		}
-		//System.out.println("expansion " + num_expansions);
 		
 		boolean success = super.expand();	
 		/*if (secondary_IF != null) {
@@ -83,8 +128,13 @@ public class DuplicatingChainedInfiniFilter extends ChainedInfiniFilter {
 			secondary_IF.expand();
 			secondary_IF.pretty_print();
 		}*/
-		//pretty_print();
+		
 		set_deleted_void_fingerprint();
+		
+		//pretty_print();
+		//print_filter_summary();
+		//print_age_histogram();
+		//System.out.println("after expansion " + num_expansions + "\t" + num_existing_entries + "\t" + num_void_entries + "\t" + num_distinct_void_entries);
 		return success;
 		
 	}
@@ -123,6 +173,10 @@ public class DuplicatingChainedInfiniFilter extends ChainedInfiniFilter {
 		long hash_diff = power_of_two_size - hash_size;
 		//long existing_fp = get_fingerprint_after_unary(matching_fingerprint_index);
 			
+		if (hash_diff < 0) {
+			System.out.println("problem!");
+		}
+		
 		return hash_diff; 
 	}
 	
@@ -161,6 +215,8 @@ public class DuplicatingChainedInfiniFilter extends ChainedInfiniFilter {
 		
 		long num_duplicates = 1 << age;
 		
+		//System.out.println("num duplicates to remove " + num_duplicates);
+		
 		//print_long_in_binary(slot_index, power_of_two_size);
 
 		long mask = (1 << (power_of_two_size - age)) - 1;
@@ -181,11 +237,16 @@ public class DuplicatingChainedInfiniFilter extends ChainedInfiniFilter {
 			
 			long matching_fingerprint_index = find_first_void_entry_in_run(run_start_index, delete_target);
 			if (matching_fingerprint_index == -1) {
+				System.out.println("not founding duplicate to delete");
 				System.exit(1);
 			}
 			
+			//System.out.println();
+			
 			//System.out.println(canonical_addr + "  " + run_start_index + "  " +  matching_fingerprint_index);
 
+			//System.out.println("removing duplicate " + canonical_addr + "  " + run_start_index + "  " + matching_fingerprint_index);
+			
 			boolean success = delete( empty_fingerprint,  canonical_addr,  run_start_index,  matching_fingerprint_index);
 			if (!success) {
 				System.out.println("there must be another void entry");
@@ -206,19 +267,19 @@ public class DuplicatingChainedInfiniFilter extends ChainedInfiniFilter {
 		return true; 
 	}
 	
-	public boolean delete(long input) {
+	public long delete(long input) {
 		
 		long large_hash = get_hash(input);
 		long slot_index = get_slot_index(large_hash);
 		long fp_long = gen_fingerprint(large_hash);
 		
 		if (slot_index >= get_logical_num_slots()) {
-			return false;
+			return -1;
 		}
 		// if the run doesn't exist, the key can't have possibly been inserted
 		boolean does_run_exist = is_occupied(slot_index);
 		if (!does_run_exist) {
-			return false;
+			return -1;
 		}
 		long run_start_index = find_run_start(slot_index);
 		
@@ -226,34 +287,38 @@ public class DuplicatingChainedInfiniFilter extends ChainedInfiniFilter {
 		
 		if (matching_fingerprint_index == -1) {
 			// we didn't find a matching fingerprint
-			return false;
+			return -1;
 		}
 		
 		long matching_fingerprint = get_fingerprint(matching_fingerprint_index);
 
 		if (matching_fingerprint != empty_fingerprint) {
-			boolean success = delete(fp_long, slot_index);
-			if (success) {
+			long removed_fp = delete(fp_long, slot_index);
+			if (removed_fp > -1) {
 				num_existing_entries--;
-				return true;
+				return removed_fp;
 			}			
 		}
 		
 		if (lazy_deletes) {
 			delete_void_lazily(matching_fingerprint_index, slot_index);
-			return true;
+			return 1;
 		}
 		
 		/*print_long_in_binary(large_hash, 32);
 		print_long_in_binary(slot_index, 32);
 		print_long_in_binary(fp_long, 32);*/
 		
-		return delete_duplicates(slot_index);
+		boolean success = delete_duplicates(slot_index);
+		
+		return success ? 1 : -1;
 	}
 	
 	
 	boolean delete_duplicates(long slot_index) {
 		long age = get_void_entry_age(slot_index);
+		
+		//System.out.println("the key has age " + age);
 		
 		boolean success = delete_duplicates(slot_index, age);
 		if (!success) {
@@ -264,18 +329,26 @@ public class DuplicatingChainedInfiniFilter extends ChainedInfiniFilter {
 		
 		long secondary_slot_index = secondary_IF.get_slot_index(slot_index);
 		long fp_long = secondary_IF.gen_fingerprint(slot_index);
-		success = secondary_IF.delete(fp_long, secondary_slot_index);
-		if (success) {
+		long removed_fp = secondary_IF.delete(fp_long, secondary_slot_index);
+		if (removed_fp > -1) {
 			secondary_IF.num_existing_entries--;
+			if (removed_fp == empty_fingerprint) {
+				secondary_IF.num_void_entries--;
+				secondary_IF.num_distinct_void_entries--;
+			}
 			return true;
 		}
 		
 		for (int i = chain.size() - 1; i >= 0; i--) {			
 			long chain_slot_index = chain.get(i).get_slot_index(slot_index);
 			fp_long = chain.get(i).gen_fingerprint(slot_index);
-			success = chain.get(i).delete(fp_long, chain_slot_index);
-			if (success) {
+			removed_fp = chain.get(i).delete(fp_long, chain_slot_index);
+			if (removed_fp > -1) {
 				chain.get(i).num_existing_entries--;
+				if (removed_fp == empty_fingerprint) {
+					secondary_IF.num_void_entries--;
+					secondary_IF.num_distinct_void_entries--;
+				}
 				return true;
 			}
 		}
@@ -283,7 +356,38 @@ public class DuplicatingChainedInfiniFilter extends ChainedInfiniFilter {
 		return success; 
 	}
 	
-
 	
+	// measures the number of bits per entry for the filter 
+	// it takes an array of filters as a parameter since some filter implementations here consist of multiple filter objects
+	public double measure_num_bits_per_entry() {
+		//System.out.println("--------------------------");
+		//current.print_filter_summary();
+		//System.out.println();
+		//double num_entries = current.get_num_occupied_slots(false);
+		double total_count = num_existing_entries;
+
+		double init_size = 1L << power_of_two_size;
+		double num_bits = bitPerEntry * init_size + num_extension_slots * bitPerEntry;
+		
+		if (secondary_IF != null) {
+			init_size = 1L << secondary_IF.power_of_two_size;
+			num_bits += secondary_IF.bitPerEntry * init_size + secondary_IF.num_extension_slots * secondary_IF.bitPerEntry;
+		}
+		
+		for (QuotientFilter q : chain) {
+			init_size = 1L << q.power_of_two_size;
+			num_bits += q.bitPerEntry * init_size + q.num_extension_slots * q.bitPerEntry;
+		}
+		//System.out.println("total entries: \t\t" + num_entries);
+		//System.out.println("total bits: \t\t" + num_bits);
+		
+		//System.out.println("entries:  " + total_count + "  bits:  " + num_bits); 
+
+		
+		double bits_per_entry = num_bits / total_count;
+		//System.out.println("total bits/entry: \t" + bits_per_entry);
+		//System.out.println();
+ 		return bits_per_entry;
+	}
 	
 }

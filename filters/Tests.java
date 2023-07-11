@@ -757,13 +757,13 @@ public class Tests {
 			}
 			
 			if (i % 4 == 0 && i > Math.pow(2, num_entries_power)) {
-					int to_del = rand.nextInt();
-					if (to_del > added.first()) {
+				int to_del = rand.nextInt();
+				if (to_del > added.first()) {
 					int r = added.floor(to_del);
 					added.remove(r);
-					boolean deleted = true;
-					deleted = qf.delete(r);
-					if (!deleted) {
+					//boolean deleted = true;
+					long removed_fp = qf.delete(r);
+					if (removed_fp == -1) {
 						System.out.println("not deleted");
 						System.exit(1);
 					}
@@ -829,8 +829,8 @@ public class Tests {
 					int r = added.floor(to_del);
 					added.remove(r);
 					
-					boolean deleted =  qf.delete(r);
-					if (!deleted) {
+					long removed_fp =  qf.delete(r);
+					if (removed_fp == -1) {
 						System.out.println("not deleted");
 						System.exit(1);
 					}
@@ -1957,7 +1957,7 @@ public class Tests {
 
 				input_int = rnd.nextInt();
 				if(!(qf.insert(input_int, false)) ||
-						!(qf.search(input_int)) || !(qf.delete(input_int)) ||
+						!(qf.search(input_int)) || !(qf.delete(input_int) != -1) ||
 						(qf.search(input_int)))
 				{
 						System.out.format("TEST 21, Trial %d: Fail with input_int", i);
@@ -1966,7 +1966,7 @@ public class Tests {
 
 				input_long = rnd.nextLong();
 				if(!(qf.insert(input_long, false)) ||
-						!(qf.search(input_long)) || !(qf.delete(input_long)) ||
+						!(qf.search(input_long)) || !(qf.delete(input_long) != -1) ||
 						(qf.search(input_long)))
 				{
 						System.out.format("TEST 21, Trial %d: Fail with input_long", i);
@@ -1976,7 +1976,7 @@ public class Tests {
 				rnd.nextBytes(input_bytes);
 				input_string = new String(input_bytes, StandardCharsets.UTF_8);
 				if(!(qf.insert(input_string, false)) ||
-					!(qf.search(input_string)) || !(qf.delete(input_string)) ||
+					!(qf.search(input_string)) || !(qf.delete(input_string) != -1) ||
 					(qf.search(input_string)))
 				{
 						System.out.format("TEST 21, Trial %d: Fail with input_string", i);
@@ -1985,7 +1985,7 @@ public class Tests {
 				
 				rnd.nextBytes(input_bytes);
 				if(!(qf.insert(input_bytes, false)) ||
-					!(qf.search(input_bytes)) || !(qf.delete(input_bytes)) ||
+					!(qf.search(input_bytes)) || !(qf.delete(input_bytes) != -1) ||
 					(qf.search(input_bytes)))
 				{
 						System.out.format("TEST 21, Trial %d: Fail with input_bytes", i);

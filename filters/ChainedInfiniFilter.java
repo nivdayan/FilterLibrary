@@ -113,22 +113,27 @@ public class ChainedInfiniFilter extends BasicInfiniFilter {
 		// In case the fingerprint is too short, we must add unary padding
 		adjusted_fingerprint = adjusted_fingerprint | unary_mask;
 		
-		//unary_mask = unary_mask <<
-		//if (bucket_index == 16269) {
-			
-			/*print_long_in_binary( bucket1, power_of_two_size + 1);
-			print_long_in_binary( slot_mask, 32);
-			print_long_in_binary( slot, secondary_IF.power_of_two_size + 2);
-			print_long_in_binary( fingerprint_mask, 32);
-			print_long_in_binary( unary_mask, 32);
-			print_long_in_binary( fingerprint, 32);
-			print_long_in_binary( adjusted_fingerprint, 32);
-			System.out.println();*/
+		//unary_mask = unary_mask <<			
+		/*print_long_in_binary( bucket1, power_of_two_size + 1);
+		print_long_in_binary( slot_mask, 32);
+		print_long_in_binary( slot, secondary_IF.power_of_two_size + 2);
+		print_long_in_binary( fingerprint_mask, 32);
+		print_long_in_binary( unary_mask, 32);
+		print_long_in_binary( fingerprint, 32);
+		print_long_in_binary( adjusted_fingerprint, 32);
+		System.out.println();*/
+
 		
 		num_existing_entries--;
 		//secondary_IF.num_existing_entries++;
-		secondary_IF.insert(adjusted_fingerprint, slot, false);
-		
+		boolean success = secondary_IF.insert(adjusted_fingerprint, slot, false);
+		if (!success) {
+			pretty_print();
+			print_filter_summary();
+			print_age_histogram();
+			System.out.println("didn't manage to insert entry to secondary");
+			System.exit(1);
+		}
 	}
 	
 	// The hash function is being computed here for each filter 
@@ -159,6 +164,21 @@ public class ChainedInfiniFilter extends BasicInfiniFilter {
 		secondary_IF.original_fingerprint_size = original_fingerprint_size;
 	}
 	
+	void consider_expanding_secondary() {
+		if (secondary_IF.num_void_entries > 0) { // our former filter is full 
+			chain.add(secondary_IF);
+			int orig_FP = secondary_IF.fingerprintLength;
+			secondary_IF = new BasicInfiniFilter(secondary_IF.power_of_two_size + 1, secondary_IF.fingerprintLength + 3);
+			secondary_IF.hash_type = this.hash_type;
+			secondary_IF.original_fingerprint_size = orig_FP;
+			secondary_IF.fprStyle = fprStyle;
+		}
+		// we expand the secondary infinifilter
+		else {  // standard procedure
+			expand_secondary_IF();
+		}
+	}
+	
 	boolean expand() {	
 		//print_filter_summary();
 		// creating secondary IF for the first time 
@@ -169,38 +189,49 @@ public class ChainedInfiniFilter extends BasicInfiniFilter {
 			create_secondary(power, FP_size);
 		}
 		// the secondary infinifilter is full, so we add it to the chain
-		else if (secondary_IF != null && secondary_IF.num_void_entries > 0) { // our former filter is full 
-			chain.add(secondary_IF);
-			int orig_FP = secondary_IF.fingerprintLength;
-			secondary_IF = new BasicInfiniFilter(secondary_IF.power_of_two_size + 1, secondary_IF.fingerprintLength + 3);
-			secondary_IF.hash_type = this.hash_type;
-			secondary_IF.original_fingerprint_size = orig_FP;
-			secondary_IF.fprStyle = fprStyle;
-		}
-		// we expand the secondary infinifilter
-		else if (secondary_IF != null) {  // standard procedure
-			expand_secondary_IF();
+		else if (secondary_IF != null) { // our former filter is full 
+			consider_expanding_secondary();
 		}
 		prep_masks();
 		super.expand();
 		//System.out.println(num_expansions + "\t" + num_distinct_void_entries + "\t" + fingerprintLength + "\t" + num_existing_entries);
+	
+		
 		return true;
 	}
 	
-
-	
-	void expand_secondary_IF() {
+	boolean exceeding_secondary_threshold() {
 		int num_entries = secondary_IF.num_existing_entries + num_void_entries;
 		long logical_slots = secondary_IF.get_logical_num_slots();
 		double secondary_fullness = num_entries / (double)logical_slots;
+		return secondary_fullness > expansion_threshold / 2.0;
+	}
+	
+	void expand_secondary_IF() {
+
 		// sometimes we may also want to widen the fingerprint bits, not just expand when we reach capacity
 		// need to consider this 
-		do  {
+		//boolean expanded = false;
+		while (exceeding_secondary_threshold()) {
 			secondary_IF.num_expansions++;
 			secondary_IF.expand();
-			logical_slots = secondary_IF.get_logical_num_slots();
-			secondary_fullness = num_entries / (double)logical_slots;
-		} while (secondary_fullness > expansion_threshold / 2.0);
+			//logical_slots = secondary_IF.get_logical_num_slots();
+			//secondary_fullness = num_entries / (double)logical_slots;
+			//expanded = true;
+		}
+		
+		/*if (expanded) {
+			return;
+		}*/
+		
+		//int extra_bits_needed = power_of_two_size - ( secondary_IF.power_of_two_size + secondary_IF.fingerprintLength - 1);
+		int info_bits_secondary = secondary_IF.power_of_two_size + secondary_IF.fingerprintLength - 1;
+		while (info_bits_secondary <= power_of_two_size + 2) {
+			//secondary_IF.pretty_print();
+			secondary_IF.widen();
+			info_bits_secondary = secondary_IF.power_of_two_size + secondary_IF.fingerprintLength - 1;
+			//secondary_IF.pretty_print();
+		}
 	}
 	
 	// TODO if we rejuvenate a void entry, we should subtract from num_void_entries 
@@ -214,8 +245,8 @@ public class ChainedInfiniFilter extends BasicInfiniFilter {
 			System.out.println("Warning: it seems the key to be rejuvenrated does not exist. We must only ever call rejuvenrate on keys that exist.");
 			return false;
 		}
-		success = secondary_IF.delete(key);
-		if (success) {
+		long removed_fp = secondary_IF.delete(key);
+		if (removed_fp > -1) {
 			success = insert(key, false);
 			if (!success) {
 				System.out.println("failed at rejuvenation");
@@ -224,8 +255,8 @@ public class ChainedInfiniFilter extends BasicInfiniFilter {
 			return true;
 		}
 		for (int i = chain.size() - 1; i >= 0; i--) {						
-			success = chain.get(i).delete(key);
-			if (success) {
+			removed_fp = chain.get(i).delete(key);
+			if (removed_fp > -1) {
 				success = insert(key, false);
 				if (!success) {
 					System.out.println("failed at rejuvenation");
@@ -238,35 +269,35 @@ public class ChainedInfiniFilter extends BasicInfiniFilter {
 	}
 	
 	
-	public boolean delete(long input) {
+	public long delete(long input) {
 		long large_hash = get_hash(input);
 		long slot_index = get_slot_index(large_hash);
 		long fp_long = gen_fingerprint(large_hash);
 		//System.out.println("deleting  " + input + "\t b " + slot_index + " \t" + get_fingerprint_str(fp_long, fingerprintLength));
-		boolean success = delete(fp_long, slot_index);
-		if (success) {
+		long removed_fp = delete(fp_long, slot_index);
+		if (removed_fp > -1) {
 			num_existing_entries--;
-			return true;
+			return removed_fp;
 		}
 		
 		slot_index = secondary_IF.get_slot_index(large_hash);
 		fp_long = secondary_IF.gen_fingerprint(large_hash);
-		success = secondary_IF.delete(fp_long, slot_index);
-		if (success) {
+		removed_fp = secondary_IF.delete(fp_long, slot_index);
+		if (removed_fp > -1) {
 			num_existing_entries--;
-			return true;
+			return removed_fp;
 		}
 		
 		for (int i = chain.size() - 1; i >= 0; i--) {			
 			slot_index = chain.get(i).get_slot_index(large_hash);
 			fp_long = chain.get(i).gen_fingerprint(large_hash);
-			success = chain.get(i).delete(fp_long, slot_index);
-			if (success) {
-				return true;
+			removed_fp = chain.get(i).delete(fp_long, slot_index);
+			if (removed_fp > -1) {
+				return removed_fp;
 			}
 		}
 		
-		return success; 
+		return removed_fp; 
 	}
 	
 	public double measure_num_bits_per_entry() {
@@ -309,21 +340,39 @@ public class ChainedInfiniFilter extends BasicInfiniFilter {
 		
 	}
 	
-	public long get_num_entries(boolean include_all_internal_filters) {
-		long num_entries = super.get_num_entries(false);
+	public long get_num_occupied_slots(boolean include_all_internal_filters) {
+		long num_entries = super.get_num_occupied_slots(false);
 		if (!include_all_internal_filters) {
 			return num_entries;
 		}
 		for (QuotientFilter q : chain) {
-			num_entries += q.get_num_entries(false);
+			num_entries += q.get_num_occupied_slots(false);
 		}
 		if (secondary_IF != null) {
-			long former_num_entries = secondary_IF.get_num_entries(false);
+			long former_num_entries = secondary_IF.get_num_occupied_slots(false);
 			num_entries += former_num_entries;
 		}
 		return num_entries; 
 	}
 	
+	
+	public void print_age_histogram() {	
+		
+		
+		super.print_age_histogram();
+		
+		//System.out.println("---------------------");
+		
+		if (secondary_IF != null) {
+			secondary_IF.print_age_histogram();
+			System.out.println();
+		}
+		
+		for (BasicInfiniFilter q : chain) {
+			q.print_age_histogram();
+		}
+	}
+
 	
 }
 

@@ -360,7 +360,7 @@ public class Experiment1 extends InfiniFilterExperiments {
 		//double utilization = qf.get_utilization();
 
 		//double num_entries = qf.get_num_entries(true);
-		double num_entries = qf.get_num_entries(true);
+		double num_entries = qf.get_num_occupied_slots(true);
 
 		results.metrics.get("num_entries").add(num_entries);
 		results.metrics.get("insertion_time").add(avg_insertions);

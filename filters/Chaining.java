@@ -30,13 +30,13 @@ public class Chaining extends QuotientFilter {
 	
 	ArrayList<QuotientFilter> older_filters;
 
-	public long get_num_entries(boolean include_all_internal_filters) {
-		long num_entries = super.get_num_entries(false);
+	public long get_num_occupied_slots(boolean include_all_internal_filters) {
+		long num_entries = super.get_num_occupied_slots(false);
 		if (!include_all_internal_filters) {
 			return num_entries;
 		}
 		for (QuotientFilter q : older_filters) {
-			num_entries += q.get_num_entries(false);
+			num_entries += q.get_num_occupied_slots(false);
 		}
 		return num_entries; 
 	}
@@ -46,7 +46,7 @@ public class Chaining extends QuotientFilter {
 		for (QuotientFilter q : older_filters) {
 			num_slots += 1L << q.power_of_two_size;
 		}
-		long num_entries = get_num_entries(true);
+		long num_entries = get_num_occupied_slots(true);
 		double utilization = num_entries / (double) num_slots;
 		return utilization;
 	}
@@ -63,7 +63,7 @@ public class Chaining extends QuotientFilter {
 		num_existing_entries = 0;
 		power_of_two_size += sizeStyle == SizeExpansion.GEOMETRIC ? 1 : 0;
 		
-		fingerprintLength = FingerprintGrowthStrategy.get_new_fingerprint_size(original_fingerprint_size, num_expansions, fprStyle);
+		fingerprintLength = FingerprintGrowthStrategy.get_new_fingerprint_size(original_fingerprint_size, num_expansions, -1, fprStyle);
 		bitPerEntry = fingerprintLength + 3;
 		long init_size = 1L << power_of_two_size;
 		num_extension_slots += 2;		

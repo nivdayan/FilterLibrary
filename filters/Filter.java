@@ -11,21 +11,21 @@ public abstract class Filter {
 	
 	abstract boolean rejuvenate(long key);
 	abstract boolean expand();
-	protected abstract boolean _delete(long large_hash);
+	protected abstract long _delete(long large_hash);
 	abstract protected boolean _insert(long large_hash, boolean insert_only_if_no_match);
 	abstract protected boolean _search(long large_hash);
 
 
-	public boolean delete(long input) {
+	public long delete(long input) {
 		return _delete(get_hash(input));
 	}
 
-	public boolean delete(String input) {
+	public long delete(String input) {
 		ByteBuffer input_buffer = ByteBuffer.wrap(input.getBytes(StandardCharsets.UTF_8));
 		return _delete(HashFunctions.xxhash(input_buffer));
 	}
 
-	public boolean delete(byte[] input) {
+	public long delete(byte[] input) {
 		ByteBuffer input_buffer = ByteBuffer.wrap(input);
 		return _delete(HashFunctions.xxhash(input_buffer));
 	}
@@ -73,8 +73,9 @@ public abstract class Filter {
 		return hash;
 	}
 	
-	public abstract long get_num_entries(boolean include_all_internal_filters);
+	public abstract long get_num_occupied_slots(boolean include_all_internal_filters);
 
+	
 	public double get_utilization() {
 		return 0;
 	}

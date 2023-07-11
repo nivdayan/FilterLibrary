@@ -1,12 +1,16 @@
 
 package filters;
 
+import java.util.Map.Entry;
+import java.util.TreeMap;
+
 public class BasicInfiniFilter extends QuotientFilter {
 
 	protected long empty_fingerprint;
 	int num_void_entries = 0;
 	FingerprintGrowthStrategy.FalsePositiveRateExpansion fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.UNIFORM;
 	int num_distinct_void_entries = 0;
+	int num_expansions_estimate = -1;
 	
 	public void set_fpr_style(FingerprintGrowthStrategy.FalsePositiveRateExpansion val) {
 		fprStyle = val;
@@ -135,7 +139,7 @@ public class BasicInfiniFilter extends QuotientFilter {
 		return unary_mask;
 	}
 	
-	int get_num_void_entries() {
+	int get_num_void_entries_by_counting() {
 		int num = 0;
 		for (long i = 0; i < get_physcial_num_slots(); i++) {
 			long fp = get_fingerprint(i);
@@ -144,6 +148,10 @@ public class BasicInfiniFilter extends QuotientFilter {
 			}
 		}
 		return num;
+	}
+	
+	public int get_num_void_entries() {
+		return num_void_entries;
 	}
 	
 	void report_void_entry_creation(long slot) {
@@ -155,9 +163,17 @@ public class BasicInfiniFilter extends QuotientFilter {
 		if (is_full()) {
 			return false;
 		}
-		int new_fingerprint_size = FingerprintGrowthStrategy.get_new_fingerprint_size(original_fingerprint_size, num_expansions, fprStyle);
+		int new_fingerprint_size = FingerprintGrowthStrategy.get_new_fingerprint_size(original_fingerprint_size, num_expansions, num_expansions_estimate, fprStyle);
 		//System.out.println("FP size: " + new_fingerprint_size);
-		new_fingerprint_size = Math.max(new_fingerprint_size, fingerprintLength);
+		//new_fingerprint_size = Math.max(new_fingerprint_size, fingerprintLength);
+		
+		// we can't currently remove more than one bit at a time from a fingerprint during expansion
+		// This means we'd be losing bits from the mother hash and result in false negatives 
+		if (new_fingerprint_size < fingerprintLength) {
+			new_fingerprint_size = fingerprintLength - 1;
+		}
+	
+		
 		QuotientFilter new_qf = new QuotientFilter(power_of_two_size + 1, new_fingerprint_size + 3);
 		Iterator it = new Iterator(this);		
 		long unary_mask = prep_unary_mask(fingerprintLength, new_fingerprint_size);
@@ -181,26 +197,27 @@ public class BasicInfiniFilter extends QuotientFilter {
 				
 				//print_long_in_binary(updated_fingerprint, 32);
 				if (updated_fingerprint == empty_fingerprint) {
-					
 					report_void_entry_creation(updated_bucket);
 				}
+				
+				
 				//if (updated_fingerprint == empty_fingerprint) {
 				//	num_void_entries++;
 					//is_full = true;
 				//}
 				/*System.out.println(bucket); 
 				System.out.print("bucket1      : ");
-				print_int_in_binary( bucket, power_of_two_size);
+				print_long_in_binary( bucket, power_of_two_size);
 				System.out.print("fingerprint1 : ");
-				print_int_in_binary((int) fingerprint, fingerprintLength);
+				print_long_in_binary((int) fingerprint, fingerprintLength);
 				System.out.print("pivot        : ");
-				print_int_in_binary((int) pivot_bit, 1);
+				print_long_in_binary((int) pivot_bit, 1);
 				System.out.print("mask        : ");
-				print_int_in_binary((int) unary_mask, new_fingerprint_size);
+				print_long_in_binary((int) unary_mask, new_fingerprint_size);
 				System.out.print("bucket2      : ");
-				print_int_in_binary((int) updated_bucket, power_of_two_size + 1);
+				print_long_in_binary((int) updated_bucket, power_of_two_size + 1);
 				System.out.print("fingerprint2 : ");
-				print_int_in_binary((int) updated_fingerprint, new_fingerprint_size);
+				print_long_in_binary((int) updated_fingerprint, new_fingerprint_size);
 				System.out.println();
 				System.out.println();*/
 			}
@@ -227,44 +244,117 @@ public class BasicInfiniFilter extends QuotientFilter {
 		return true;
 	}
 	
+	boolean widen() {
+		if (is_full()) {
+			return false;
+		}
+		//System.out.println("FP size: " + new_fingerprint_size);
+		int new_fingerprint_size = fingerprintLength + 1;
+		QuotientFilter new_qf = new QuotientFilter(power_of_two_size, new_fingerprint_size + 3);
+		Iterator it = new Iterator(this);		
+		long unary_mask = prep_unary_mask(fingerprintLength, new_fingerprint_size - 1 );
+		unary_mask <<= 1;
+		set_empty_fingerprint(new_fingerprint_size);
+		
+		//print_long_in_binary(unary_mask, 32);
+		//print_long_in_binary(current_empty_fingerprint, 32);
+		//print_long_in_binary(empty_fingerprint, 32);
+		//num_void_entries = 0;
+		
+		while (it.next()) {
+			long bucket = it.bucket_index;
+			long fingerprint = it.fingerprint;
+			
+			long updated_fingerprint = fingerprint | unary_mask;				
+			new_qf.insert(updated_fingerprint, bucket, false);
+
+			//print_long_in_binary(updated_fingerprint, 32);
+			//if (updated_fingerprint == empty_fingerprint) {
+			//	num_void_entries++;
+			//is_full = true;
+			//}
+			/*System.out.println(bucket); 
+				System.out.print("bucket1      : ");
+				print_int_in_binary( bucket, power_of_two_size);
+				System.out.print("fingerprint1 : ");
+				print_int_in_binary((int) fingerprint, fingerprintLength);
+				System.out.print("pivot        : ");
+				print_int_in_binary((int) pivot_bit, 1);
+				System.out.print("mask        : ");
+				print_int_in_binary((int) unary_mask, new_fingerprint_size);
+				System.out.print("bucket2      : ");
+				print_int_in_binary((int) updated_bucket, power_of_two_size + 1);
+				System.out.print("fingerprint2 : ");
+				print_int_in_binary((int) updated_fingerprint, new_fingerprint_size);
+				System.out.println();
+				System.out.println();*/
+
+
+		}
+		//System.out.println("num_void_entries  " + num_void_entries);
+		empty_fingerprint = (1L << new_fingerprint_size) - 2 ;
+		fingerprintLength = new_fingerprint_size;
+		bitPerEntry = new_fingerprint_size + 3;
+		filter = new_qf.filter;
+		num_existing_entries = new_qf.num_existing_entries;
+		//num_void_entries = new_qf.num_void_entries;
+		//power_of_two_size++;
+		//num_extension_slots += 2;
+		//max_entries_before_expansion = (int)(Math.pow(2, power_of_two_size) * expansion_threshold);
+		last_empty_slot = new_qf.last_empty_slot;
+		last_cluster_start = new_qf.last_cluster_start;
+		backward_steps = new_qf.backward_steps;
+
+		return true;
+	}
+	
 	boolean is_full() {
 		return num_void_entries > 0;
 	}
 	
+
 	public void print_filter_summary() {
 		super.print_filter_summary();
 		int num_void_entries = get_num_void_entries();
 		System.out.println("void entries: " + num_void_entries);
+		System.out.println("distinct void entries: " + num_distinct_void_entries);
 		System.out.println("is full: " + is_full);
 		System.out.println("original fingerprint size: " + original_fingerprint_size);
 		System.out.println("num expansions : " + num_expansions);
 	}
 	
-	/*public void print_filter_summary() {	
-		super.print_filter_summary();
+	public void print_age_histogram() {	
 		
-		TreeMap<Integer, Integer> histogram = new TreeMap<Integer, Integer>();
+		TreeMap<Long, Long> histogram = new TreeMap<Long, Long>();
 		
-		for (int i = 0; i <= fingerprintLength; i++) {
-			histogram.put(i, 0);
+		for (long i = 0; i <= fingerprintLength; i++) {
+			histogram.put(i, 0L);
 		}
 		
-		
+		long anomalies = 0;
 		for (int i = 0; i < get_logical_num_slots_plus_extensions(); i++) {
-			int age = parse_unary(i); 
-			int count = histogram.get(age);
-			histogram.put(age, count + 1);
+			if (!is_slot_empty(i)) {
+				long fp = get_fingerprint(i);
+				long age = parse_unary(i); 	
+				if (age >= 0) { 
+					long count = histogram.get(age);
+					histogram.put(age, count + 1);
+				}
+				else {
+					// entry is likely a deleted_void_fingerprint
+				}
+			}
 		}
 		
 		System.out.println("fingerprint sizes histogram");
 		System.out.println("\tFP size" + "\t" + "count");
-		for ( Entry<Integer, Integer> e : histogram.entrySet() ) {
-			int fingerprint_size = fingerprintLength - e.getKey() - 1;
+		for ( Entry<Long, Long> e : histogram.entrySet() ) {
+			long fingerprint_size = fingerprintLength - e.getKey() - 1;
 			if (fingerprint_size >= 0) {
 				System.out.println("\t" + fingerprint_size + "\t" + e.getValue());
 			}
 		}
 		
-	}*/
+	}
 
 }

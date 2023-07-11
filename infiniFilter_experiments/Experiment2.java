@@ -70,7 +70,7 @@ public class Experiment2 extends InfiniFilterExperiments {
 		double FPR = num_false_positives / (double)num_qeuries;
 		//int num_slots = (1 << qf.power_of_two_size) - 1;
 		//double utilization = qf.get_utilization();
-		double num_entries = qf.get_num_entries(true);
+		double num_entries = qf.get_num_occupied_slots(true);
 
 		//long totes_insertion = end_insertions - start_insertions;
 		//System.out.println("insetion times: " + totes_insertion + "   query tally " + query_tally);

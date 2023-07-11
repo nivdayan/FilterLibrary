@@ -46,16 +46,16 @@ public class CuckooFilter extends Filter {
 	}
 
 	@Override
-	protected boolean _delete(long large_hash) {
+	protected long _delete(long large_hash) {
 		long fingerprint = gen_fingerprint(large_hash);
 		while (fingerprint == 0) {
 			large_hash = HashFunctions.xxhash(large_hash);
 			fingerprint = gen_fingerprint(large_hash);
 		}
 		int bucket1 = get_bucket_index(large_hash);
-		boolean removed = remove(bucket1, fingerprint);	
-		if (removed) {
-			return true;
+		long removed = remove(bucket1, fingerprint);	
+		if (removed > -1) {
+			return removed;
 		}	
 		long second_large_hash = HashFunctions.xxhash(fingerprint);
 		int bucket2 = bucket1 ^ get_bucket_index(second_large_hash);
@@ -64,7 +64,7 @@ public class CuckooFilter extends Filter {
 	}
 	
 	// return the index of an empty cell in the bucket, or -1 if there are no empty cells
-	boolean remove(long bucket, long fingerprint) {
+	long remove(long bucket, long fingerprint) {
 		long starting_bit = bucket * bucket_size * bits_per_entry;
 		for (int i = 0; i < bucket_size; i++) {
 			long from = starting_bit + i * bits_per_entry;
@@ -72,10 +72,10 @@ public class CuckooFilter extends Filter {
 			long res = filter.getFromTo(from, to);
 			if (res == fingerprint) {
 				filter.setFromTo(from, to, 0);
-				return true;
+				return res;
 			}
 		}
-		return false;
+		return -1;
 	}
 
 	long gen_fingerprint(long large_hash) {
@@ -202,7 +202,7 @@ public class CuckooFilter extends Filter {
 	}
 
 	@Override
-	public long get_num_entries(boolean include_all_internal_filters) {
+	public long get_num_occupied_slots(boolean include_all_internal_filters) {
 		long num_entries = 0;
 		for (long i = 0; i < num_buckets; i++) {
 			long bucket_start = i * bucket_size * bits_per_entry;

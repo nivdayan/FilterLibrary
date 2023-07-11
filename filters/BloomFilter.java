@@ -33,8 +33,8 @@ public class BloomFilter extends Filter {
 	}
 
 	@Override
-	protected boolean _delete(long large_hash) {
-		return false;
+	protected long _delete(long large_hash) {
+		return -1;
 	}
 	
 	long get_target_bit(long large_hash, int hash_num) {
@@ -75,7 +75,7 @@ public class BloomFilter extends Filter {
 	}
 
 	@Override
-	public long get_num_entries(boolean include_all_internal_filters) {
+	public long get_num_occupied_slots(boolean include_all_internal_filters) {
 		return current_num_entries;
 	}
 	
