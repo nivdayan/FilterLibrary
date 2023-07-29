@@ -3,7 +3,7 @@
 This filters library contains the InfiniFilter paper from SIGMOD 2023 as well as some baselines against which it can be compared.  
 
 ## Installation
-To compile the library, compile the library using the following command using the java development kit version 11 or above. 
+Compile the library using the following command using the java development kit version 11 or above. 
 ```console
 javac filters/*.java bitmap_implementations/*.java infiniFilter_experiments/*.java  
 ```
