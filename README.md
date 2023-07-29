@@ -10,7 +10,7 @@ javac filters/*.java bitmap_implementations/*.java infiniFilter_experiments/*.ja
 
 ## Reproducing the Results
 
-To reproduce the experimental results in the paper, run the following commands from the root directory of the repository. Each command will generate a folder with five csv files. 
+To reproduce the experimental results in the paper, run the following commands from the root directory of the repository. Each command will generate a folder with five csv files: false_positive_rate.txt, memory.txt, read_speed.txt, writes_speed.txt, and all.txt. The last file contains all the results in one place. Each of these files shows how the given metric changed during the experiment with data growth. The details of each experiment are given in the paper.   
 
 For Figure 13, Parts (A) to (D), run: 
 ```console
