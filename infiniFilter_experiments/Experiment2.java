@@ -138,6 +138,7 @@ public class Experiment2 extends InfiniFilterExperiments {
 
 		System.gc();
 
+		String title = "'#entries','0rejuv/insert','0.2rejuv/insert','1rejuv/insert','3rejuv/insert'\n";
 
 		int commas_before = 1;
 		int commas_after = 3;
@@ -177,8 +178,12 @@ public class Experiment2 extends InfiniFilterExperiments {
 		
 		String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(Calendar.getInstance().getTime());
 
-		LocalDate ld = java.time.LocalDate.now();
-		String dir_name = "Exp2_" + bits_per_entry + "_bytes_" +  timeStamp.toString();
+		//LocalDate ld = java.time.LocalDate.now();
+
+		String dir_name = InfiniFilterExperiments.exp_name;
+		if (dir_name.isEmpty()) {
+			dir_name = "Exp2_" + bits_per_entry + "_bytes_" +  timeStamp.toString();
+		}
 	    Path path = Paths.get(dir_name);
 
 		try {
@@ -187,11 +192,11 @@ public class Experiment2 extends InfiniFilterExperiments {
 			e1.printStackTrace();
 		}
 		
-		String write_latency_file_name = dir_name + "/writes_speed.txt";
-		String read_latency_file_name  = dir_name + "/read_speed.txt";
-		String FPR_file_name  = dir_name + "/false_positive_rate.txt";
-		String memory_file_name  = dir_name + "/memory.txt";
-		String all_file_name  = dir_name + "/all.txt";
+		String write_latency_file_name = dir_name + "/writes_speed.csv";
+		String read_latency_file_name  = dir_name + "/read_speed.csv";
+		String FPR_file_name  = dir_name + "/false_positive_rate.csv";
+		String memory_file_name  = dir_name + "/memory.csv";
+		String all_file_name  = dir_name + "/all.csv";
 		
 		create_file(write_latency_file_name);
 		create_file(read_latency_file_name);
@@ -201,6 +206,8 @@ public class Experiment2 extends InfiniFilterExperiments {
 		
 	    try {
 	        FileWriter insertion_writer = new FileWriter(write_latency_file_name);
+	        
+	        insertion_writer.write(title);
 	        
 			commas_before = 1;
 			commas_after = 3;
@@ -213,6 +220,8 @@ public class Experiment2 extends InfiniFilterExperiments {
 			insertion_writer.close();
 	        FileWriter reads_writer = new FileWriter(read_latency_file_name);
 
+	        reads_writer.write(title);
+	        
 			commas_before = 1;
 			commas_after = 3;
 			chained_IF_1.print_to_file("num_entries", "query_time", commas_before++, commas_after--, reads_writer);
@@ -224,6 +233,7 @@ public class Experiment2 extends InfiniFilterExperiments {
 			reads_writer.close();
 	        FileWriter FPR_writer = new FileWriter(FPR_file_name);
 
+	        FPR_writer.write(title);
 			commas_before = 1;
 			commas_after = 3;
 			chained_IF_1.print_to_file("num_entries", "FPR", commas_before++, commas_after--, FPR_writer);
@@ -234,6 +244,7 @@ public class Experiment2 extends InfiniFilterExperiments {
 			FPR_writer.close();
 			FileWriter mem_writer = new FileWriter(memory_file_name);
 			
+			mem_writer.write(title);
 			//System.out.println();
 
 			commas_before = 1;
@@ -247,6 +258,8 @@ public class Experiment2 extends InfiniFilterExperiments {
 						
 	    	FileWriter all_writer = new FileWriter(all_file_name);
 
+	    	all_writer.write(title);
+	    	
 			commas_before = 1;
 			commas_after = 3;
 			chained_IF_1.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);

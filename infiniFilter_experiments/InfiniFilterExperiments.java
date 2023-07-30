@@ -25,12 +25,13 @@ public class InfiniFilterExperiments {
 	static int bits_per_entry = 16;
 	static int num_entries_power = 10;	
 	static int num_cycles = 23; // went up to 31
+	static String exp_name = ""; // went up to 31
 	
 	static void parse_arguments(String[] args) {
 		if (args != null) {
-	        ArrayList<Integer> argsArr = new ArrayList<Integer>(args.length); // could be 9
-	        for (String val : args) {
-	            int temp = Integer.parseInt(val);
+	        ArrayList<Integer> argsArr = new ArrayList<Integer>(); 
+	        for (int i = 0; i < Math.min(args.length, 3); i++) {
+	            int temp = Integer.parseInt(args[i]);
 	            argsArr.add(temp);
 	        }   
 	        if (argsArr.size() > 0 && argsArr.get(0) > 0) {
@@ -41,6 +42,9 @@ public class InfiniFilterExperiments {
 	        }
 	        if (argsArr.size() > 2 && argsArr.get(2) > 0) {
 	        	num_cycles = argsArr.get(2);
+	        }
+	        if (args.length > 3 && !args[3].isEmpty()) {
+	        	exp_name = args[3];
 	        }
 		}
 	}
@@ -89,6 +93,7 @@ public class InfiniFilterExperiments {
 				System.out.println();	
 			}
 		}
+	
 		
 		void print_to_file(String x_axis_name, String y_axis_name, int commas, int after_commas, FileWriter file) throws IOException {
 			ArrayList<Double> x_axis = metrics.get(x_axis_name);

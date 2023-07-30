@@ -60,7 +60,7 @@ public class Experiment3 extends InfiniFilterExperiments {
 			System.out.println("geometric chaining polynomial FPR " + i);
 		}
 		
-		BasicInfiniFilter qf4 = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
+		/*BasicInfiniFilter qf4 = new ChainedInfiniFilter(num_entries_power, bits_per_entry);
 		qf4.set_fpr_style(FingerprintGrowthStrategy.FalsePositiveRateExpansion.TRIANGULAR);
 		qf4.set_expand_autonomously(true); 
 		baseline res4 = new baseline();
@@ -71,14 +71,16 @@ public class Experiment3 extends InfiniFilterExperiments {
 			starting_index = end_key;
 			end_key = qf4.get_max_entries_before_expansion() * 2 - 1;
 			System.out.println("infinifilter triangular FPR " + i);
-		}
+		}*/
 
+		String title = "'#entries','InfiniFilter Uniform','InfiniFilter Growing','Geom Chaining Growing'\n";
+		
 		int commas_before = 1;
-		int commas_after = 3;
+		int commas_after = 2;
 		res1.print("num_entries", "insertion_time", commas_before++, commas_after--);
 		res2.print("num_entries", "insertion_time", commas_before++, commas_after--);
 		res3.print("num_entries", "insertion_time", commas_before++, commas_after--);
-		res4.print("num_entries", "insertion_time", commas_before++, commas_after--);
+		//res4.print("num_entries", "insertion_time", commas_before++, commas_after--);
 
 		
 		System.out.println();
@@ -88,7 +90,7 @@ public class Experiment3 extends InfiniFilterExperiments {
 		res1.print("num_entries", "query_time", commas_before++, commas_after--);
 		res2.print("num_entries", "query_time", commas_before++, commas_after--);
 		res3.print("num_entries", "query_time", commas_before++, commas_after--);
-		res4.print("num_entries", "query_time", commas_before++, commas_after--);
+		//res4.print("num_entries", "query_time", commas_before++, commas_after--);
 
 		System.out.println();
 
@@ -97,7 +99,7 @@ public class Experiment3 extends InfiniFilterExperiments {
 		res1.print("num_entries", "FPR", commas_before++, commas_after--);
 		res2.print("num_entries", "FPR", commas_before++, commas_after--);
 		res3.print("num_entries", "FPR", commas_before++, commas_after--);
-		res4.print("num_entries", "FPR", commas_before++, commas_after--);
+		//res4.print("num_entries", "FPR", commas_before++, commas_after--);
 
 		System.out.println();
 
@@ -106,14 +108,17 @@ public class Experiment3 extends InfiniFilterExperiments {
 		res1.print("num_entries", "memory", commas_before++, commas_after--);
 		res2.print("num_entries", "memory", commas_before++, commas_after--);
 		res3.print("num_entries", "memory", commas_before++, commas_after--);
-		res4.print("num_entries", "memory", commas_before++, commas_after--);
+		//res4.print("num_entries", "memory", commas_before++, commas_after--);
 
 		
 		String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(Calendar.getInstance().getTime());
 
-		LocalDate ld = java.time.LocalDate.now();
-		String dir_name = "Exp3_" + bits_per_entry + "_bytes_" +  timeStamp.toString();
+		String dir_name = InfiniFilterExperiments.exp_name;
+		if (dir_name.isEmpty()) {
+			dir_name = "Exp3_" + bits_per_entry + "_bytes_" +  timeStamp.toString();
+		}
 	    Path path = Paths.get(dir_name);
+
 
 		try {
 			Files.createDirectories(path);
@@ -121,11 +126,11 @@ public class Experiment3 extends InfiniFilterExperiments {
 			e1.printStackTrace();
 		}
 		
-		String write_latency_file_name = dir_name + "/writes_speed.txt";
-		String read_latency_file_name  = dir_name + "/read_speed.txt";
-		String FPR_file_name  = dir_name + "/false_positive_rate.txt";
-		String memory_file_name  = dir_name + "/memory.txt";
-		String all_file_name  = dir_name + "/all.txt";
+		String write_latency_file_name = dir_name + "/writes_speed.csv";
+		String read_latency_file_name  = dir_name + "/read_speed.csv";
+		String FPR_file_name  = dir_name + "/false_positive_rate.csv";
+		String memory_file_name  = dir_name + "/memory.csv";
+		String all_file_name  = dir_name + "/all.csv";
 		
 		create_file(write_latency_file_name);
 		create_file(read_latency_file_name);
@@ -136,23 +141,25 @@ public class Experiment3 extends InfiniFilterExperiments {
 	    try {
 	        FileWriter insertion_writer = new FileWriter(write_latency_file_name);
 	        
+	        insertion_writer.write(title);
 			commas_before = 1;
 			commas_after = 2;
 			res1.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, insertion_writer);
 			res2.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, insertion_writer);
 			res3.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, insertion_writer);
-			res4.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, insertion_writer);
+			//res4.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, insertion_writer);
 
 			//System.out.println();
 			insertion_writer.close();
 	        FileWriter reads_writer = new FileWriter(read_latency_file_name);
 
+	        reads_writer.write(title);
 			commas_before = 1;
 			commas_after = 2;
 			res1.print_to_file("num_entries", "query_time", commas_before++, commas_after--, reads_writer);
 			res2.print_to_file("num_entries", "query_time", commas_before++, commas_after--, reads_writer);
 			res3.print_to_file("num_entries", "query_time", commas_before++, commas_after--, reads_writer);
-			res4.print_to_file("num_entries", "query_time", commas_before++, commas_after--, reads_writer);
+			//res4.print_to_file("num_entries", "query_time", commas_before++, commas_after--, reads_writer);
 
 			//System.out.println();
 			reads_writer.close();
@@ -160,10 +167,11 @@ public class Experiment3 extends InfiniFilterExperiments {
 
 			commas_before = 1;
 			commas_after = 2;
+			FPR_writer.write(title);
 			res1.print_to_file("num_entries", "FPR", commas_before++, commas_after--, FPR_writer);
 			res2.print_to_file("num_entries", "FPR", commas_before++, commas_after--, FPR_writer);
 			res3.print_to_file("num_entries", "FPR", commas_before++, commas_after--, FPR_writer);
-			res4.print_to_file("num_entries", "FPR", commas_before++, commas_after--, FPR_writer);
+			//res4.print_to_file("num_entries", "FPR", commas_before++, commas_after--, FPR_writer);
 
 			FPR_writer.close();
 			FileWriter mem_writer = new FileWriter(memory_file_name);
@@ -172,21 +180,23 @@ public class Experiment3 extends InfiniFilterExperiments {
 
 			commas_before = 1;
 			commas_after = 2;
+			mem_writer.write(title);
 			res1.print_to_file("num_entries", "memory", commas_before++, commas_after--, mem_writer);
 			res2.print_to_file("num_entries", "memory", commas_before++, commas_after--, mem_writer);
 			res3.print_to_file("num_entries", "memory", commas_before++, commas_after--, mem_writer);
-			res4.print_to_file("num_entries", "memory", commas_before++, commas_after--, mem_writer);
+			//res4.print_to_file("num_entries", "memory", commas_before++, commas_after--, mem_writer);
 
 			mem_writer.close();
 						
 	    	FileWriter all_writer = new FileWriter(all_file_name);
-
+	    	all_writer.write(title);
+	    	
 			commas_before = 1;
 			commas_after = 2;
 			res1.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
 			res2.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
 			res3.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
-			res4.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
+			//res4.print_to_file("num_entries", "insertion_time", commas_before++, commas_after--, all_writer);
 
 			all_writer.write("\n");
 			
@@ -195,7 +205,7 @@ public class Experiment3 extends InfiniFilterExperiments {
 			res1.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
 			res2.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
 			res3.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
-			res4.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
+			//res4.print_to_file("num_entries", "query_time", commas_before++, commas_after--, all_writer);
 
 			all_writer.write("\n");
 			
@@ -204,7 +214,7 @@ public class Experiment3 extends InfiniFilterExperiments {
 			res1.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
 			res2.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
 			res3.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
-			res4.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
+			//res4.print_to_file("num_entries", "FPR", commas_before++, commas_after--, all_writer);
 
 			all_writer.write("\n");
 			
@@ -213,7 +223,7 @@ public class Experiment3 extends InfiniFilterExperiments {
 			res1.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
 			res2.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
 			res3.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
-			res4.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
+			//res4.print_to_file("num_entries", "memory", commas_before++, commas_after--, all_writer);
 
 			all_writer.close();
 	    	
