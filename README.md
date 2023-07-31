@@ -2,15 +2,23 @@
 
 This filters library contains the InfiniFilter paper from SIGMOD 2023 as well as some baselines against which it can be compared.  
 
-## Installation
-Compile the library by running the following command from the root directory of the repository. The java development kit version 11 or above should be installed. 
+## Compilation
+Compile the library by running the following command from the root directory of the repository. 
 ```console
 javac filters/*.java bitmap_implementations/*.java infiniFilter_experiments/*.java  
 ```
 
-## Reproducing the Results
-To reproduce the results of the SIGMOD 2023 paper, run the script run_exps.sh from the root directory of the repository. This script requires Gnuplot to be installed to generate the figures. The script will reproduce Figures 13 to 16 in the paper and name them accordingly. 
+## Experimental Reproduction
+To reproduce the results of the SIGMOD 2023 paper, run the script run_exps.sh from the root directory of the repository. The script will reproduce Figures 13 to 16 in the paper and name them accordingly: figure13.png to figure.16.png. The raw data used to generate these figures is stored in a group of directories called exp1 to exp6. Running the script again will delete results of older runs and regenerate them. 
 
 ```console
 ./run_exps.sh   
+```
+
+## Dependencies
+Running the experiments requires having the Java Development Kit version 11 or above installed. Plotting the figures to illustrate the experimental results requires having Gnuplot installed. Both dependencies can be obtained using the following commands on Ubuntu or equivalents on other systems.  
+
+```console
+sudo apt install default-jdk
+sudo apt-get install gnuplot
 ```
