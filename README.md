@@ -1,7 +1,7 @@
 
 # InfiniFilter: Expanding Filters to Infinity and Beyond
 
-This filters library contains the InfiniFilter paper from SIGMOD 2023 as well as some baselines against which it can be compared. InfiniFilter is a probabalistic data structure that answers set-membership queries (similarly to a Bloom filter or a Quotient Filter). The core innovation is that InfiniFilter is able to dynamically expand while maintaining good guarantees over performance and the false positive rate. The full paper can be accessed [here](https://nivdayan.github.io/infinifilter.pdf). 
+This filters library contains the InfiniFilter paper from SIGMOD 2023 as well as some baselines against which it can be compared. InfiniFilter is a probabalistic data structure that answers set-membership queries (similarly to a Bloom filter or a Quotient Filter). The core innovation is that InfiniFilter is able to dynamically expand while maintaining good guarantees over performance and the false positive rate. The full paper can be accessed [here](https://nivdayan.github.io/infinifilter.pdf). A video lecture on InfiniFinity appears on [youtube](https://www.youtube.com/watch?v=xCy6t8013FY). 
 
 ## Compilation
 Compile the library by running the following command from the root directory of the repository. 
