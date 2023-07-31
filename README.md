@@ -1,7 +1,7 @@
 
 # InfiniFilter: Expanding Filters to Infinity and Beyond
 
-This filters library contains the InfiniFilter paper from SIGMOD 2023 as well as some baselines against which it can be compared. InfiniFilter is a probabalistic data structure that answers set-membership queries (similarly to a Bloom filter or a Quotient Filter). The core innovation is that InfiniFilter is able to dynamically expand along with the data while maintaining good guarantees over performance and the false positive rate. The full paper can be accessed [here](https://nivdayan.github.io/infinifilter.pdf). A video lecture on InfiniFilter appears on [youtube](https://www.youtube.com/watch?v=xCy6t8013FY). 
+This filters library contains the InfiniFilter paper from SIGMOD 2023 as well as some baselines against which it can be compared. InfiniFilter is a probabilistic data structure that answers set-membership queries (similar to a Bloom filter or a Quotient Filter). The core innovation is that InfiniFilter can dynamically expand along with the data while maintaining good guarantees over performance and the false positive rate. The full paper can be accessed [here](https://nivdayan.github.io/infinifilter.pdf). A video lecture on InfiniFilter appears on [youtube](https://www.youtube.com/watch?v=xCy6t8013FY). 
 
 ## Compilation
 Compile the library by running the following command from the root directory of the repository. 
@@ -10,7 +10,7 @@ javac filters/*.java bitmap_implementations/*.java infiniFilter_experiments/*.ja
 ```
 
 ## Experimental Reproduction
-To reproduce the results of the SIGMOD 2023 paper, run the script run_exps.sh from the root directory of the repository. The script will reproduce Figures 13 to 16 in the paper and name them accordingly: figure13.png to figure.16.png. The raw data used to generate these figures is stored in a group of directories called exp1 to exp6. Running the script again will delete results of older runs and regenerate them. 
+To reproduce the results of the SIGMOD 2023 paper, run the script run_exps.sh from the root directory of the repository. The script will reproduce Figures 13 to 16 in the paper and name them accordingly: figure13.png to figure.16.png. The raw data used to generate these figures is stored in a group of directories called exp1 to exp6. Running the script again will delete the results of older runs and regenerate them. 
 
 ```console
 ./run_exps.sh   
