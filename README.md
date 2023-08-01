@@ -12,7 +12,7 @@ javac filters/*.java bitmap_implementations/*.java infiniFilter_experiments/*.ja
 ## Experimental Reproduction
 To reproduce the results of the SIGMOD 2023 paper, run the script run_exps.sh from the root directory of the repository. The script will reproduce Figures 13 to 16 in the paper and name them accordingly: figure13.png to figure.16.png. The raw data used to generate these figures is stored in a group of directories called exp1 to exp6. Running the script again will delete the results of older runs and regenerate them. 
 
-The script takes a parameter for power of the maximum number of slots to which it will expand the filter. For example, an argument of 31 means the filter will grow to a size of up to 2^31 slots during each experiment. An argument of 31 should indeed be used to reproduce the paper's results. 
+The script takes a parameter for power of the maximum number of slots to which it will expand the filter. For example, an argument of 31 means the filter will grow to a size of up to 2^31 slots during each experiment. An argument of 31 should be used to reproduce the paper's results. The default value for this parameter is 24. 
 
 ```console
 ./run_exps.sh 31
