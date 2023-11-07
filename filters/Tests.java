@@ -144,6 +144,8 @@ public class Tests {
 			else {
 				System.out.println("insertion failed");
 				filter.pretty_print();
+				filter.insert(rand_num, false);
+				System.exit(1);
 			}
 
 		}
@@ -165,8 +167,8 @@ public class Tests {
 	static public void test3() {
 		int bits_per_entry = 10;
 		int num_entries_power = 10;
-		Filter filter = new QuotientFilter(num_entries_power, bits_per_entry);
-		int num_entries = (int) (Math.pow(2, num_entries_power) * 0.9 );
+		QuotientFilter filter = new QuotientFilter(num_entries_power, bits_per_entry);
+		int num_entries = (int)filter.max_entries_before_expansion;
 		test_no_false_negatives(filter, num_entries);
 	}
 	
@@ -559,11 +561,15 @@ public class Tests {
 		int bits_per_entry = 10;
 		int num_entries_power = 3;		
 		BasicInfiniFilter qf = new BasicInfiniFilter(num_entries_power, bits_per_entry);
+		qf.expand_autonomously = false;
 		qf.hash_type = HashType.arbitrary;
 		int i = 1;
 		while (i < Math.pow(2, num_entries_power) - 1) {
-			qf.insert(i, false);
+			boolean success = qf.insert(i, false);
 			i++;
+			if (!success) {
+				System.out.println("insertion failed");
+			}
 		}
 
 		//qf.pretty_print();
@@ -2017,7 +2023,8 @@ public class Tests {
 			long num_entries = (long)(Math.pow(2, num_entries_power) * 0.9);
 			for (int i = 5; i <= 16; i++) {
 				int bits_per_entry = i;
-				Filter qf = new QuotientFilter(num_entries_power, bits_per_entry);
+				QuotientFilter qf = new QuotientFilter(num_entries_power, bits_per_entry);
+				qf.expand_autonomously = false;
 				double model_FPR = Math.pow(2, - bits_per_entry + 3);
 				test_FPR(qf, model_FPR, num_entries);
 			}

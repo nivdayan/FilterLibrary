@@ -93,7 +93,6 @@ public class ChainedInfiniFilter extends BasicInfiniFilter {
 		QuotientFilter.print_long_in_binary(unary_mask1, 32);
 		QuotientFilter.print_long_in_binary(_unary_mask, 32);*/
 		
-		
 		unary_mask = _unary_mask;
 		slot_mask = _slot_mask;
 		fingerprint_mask = _fingerprint_mask;
@@ -123,10 +122,28 @@ public class ChainedInfiniFilter extends BasicInfiniFilter {
 		print_long_in_binary( adjusted_fingerprint, 32);
 		System.out.println();*/
 
-		
 		num_existing_entries--;
 		//secondary_IF.num_existing_entries++;
 		boolean success = secondary_IF.insert(adjusted_fingerprint, slot, false);
+		
+		consider_widening();
+		
+		if (!success) {
+			consider_expanding_secondary();
+			prep_masks();
+			
+			 bucket1 = bucket_index;
+			 fingerprint = bucket_index >> secondary_IF.power_of_two_size;
+			 slot = bucket1 & slot_mask;
+			 adjusted_fingerprint = fingerprint & fingerprint_mask; 
+			adjusted_fingerprint = adjusted_fingerprint | unary_mask;
+			
+			success = secondary_IF.insert(adjusted_fingerprint, slot, false);
+			
+			//pretty_print();
+			//print_filter_summary();
+		}
+		
 		if (!success) {
 			pretty_print();
 			print_filter_summary();
@@ -160,18 +177,25 @@ public class ChainedInfiniFilter extends BasicInfiniFilter {
 		power = Math.max(power, 3);
 		secondary_IF = new BasicInfiniFilter(power, FP_size + 3);
 		secondary_IF.hash_type = this.hash_type;
-		secondary_IF.fprStyle = fprStyle;
+		secondary_IF.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.UNIFORM;
 		secondary_IF.original_fingerprint_size = original_fingerprint_size;
 	}
 	
 	void consider_expanding_secondary() {
-		if (secondary_IF.num_void_entries > 0) { // our former filter is full 
+		if (secondary_IF.num_void_entries > 0 && exceeding_secondary_threshold()) { // our former filter is full 			
 			chain.add(secondary_IF);
-			int orig_FP = secondary_IF.fingerprintLength;
-			secondary_IF = new BasicInfiniFilter(secondary_IF.power_of_two_size + 1, secondary_IF.fingerprintLength + 3);
+			//int orig_FP = secondary_IF.fingerprintLength;
+			
+			int new_power_of_two = secondary_IF.power_of_two_size;
+			if (fprStyle == FingerprintGrowthStrategy.FalsePositiveRateExpansion.POLYNOMIAL || 
+				fprStyle == FingerprintGrowthStrategy.FalsePositiveRateExpansion.POLYNOMIAL_SHRINK) {
+				new_power_of_two -= 2;
+			}
+			
+			secondary_IF = new BasicInfiniFilter(new_power_of_two, secondary_IF.fingerprintLength + 3);
 			secondary_IF.hash_type = this.hash_type;
-			secondary_IF.original_fingerprint_size = orig_FP;
-			secondary_IF.fprStyle = fprStyle;
+			secondary_IF.original_fingerprint_size = original_fingerprint_size;
+			secondary_IF.fprStyle = FingerprintGrowthStrategy.FalsePositiveRateExpansion.UNIFORM;
 		}
 		// we expand the secondary infinifilter
 		else {  // standard procedure
@@ -191,12 +215,13 @@ public class ChainedInfiniFilter extends BasicInfiniFilter {
 		// the secondary infinifilter is full, so we add it to the chain
 		else if (secondary_IF != null) { // our former filter is full 
 			consider_expanding_secondary();
+			//consider_widening();
+			//expand_secondary_IF();
 		}
 		prep_masks();
 		super.expand();
 		//System.out.println(num_expansions + "\t" + num_distinct_void_entries + "\t" + fingerprintLength + "\t" + num_existing_entries);
-	
-		
+
 		return true;
 	}
 	
@@ -204,33 +229,34 @@ public class ChainedInfiniFilter extends BasicInfiniFilter {
 		int num_entries = secondary_IF.num_existing_entries + num_void_entries;
 		long logical_slots = secondary_IF.get_logical_num_slots();
 		double secondary_fullness = num_entries / (double)logical_slots;
-		return secondary_fullness > expansion_threshold / 2.0;
+		return secondary_fullness > expansion_threshold / 0.95;
 	}
 	
 	void expand_secondary_IF() {
-
 		// sometimes we may also want to widen the fingerprint bits, not just expand when we reach capacity
 		// need to consider this 
-		//boolean expanded = false;
 		while (exceeding_secondary_threshold()) {
 			secondary_IF.num_expansions++;
+			//System.out.println(secondary_IF.num_expansions);
+			if (secondary_IF.num_expansions == 7) {
+				exceeding_secondary_threshold();
+			}
 			secondary_IF.expand();
 			//logical_slots = secondary_IF.get_logical_num_slots();
 			//secondary_fullness = num_entries / (double)logical_slots;
 			//expanded = true;
 		}
 		
-		/*if (expanded) {
-			return;
-		}*/
-		
 		//int extra_bits_needed = power_of_two_size - ( secondary_IF.power_of_two_size + secondary_IF.fingerprintLength - 1);
-		int info_bits_secondary = secondary_IF.power_of_two_size + secondary_IF.fingerprintLength - 1;
-		while (info_bits_secondary <= power_of_two_size + 2) {
-			//secondary_IF.pretty_print();
+		//consider_widening();
+	}
+	
+	void consider_widening() {
+		int info_bits_secondary = secondary_IF.power_of_two_size + secondary_IF.fingerprintLength;
+		while (info_bits_secondary <= power_of_two_size + 1) {
 			secondary_IF.widen();
-			info_bits_secondary = secondary_IF.power_of_two_size + secondary_IF.fingerprintLength - 1;
-			//secondary_IF.pretty_print();
+			prep_masks();
+			info_bits_secondary = secondary_IF.power_of_two_size + secondary_IF.fingerprintLength;
 		}
 	}
 	

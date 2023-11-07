@@ -4,6 +4,7 @@ import infiniFilter_experiments.Experiment1;
 import infiniFilter_experiments.Experiment2;
 import infiniFilter_experiments.Experiment3;
 import infiniFilter_experiments.Experiment4;
+import infiniFilter_experiments.Experiment5;
 import infiniFilter_experiments.InfiniFilterExperiments;
 
 public class Client {
@@ -44,10 +45,13 @@ public class Client {
 		//run_tests();
 		//aleph_tests.test1();
 		
-		aleph_tests.run_tests();
+		//aleph_tests.run_tests();
 		//run_tests();
-				
+		//Tests.test12();
+		
 		//QuotientFilter new_qf = new QuotientFilter(30 + 1, 13 + 3);
+		
+		Experiment5.main(null);
 		
 		//Experiment2.main(null);
 		//Experiment3.main(null);

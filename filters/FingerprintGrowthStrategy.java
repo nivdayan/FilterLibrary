@@ -26,7 +26,7 @@ public class FingerprintGrowthStrategy {
 		}
 		else if (fprStyle == FalsePositiveRateExpansion.POLYNOMIAL_SHRINK) {
 			
-			double additional_init_FP = Math.ceil( Math.log(Math.pow(max_num_expansions_est, 2)) / Math.log(2) );
+			/*double additional_init_FP = Math.ceil( Math.log(Math.pow(max_num_expansions_est, 2)) / Math.log(2) );
 			double target_fp_size = original_fingerprint_size - additional_init_FP;
 			double target_FPR = Math.pow(2, -target_fp_size);
 			
@@ -35,7 +35,15 @@ public class FingerprintGrowthStrategy {
 			current = current == 0 ? 1 : current;
 			current = Math.abs(current);
 			double factor = 1.0 / Math.pow(current, 2);
-			new_filter_FPR = factor * target_FPR; 
+			new_filter_FPR = factor * target_FPR; */
+			
+			long abs = Math.abs(max_num_expansions_est - 1 - num_expansions);
+			long max = Math.max(abs, 1);
+			double log = Math.log(max) / Math.log(2);
+			int ceil = 2 * (int)Math.round(log);
+			int FP_size = original_fingerprint_size + ceil;
+			//System.out.println(max_num_expansions_est + " " + FP_size);
+			return FP_size;
 			
 		}
 		else if (fprStyle == FalsePositiveRateExpansion.TRIANGULAR) {
@@ -47,7 +55,6 @@ public class FingerprintGrowthStrategy {
 		}		
 		double fingerprint_size = Math.ceil( Math.log(1.0/new_filter_FPR) / Math.log(2) );
 		int fingerprint_size_int = (int) fingerprint_size;
-		//System.out.println(fingerprint_size_int);
 		return fingerprint_size_int;
 	}
 	

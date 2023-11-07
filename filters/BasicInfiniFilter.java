@@ -245,9 +245,9 @@ public class BasicInfiniFilter extends QuotientFilter {
 	}
 	
 	boolean widen() {
-		if (is_full()) {
+		/*if (is_full()) {
 			return false;
-		}
+		}*/
 		//System.out.println("FP size: " + new_fingerprint_size);
 		int new_fingerprint_size = fingerprintLength + 1;
 		QuotientFilter new_qf = new QuotientFilter(power_of_two_size, new_fingerprint_size + 3);

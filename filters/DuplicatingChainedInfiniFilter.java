@@ -28,9 +28,18 @@ public class DuplicatingChainedInfiniFilter extends ChainedInfiniFilter {
 		deleted_void_entries = new ArrayList<>();
 		lazy_deletes = _lazy_updates;
 		num_expansions_estimate = new_num_expansions_estimate;
+		//System.out.println(filter.size());
 		if (num_expansions_estimate > -1) {
 			fprStyle = FalsePositiveRateExpansion.POLYNOMIAL_SHRINK;
+			fingerprintLength = FingerprintGrowthStrategy.get_new_fingerprint_size(fingerprintLength, 0, new_num_expansions_estimate, fprStyle);
+			bitPerEntry = fingerprintLength + 3; 
+			filter = make_filter(1L << power_of_two, bitPerEntry);
+			empty_fingerprint = (1L << fingerprintLength) - 2 ;
+			//original_fingerprint_size = fingerprintLength;
+			//int f = original_fingerprint_size;
 		}
+		//System.out.println(filter.size());
+		//System.out.println();
 	}
 	
 	void set_deleted_void_fingerprint() {
@@ -40,6 +49,7 @@ public class DuplicatingChainedInfiniFilter extends ChainedInfiniFilter {
 	}
 	
 	void handle_empty_fingerprint(long bucket_index, QuotientFilter insertee) {
+		//pretty_print();
 		//super.handle_empty_fingerprint(bucket_index, insertee);
 		long bucket1 = bucket_index;
 		long bucket_mask = 1L << power_of_two_size; 		// setting this bit to the proper offset of the slot address field
@@ -72,6 +82,9 @@ public class DuplicatingChainedInfiniFilter extends ChainedInfiniFilter {
 			consider_expanding_secondary();
 			prep_masks();
 		}
+		
+		consider_widening();
+		//prep_masks();
 		
 		/*if (slot == 3565) {
 			System.out.println("" + secondary_IF.power_of_two_size);
@@ -106,10 +119,15 @@ public class DuplicatingChainedInfiniFilter extends ChainedInfiniFilter {
 		int num_entries = secondary_IF.num_existing_entries;
 		long logical_slots = secondary_IF.get_logical_num_slots();
 		double secondary_fullness = num_entries / (double)logical_slots;
-		return secondary_fullness > expansion_threshold / 2.0;
+		return secondary_fullness > expansion_threshold;
 	}
 	
 	boolean expand() {
+		//if (num_expansions == 10) {
+			//print_filter_summary();
+			//print_age_histogram();
+			//System.out.println();
+		//}
 		//pretty_print();
 		//print_filter_summary();
 		//print_age_histogram();
