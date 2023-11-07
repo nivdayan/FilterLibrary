@@ -24,9 +24,9 @@ public class Experiment5 extends InfiniFilterExperiments {
 	public static void main(String[] args) {
 		parse_arguments(args);
 		
-		InfiniFilterExperiments.bits_per_entry = 8;
+		//InfiniFilterExperiments.bits_per_entry = 8;
 		//num_entries_power = 12;	
-		num_cycles = 24;
+		//num_cycles = 24;
 		
 		System.gc();
 		{
